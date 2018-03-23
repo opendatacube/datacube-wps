@@ -26,31 +26,7 @@ import flask
 
 import pywps
 from pywps import Service, Process, BoundingBoxInput, LiteralOutput
-
-class PixelDrill(Process):
-    def __init__(self):
-        inputs = [BoundingBoxInput('pointin',
-                                   'point in',
-                                   ['epsg:4326'])]
-        outputs = [LiteralOutput('avgout',
-                                 'avg out',
-                                 'float')]
-
-        super(PixelDrill, self).__init__(
-            self._handler,
-            identifier       = 'pixeldrill',
-            version          = '0.1',
-            title            = 'WOfS Pixel Drill',
-            abstract         = 'Does WOfS Pixel Drill',
-            inputs           = inputs,
-            outputs          = outputs,
-            store_supported  = False,
-            status_supported = False)
-
-    def _handler(self, request, response):
-        response.outputs['avgout'].data = 67.4
-        return response
-
+from processes.pixeldrill import PixelDrill
 
 
 app = flask.Flask(__name__)
@@ -69,15 +45,6 @@ for process in processes:
 
 # This is, how you start PyWPS instance
 service = Service(processes, ['pywps.cfg'])
-
-
-@app.route("/")
-def hello():
-    server_url = pywps.configuration.get_config_value("server", "url")
-    request_url = flask.request.url
-    return flask.render_template('home.html', request_url=request_url,
-                                 server_url=server_url,
-                                 process_descriptor=process_descriptor)
 
 
 @app.route('/wps', methods=['GET', 'POST'])
