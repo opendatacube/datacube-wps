@@ -53,16 +53,20 @@ class PixelDrill(Process):
         s = shape(geometry_json)
 
         d = _getData(s)
-        # massage dataset
-        squeezed = d.squeeze()
-        squeezed = squeezed.drop('x')
-        squeezed = squeezed.drop('y')
 
-        ar = squeezed.to_array()
+        if len(d.variables) == 0:
+            output = []
+        else:
+            # massage dataset
+            squeezed = d.squeeze()
+            squeezed = squeezed.drop('x')
+            squeezed = squeezed.drop('y')
 
-        zipped = list(zip(ar.values[0], ar.coords['time'].values))
+            ar = squeezed.to_array()
 
-        output_json = json.dumps(zipped, cls=DatetimeEncoder)
+            output = list(zip(ar.values[0], ar.coords['time'].values))
+
+        output_json = json.dumps(output, cls=DatetimeEncoder)
 
         response.outputs['timeseries'].output_format = Format('application/json', '.json', None)
         response.outputs['timeseries'].data = output_json
@@ -71,7 +75,9 @@ class PixelDrill(Process):
 
 def _getData(shape):
     dc = datacube.Datacube()
-    data = dc.load(product='LS8_OLI_WATER', latitude=(shape.y, shape.y), longitude=(shape.x, shape.x))
+    if (shape.type == 'Point'):
+        data = dc.load(product='LS8_OLI_WATER', latitude=(shape.y, shape.y), longitude=(shape.x, shape.x))
+
     return data
 
 
