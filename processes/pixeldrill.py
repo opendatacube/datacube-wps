@@ -3,9 +3,8 @@ from pywps import Process, ComplexInput, ComplexOutput, Format, FORMATS
 
 import json
 
-from shapely.geometry import shape
-
 import datacube
+from datacube.utils import geometry
 
 # From https://stackoverflow.com/a/16353080
 class DatetimeEncoder(json.JSONEncoder):
@@ -37,8 +36,8 @@ class PixelDrill(Process):
             abstract         = 'Does WOfS Pixel Drill',
             inputs           = inputs,
             outputs          = outputs,
-            store_supported  = False,
-            status_supported = False)
+            store_supported  = True,
+            status_supported = True)
 
     def _handler(self, request, response):
         # Create geometry
@@ -50,9 +49,8 @@ class PixelDrill(Process):
             raise pywps.InvalidParameterException()
 
         geometry_json = features_json[0]['geometry']
-        s = shape(geometry_json)
 
-        d = _getData(s)
+        d = _getData(geometry_json)
 
         if len(d.variables) == 0:
             output = []
@@ -74,10 +72,16 @@ class PixelDrill(Process):
 
 
 def _getData(shape):
-    dc = datacube.Datacube()
-    if (shape.type == 'Point'):
-        data = dc.load(product='LS8_OLI_WATER', latitude=(shape.y, shape.y), longitude=(shape.x, shape.x))
+    product_name = 'LS8_OLI_WATER'
+    crs          = 'EPSG:4326'
 
+    dc = datacube.Datacube()
+
+    g = geometry.Geometry(shape, crs=datacube.utils.geometry.CRS('EPSG:4326'))
+    query = {
+        'geopolygon': g
+    }
+    data = dc.load(product=product_name, **query)
     return data
 
 
