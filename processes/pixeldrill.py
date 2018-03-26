@@ -1,5 +1,5 @@
 import pywps
-from pywps import Process, ComplexInput, ComplexOutput, Format, FORMATS
+from pywps import Process, ComplexInput, ComplexOutput, LiteralInput, Format, FORMATS
 
 import json
 
@@ -21,7 +21,10 @@ class PixelDrill(Process):
                                'Geometry',
                                supported_formats=[
                                                     Format('application/gml+xml')
-                                                 ])]
+                                                 ]),
+                  LiteralInput('product',
+                               'Datacube Product to Drill',
+                               data_type='string')]
         outputs = [ComplexOutput('timeseries',
                                  'Timeseries Drill',
                                  supported_formats=[
@@ -32,8 +35,8 @@ class PixelDrill(Process):
             self._handler,
             identifier       = 'pixeldrill',
             version          = '0.1',
-            title            = 'WOfS Pixel Drill',
-            abstract         = 'Does WOfS Pixel Drill',
+            title            = 'Pixel Drill',
+            abstract         = 'Performs Pixel Drill',
             inputs           = inputs,
             outputs          = outputs,
             store_supported  = True,
@@ -43,6 +46,7 @@ class PixelDrill(Process):
         # Create geometry
         stream       = request.inputs['geometry'][0].stream
         request_json = json.loads(stream.readline())
+        product      = request.inputs['product'][0].data
 
         features_json = request_json['features']
         if len(features_json) > 1:
@@ -50,7 +54,15 @@ class PixelDrill(Process):
 
         geometry_json = features_json[0]['geometry']
 
-        d = _getData(geometry_json)
+        # test for CRS in geoJSON
+        # Terria may not set this, so we will assume EPSG:4326
+        # if nothing present even though geoJSON spec disallows assumption
+        crs = 'EPSG:4326'
+
+        if hasattr(request_json, 'crs'):
+            crs = request_json['crs']['properties']['name']
+
+        d = _getData(geometry_json, product, crs)
 
         if len(d.variables) == 0:
             output = []
@@ -71,17 +83,13 @@ class PixelDrill(Process):
         return response
 
 
-def _getData(shape):
-    product_name = 'LS8_OLI_WATER'
-    crs          = 'EPSG:4326'
-
+def _getData(shape, product, crs):
     dc = datacube.Datacube()
 
-    g = geometry.Geometry(shape, crs=datacube.utils.geometry.CRS('EPSG:4326'))
+    g = geometry.Geometry(shape, crs=datacube.utils.geometry.CRS(crs))
     query = {
         'geopolygon': g
     }
-    data = dc.load(product=product_name, **query)
+    data = dc.load(product=product, **query)
     return data
-
 
