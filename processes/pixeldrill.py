@@ -6,6 +6,8 @@ import json
 import datacube
 from datacube.utils import geometry
 
+import rasterio.features
+
 # From https://stackoverflow.com/a/16353080
 class DatetimeEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -13,6 +15,25 @@ class DatetimeEncoder(json.JSONEncoder):
             return super(DatetimeEncoder, obj).default(obj)
         except TypeError:
             return str(obj)
+
+def geometry_mask(geoms, geobox, all_touched=False, invert=False):
+    """
+    Create a mask from shapes.
+
+    By default, mask is intended for use as a
+    numpy mask, where pixels that overlap shapes are False.
+    :param list[Geometry] geoms: geometries to be rasterized
+    :param datacube.utils.GeoBox geobox:
+    :param bool all_touched: If True, all pixels touched by geometries will be burned in. If
+                             false, only pixels whose center is within the polygon or that
+                             are selected by Bresenham's line algorithm will be burned in.
+    :param bool invert: If True, mask will be True for pixels that overlap shapes.
+    """
+    return rasterio.features.geometry_mask([geom.to_crs(geobox.crs) for geom in geoms],
+                                           out_shape=geobox.shape,
+                                           transform=geobox.affine,
+                                           all_touched=all_touched,
+                                           invert=invert)
 
 
 class PixelDrill(Process):
@@ -23,7 +44,7 @@ class PixelDrill(Process):
                                                     Format('application/gml+xml')
                                                  ]),
                   LiteralInput('product',
-                               'Datacube Product to Drill',
+                               'Datacube product to drill',
                                data_type='string')]
         outputs = [ComplexOutput('timeseries',
                                  'Timeseries Drill',
@@ -85,11 +106,16 @@ class PixelDrill(Process):
 
 def _getData(shape, product, crs):
     dc = datacube.Datacube()
-
-    g = geometry.Geometry(shape, crs=datacube.utils.geometry.CRS(crs))
+    dc_crs = datacube.utils.geometry.CRS(crs)
+    g = geometry.Geometry(shape, crs=dc_crs)
     query = {
         'geopolygon': g
     }
     data = dc.load(product=product, **query)
+
+    # # mask if polygon
+    # mask = geometry_mask([g], data.geobox, invert=True)
+    # masked = data.where(mask)
+
     return data
 
