@@ -8,6 +8,9 @@ from datacube.utils import geometry
 
 import rasterio.features
 
+import csv
+import io
+
 # From https://stackoverflow.com/a/16353080
 class DatetimeEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -15,6 +18,16 @@ class DatetimeEncoder(json.JSONEncoder):
             return super(DatetimeEncoder, obj).default(obj)
         except TypeError:
             return str(obj)
+
+def result_to_csv(results):
+    with io.StringIO('') as csv_string:
+        writer = csv.writer(csv_string, lineterminator='\n')
+
+        writer.writerow(['date', 'water'])
+        writer.writerows(results)
+
+        return csv_string.getvalue()
+
 
 def geometry_mask(geoms, geobox, all_touched=False, invert=False):
     """
@@ -35,6 +48,8 @@ def geometry_mask(geoms, geobox, all_touched=False, invert=False):
                                            all_touched=all_touched,
                                            invert=invert)
 
+_csv_format = Format('application/vnd.terriajs.catalog-member+json',
+                                                           schema='https://tools.ietf.org/html/rfc7159')
 
 class PixelDrill(Process):
     def __init__(self):
@@ -49,8 +64,8 @@ class PixelDrill(Process):
         outputs = [ComplexOutput('timeseries',
                                  'Timeseries Drill',
                                  supported_formats=[
-                                                    Format('application/json')
-                                                ])]
+                                                        _csv_format
+                                                   ])]
 
         super(PixelDrill, self).__init__(
             self._handler,
@@ -95,12 +110,23 @@ class PixelDrill(Process):
 
             ar = squeezed.to_array()
 
-            output = list(zip(ar.values[0], ar.coords['time'].values))
+            output = list(zip(ar.coords['time'].values, ar.values[0]))
 
-        output_json = json.dumps(output, cls=DatetimeEncoder)
+        csv = result_to_csv(output)
 
-        response.outputs['timeseries'].output_format = Format('application/json', '.json', None)
-        response.outputs['timeseries'].data = output_json
+        output_dict = {
+            "data": csv,
+            "isEnabled": True,
+            "type": "csv",
+            "name": "WOfS",
+        }
+
+        output_json = json.dumps(output_dict, cls=DatetimeEncoder)
+
+        output_str = '<![CDATA[' + output_json + ']]>'
+
+        response.outputs['timeseries'].output_format = _csv_format
+        response.outputs['timeseries'].data = output_str
         return response
 
 
