@@ -47,6 +47,12 @@ for process in processes:
 service = Service(processes, ['pywps.cfg'])
 
 
+@app.after_request
+def apply_cors(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+    
+
 @app.route('/wps', methods=['GET', 'POST'])
 def wps():
 
