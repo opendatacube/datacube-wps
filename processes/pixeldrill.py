@@ -56,7 +56,7 @@ class PixelDrill(Process):
         inputs = [ComplexInput('geometry',
                                'Geometry',
                                supported_formats=[
-                                                    Format('application/gml+xml')
+                                                    Format('application/vnd.geo+json', schema='http://geojson.org/geojson-spec.html#point')
                                                  ]),
                   LiteralInput('product',
                                'Datacube product to drill',
