@@ -52,6 +52,21 @@ def apply_cors(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
     
+# Serving output files for async processing
+@app.route('/wps/outputs/'+'<filename>')
+def outputfile(filename):
+    targetfile = os.path.join('outputs', filename)
+    if os.path.isfile(targetfile):
+        file_ext = os.path.splitext(targetfile)[1]
+        with open(targetfile, mode='rb') as f:
+            file_bytes = f.read()
+        mime_type = None
+        if 'xml' in file_ext:
+            mime_type = 'text/xml'
+        return flask.Response(file_bytes, content_type=mime_type)
+    else:
+        flask.abort(404)
+
 
 @app.route('/wps', methods=['GET', 'POST'])
 def wps():
