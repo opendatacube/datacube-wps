@@ -49,7 +49,7 @@ def geometry_mask(geoms, geobox, all_touched=False, invert=False):
                                            invert=invert)
 
 _csv_format = Format('application/vnd.terriajs.catalog-member+json',
-                                                           schema='https://tools.ietf.org/html/rfc7159')
+                     schema='https://tools.ietf.org/html/rfc7159')
 
 class PixelDrill(Process):
     def __init__(self):
@@ -123,10 +123,11 @@ class PixelDrill(Process):
 
         output_json = json.dumps(output_dict, cls=DatetimeEncoder)
 
-        output_str = '<![CDATA[' + output_json + ']]>'
+        output_str = output_json
 
         response.outputs['timeseries'].output_format = _csv_format
         response.outputs['timeseries'].data = output_str
+
         return response
 
 
