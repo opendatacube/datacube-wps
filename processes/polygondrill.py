@@ -10,6 +10,8 @@ import rasterio.features
 
 import csv
 import io
+import boto3
+import xarray
 
 # From https://stackoverflow.com/a/16353080
 class DatetimeEncoder(json.JSONEncoder):
@@ -53,6 +55,7 @@ def _getData(shape, product, crs, time=None):
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
 def _processData(data, **kwargs):
+    data = data.mean(dim=('x','y'))
     return data
 
 class PolygonDrill(Process):
@@ -102,20 +105,23 @@ class PolygonDrill(Process):
         data = []
         for feature in features:
             geometry = feature['geometry']
-            crs = request_json['crs']['properties']['name']
+            crs = feature['crs']['properties']['name']
+            time = (request.inputs['start'][0].data,
+                    request.inputs['end'][0].data)
 
             # Can do custom loading of data here
             d = _getData(geometry,
                          product,
                          crs,
-                         (request.inputs['start'][0].data,
-                          request.inputs['end'][0].data))
+                         time)
+
             data.append(d)
 
         if len(data) == 0:
             csv = ""
         else:
-            csv = _processData(data).to_pandas().to_csv();
+            data = xarray.merge(data)
+            csv = _processData(data).to_dataframe().to_csv();
 
         output_dict = {
             "data": csv,
