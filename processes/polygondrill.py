@@ -102,14 +102,9 @@ class PolygonDrill(Process):
         data = []
         for feature in features:
             geometry = feature['geometry']
-            # test for CRS in geoJSON
-            # Terria may not set this, so we will assume EPSG:4326
-            # if nothing present even though geoJSON spec disallows assumption
-            crs = 'EPSG:4326' 
+            crs = request_json['crs']['properties']['name']
 
-            if hasattr(request_json, 'crs'):
-                crs = request_json['crs']['properties']['name']
-
+            # Can do custom loading of data here
             d = _getData(geometry,
                          product,
                          crs,
@@ -120,7 +115,6 @@ class PolygonDrill(Process):
         if len(data) == 0:
             csv = ""
         else:
-            # Perform operations on data here, return a CSV string
             csv = _processData(data).to_pandas().to_csv();
 
         output_dict = {
