@@ -26,14 +26,12 @@ import flask
 
 import pywps
 from pywps import Service, Process, BoundingBoxInput, LiteralOutput
-from processes.pixeldrill import PixelDrill
 from processes.polygondrill import PolygonDrill
 
 
 app = flask.Flask(__name__)
 
 processes = [
-    PixelDrill(),
     PolygonDrill()
 ]
 
