@@ -52,7 +52,7 @@ def _getData(shape, product, crs, time=None):
 def _processData(data, **kwargs):
     data = data.mean(dim=('x','y'))
     return data
-    
+
 
 class PolygonDrill(Process):
     def __init__(self):
@@ -80,8 +80,8 @@ class PolygonDrill(Process):
             self._handler,
             identifier       = 'polygondrill',
             version          = '0.1',
-            title            = 'Polygon Drill',
-            abstract         = 'Performs Polygon Drill',
+            title            = 'Fractional Cover',
+            abstract         = 'Performs Fractional Cover Polygon Drill',
             inputs           = inputs,
             outputs          = outputs,
             store_supported  = True,
@@ -113,9 +113,9 @@ class PolygonDrill(Process):
                 crs = feature['crs']['properties']['name']
             elif crs is None and not hasattr(feature, 'crs'):
                 # Terria doesn't provide the CRS for the polygon
-                # Must assume the crs even though geoJSON doesn't actually allow
-                # assumption
-                crs = 'EPSG:4326'
+                # Must assume the crs according to spec
+                # http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
+                crs = 'urn:ogc:def:crs:OGC:1.3:CRS84'
             # Can do custom loading of data here
             d = _getData(geometry,
                          product,
@@ -139,7 +139,7 @@ class PolygonDrill(Process):
             "data": csv,
             "isEnabled": True,
             "type": "csv",
-            "name": "PolygonDrill",
+            "name": "Fractional Cover",
         }
 
         output_json = json.dumps(output_dict, cls=DatetimeEncoder)
