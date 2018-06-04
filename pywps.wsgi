@@ -9,10 +9,22 @@ processes = [
     PolygonDrill()
 ]
 
+
+class WPS(object):
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, response):
+        def add_cors(status, headers, exc_info=None):
+            headers.append(("Access-Control-Allow-Origin", "*"))
+            return response(status, headers, exc_info)
+
+        return self.app(environ, add_cors)
+
 # Service accepts two parameters:
 # 1 - list of process instances
 # 2 - list of configuration files
-application = Service(
+application = WPS(Service(
     processes,
     ['pywps.cfg']
-)
+))

@@ -61,9 +61,6 @@ class PolygonDrill(Process):
                                supported_formats=[
                                                     Format('application/vnd.geo+json', schema='http://geojson.org/geojson-spec.html#polygon')
                                                  ]),
-                  LiteralInput('product',
-                               'Datacube product to drill',
-                               data_type='string'),
                   LiteralInput('start',
                                'Start Date',
                                data_type='date'),
@@ -91,7 +88,7 @@ class PolygonDrill(Process):
         # Create geometry
         stream       = request.inputs['geometry'][0].stream
         request_json = json.loads(stream.readline())
-        product      = request.inputs['product'][0].data
+        product      = 'ls8_fc_albers'
 
         time = (request.inputs['start'][0].data,
                 request.inputs['end'][0].data)
@@ -132,7 +129,12 @@ class PolygonDrill(Process):
             data.attrs['crs'] = crs_attr
             mask = geometry_mask([f['geometry'] for f in features], crs, data.geobox, invert=True)
             data = data.where(mask)
-            csv = _processData(data).to_dataframe().to_csv(date_format="%Y-%m-%d");
+            print(_processData(data).to_dataframe())
+            csv = _processData(data).to_dataframe().to_csv(header=['FC Bare Soil',
+                                                                   'FC Photosynthetic Vegetation',
+                                                                   'FC Non-Photosynthetic Vegetation',
+                                                                   'FC Unmixing Error'],
+                                                           date_format="%Y-%m-%d");
 
 
         output_dict = {
