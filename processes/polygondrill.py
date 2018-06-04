@@ -26,44 +26,40 @@ class DatetimeEncoder(json.JSONEncoder):
 _json_format = Format('application/vnd.terriajs.catalog-member+json',
                      schema='https://tools.ietf.org/html/rfc7159')
 
-def geometry_mask(geom, geobox, all_touched=False, invert=False):
-    return rasterio.features.geometry_mask(geom.to_crs(geobox.crs),
+def geometry_mask(geoms, src_crs, geobox, all_touched=False, invert=False):
+    gs = [geometry.Geometry(geom, crs=datacube.utils.geometry.CRS(src_crs)).to_crs(geobox.crs) for geom in geoms]
+    return rasterio.features.geometry_mask(gs,
                                            out_shape=geobox.shape,
                                            transform=geobox.affine,
                                            all_touched=all_touched,
                                            invert=invert)
 
 def _getData(shape, product, crs, time=None):
-    dc = datacube.Datacube()
-    dc_crs = datacube.utils.geometry.CRS(crs)
-    g = geometry.Geometry(shape, crs=dc_crs)
-    query = {
-        'geopolygon': g
-    }
-    if time is not None:
-        first, second = time;
-        time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
-        query['time'] = time
-
-    data = dc.load(product=product, **query)
-
-    if (g.type == 'Polygon'):
-        mask = geometry_mask(g, data.geobox, invert=True)
-        data = data.where(mask)
-
-    return data
+    with datacube.Datacube() as dc:
+        dc_crs = datacube.utils.geometry.CRS(crs)
+        g = geometry.Geometry(shape, crs=dc_crs)
+        query = {
+            'geopolygon': g
+        }
+        if time is not None:
+            first, second = time;
+            time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
+            query['time'] = time
+        data = dc.load(product=product, group_by='solar_day', **query)
+        return data
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
 def _processData(data, **kwargs):
     data = data.mean(dim=('x','y'))
     return data
+    
 
 class PolygonDrill(Process):
     def __init__(self):
         inputs = [ComplexInput('geometry',
                                'Geometry',
                                supported_formats=[
-                                                    Format('application/vnd.geo+json', schema='http://geojson.org/geojson-spec.html#point')
+                                                    Format('application/vnd.geo+json', schema='http://geojson.org/geojson-spec.html#polygon')
                                                  ]),
                   LiteralInput('product',
                                'Datacube product to drill',
@@ -97,6 +93,13 @@ class PolygonDrill(Process):
         request_json = json.loads(stream.readline())
         product      = request.inputs['product'][0].data
 
+        time = (request.inputs['start'][0].data,
+                request.inputs['end'][0].data)
+        crs = None
+
+        if hasattr(request_json, 'crs'):
+            crs = request_json['crs']['properties']['name']
+
         features = request_json['features']
         if len(features) < 1:
             # Can't drill if there is no geometry
@@ -105,10 +108,14 @@ class PolygonDrill(Process):
         data = []
         for feature in features:
             geometry = feature['geometry']
-            crs = feature['crs']['properties']['name']
-            time = (request.inputs['start'][0].data,
-                    request.inputs['end'][0].data)
 
+            if crs is None and hasattr(feature, 'crs'):
+                crs = feature['crs']['properties']['name']
+            elif crs is None and not hasattr(feature, 'crs'):
+                # Terria doesn't provide the CRS for the polygon
+                # Must assume the crs even though geoJSON doesn't actually allow
+                # assumption
+                crs = 'EPSG:4326'
             # Can do custom loading of data here
             d = _getData(geometry,
                          product,
@@ -120,8 +127,13 @@ class PolygonDrill(Process):
         if len(data) == 0:
             csv = ""
         else:
+            crs_attr = data[0].attrs['crs']
             data = xarray.merge(data)
-            csv = _processData(data).to_dataframe().to_csv();
+            data.attrs['crs'] = crs_attr
+            mask = geometry_mask([f['geometry'] for f in features], crs, data.geobox, invert=True)
+            data = data.where(mask)
+            csv = _processData(data).to_dataframe().to_csv(date_format="%Y-%m-%d");
+
 
         output_dict = {
             "data": csv,
