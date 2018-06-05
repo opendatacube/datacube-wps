@@ -154,7 +154,6 @@ class PolygonDrill(Process):
             data.attrs['crs'] = crs_attr
             mask = geometry_mask([f['geometry'] for f in features], crs, data.geobox, invert=True)
             data = data.where(mask)
-            print(_processData(data).to_dataframe())
             csv = _processData(data).to_dataframe().to_csv(header=['Bare Soil',
                                                                    'Photosynthetic Vegetation',
                                                                    'Non-Photosynthetic Vegetation',
