@@ -50,6 +50,7 @@ service = Service(processes, ['pywps.cfg'])
 @app.after_request
 def apply_cors(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Cache-Control'] = 'max-age=0'
     return response
     
 # Serving output files for async processing
@@ -68,7 +69,7 @@ def outputfile(filename):
         flask.abort(404)
 
 
-@app.route('/wps', methods=['GET', 'POST'])
+@app.route('/wps/', methods=['GET', 'POST'])
 def wps():
 
     return service

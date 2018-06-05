@@ -17,6 +17,9 @@ ADD . .
 WORKDIR src/pywps
 RUN pip3 install -e . --no-deps
 WORKDIR /code
-RUN ln -s ./pywps.wsgi ./pywps_app.py
 
-CMD gunicorn -b 0.0.0.0:8000 pywps_app:application
+COPY docker/wps-entrypoint.sh /usr/local/bin/wps-entrypoint.sh
+
+ENTRYPOINT ["wps-entrypoint.sh"]
+
+CMD gunicorn -b 0.0.0.0:8000 wps:app

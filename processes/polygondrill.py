@@ -54,6 +54,30 @@ def _processData(data, **kwargs):
     return data
 
 
+tableStyle = {
+    "columns": {
+        "FC Bare Soil": {
+            "units": "%",
+            "chartLineColor": "#9D1309",
+            "active": True
+        },
+        "FC Photosynthetic Vegetation": {
+            "units": "%",
+            "chartLineColor": "#385E0F",
+            "active": True
+        },
+        "FC Non-Photosynthetic Vegetation": {
+            "units": "%",
+            "chartLineColor": "#F4F776",
+            "active": True
+        },
+        "FC Unmixing Error": {
+            "chartLineColor": "#D0D2C4",
+            "active": False
+        }
+    }
+}
+
 class PolygonDrill(Process):
     def __init__(self):
         inputs = [ComplexInput('geometry',
@@ -143,6 +167,8 @@ class PolygonDrill(Process):
             "type": "csv",
             "name": "Fractional Cover",
         }
+
+
 
         output_json = json.dumps(output_dict, cls=DatetimeEncoder)
 
