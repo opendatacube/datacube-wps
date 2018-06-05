@@ -56,23 +56,24 @@ def _processData(data, **kwargs):
 
 tableStyle = {
     "columns": {
-        "FC Bare Soil": {
+        "Bare Soil": {
             "units": "%",
-            "chartLineColor": "#9D1309",
+            "chartLineColor": "#8B0000",
             "active": True
         },
-        "FC Photosynthetic Vegetation": {
+        "Photosynthetic Vegetation": {
             "units": "%",
-            "chartLineColor": "#385E0F",
+            "chartLineColor": "green",
             "active": True
         },
-        "FC Non-Photosynthetic Vegetation": {
+        "Non-Photosynthetic Vegetation": {
             "units": "%",
-            "chartLineColor": "#F4F776",
+            "chartLineColor": "#dac586",
             "active": True
         },
-        "FC Unmixing Error": {
-            "chartLineColor": "#D0D2C4",
+        "Unmixing Error": {
+            "units": "%",
+            "chartLineColor": "#6699CC",
             "active": False
         }
     }
@@ -154,10 +155,10 @@ class PolygonDrill(Process):
             mask = geometry_mask([f['geometry'] for f in features], crs, data.geobox, invert=True)
             data = data.where(mask)
             print(_processData(data).to_dataframe())
-            csv = _processData(data).to_dataframe().to_csv(header=['FC Bare Soil',
-                                                                   'FC Photosynthetic Vegetation',
-                                                                   'FC Non-Photosynthetic Vegetation',
-                                                                   'FC Unmixing Error'],
+            csv = _processData(data).to_dataframe().to_csv(header=['Bare Soil',
+                                                                   'Photosynthetic Vegetation',
+                                                                   'Non-Photosynthetic Vegetation',
+                                                                   'Unmixing Error'],
                                                            date_format="%Y-%m-%d");
 
 
@@ -165,7 +166,8 @@ class PolygonDrill(Process):
             "data": csv,
             "isEnabled": True,
             "type": "csv",
-            "name": "Fractional Cover",
+            "name": "FC",
+            "tableStyle": tableStyle
         }
 
 
