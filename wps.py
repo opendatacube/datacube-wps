@@ -26,13 +26,15 @@ import flask
 
 import pywps
 from pywps import Service, Process, BoundingBoxInput, LiteralOutput
-from processes.polygondrill import PolygonDrill
+from processes.fcdrill import FcDrill
+from processes.wofsdrill import WofsDrill
 
 
 app = flask.Flask(__name__)
 
 processes = [
-    PolygonDrill()
+    FcDrill(),
+    WofsDrill()
 ]
 
 # For the process list on the home page

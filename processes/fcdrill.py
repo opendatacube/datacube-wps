@@ -54,7 +54,7 @@ class FcDrill(GeometryDrill):
     def __init__(self):
         super(FcDrill, self).__init__(
             handler          = _processData,
-            identifier       = 'polygondrill',
+            identifier       = 'FractionalCoverDrill',
             version          = '0.1',
             title            = 'Fractional Cover',
             abstract         = 'Performs Fractional Cover Polygon Drill',

@@ -52,7 +52,7 @@ class WofsDrill(GeometryDrill):
     def __init__(self):
         super(WofsDrill, self).__init__(
             handler          = _processData,
-            identifier       = 'polygondrill',
+            identifier       = 'WOfSDrill',
             version          = '0.1',
             title            = 'WOfS',
             abstract         = 'Performs WOfS Polygon Drill',
