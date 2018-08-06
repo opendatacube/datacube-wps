@@ -56,7 +56,7 @@ def apply_cors(response):
     return response
     
 # Serving output files for async processing
-@app.route('/wps/outputs/'+'<filename>')
+@app.route('/outputs/'+'<filename>')
 def outputfile(filename):
     targetfile = os.path.join('outputs', filename)
     if os.path.isfile(targetfile):
@@ -71,7 +71,7 @@ def outputfile(filename):
         flask.abort(404)
 
 
-@app.route('/wps/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def wps():
 
     return service
