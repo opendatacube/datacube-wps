@@ -16,6 +16,7 @@ ADD . .
 
 WORKDIR /code/pywps
 RUN pip3 install -e . --no-deps
+WORKDIR /code/logs
 WORKDIR /code
 
 COPY docker/wps-entrypoint.sh /usr/local/bin/wps-entrypoint.sh
