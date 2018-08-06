@@ -10,11 +10,11 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /code
 
-RUN git clone https://github.com/roarmstrong/pywps src
+RUN git clone https://github.com/geopython/pywps
 
 ADD . .
 
-WORKDIR src/pywps
+WORKDIR /code/pywps
 RUN pip3 install -e . --no-deps
 WORKDIR /code
 
