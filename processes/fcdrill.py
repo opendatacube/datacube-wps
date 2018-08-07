@@ -15,7 +15,8 @@ from processes.geometrydrill import GeometryDrill
 
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
-def _processData(data, **kwargs):
+def _processData(datas, **kwargs):
+    data = datas[0]
     data = data.mean(dim=('x','y'))
     data = data.to_dataframe().to_csv(header=['Bare Soil',
                                               'Photosynthetic Vegetation',
@@ -61,7 +62,19 @@ class FcDrill(GeometryDrill):
             store_supported  = True,
             status_supported = True,
             geometry_type    = "polygon",
-            product_name     = "ls8_fc_albers",
-            table_style      = tableStyle)
+            products         = [
+                {
+                    "name": "ls8_fc_albers"
+                },
+                {
+                    "name": "wofs_albers",
+                    "additional_query": {
+                        "output_crs": 'EPSG:3577',
+                        "resolution": (-25, 25)
+                    }
+                }
+            ],
+            table_style      = tableStyle,
+            output_name      = "FC")
         
 

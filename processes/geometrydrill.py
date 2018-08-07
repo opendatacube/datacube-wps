@@ -34,7 +34,7 @@ def geometry_mask(geoms, src_crs, geobox, all_touched=False, invert=False):
                                            all_touched=all_touched,
                                            invert=invert)
 
-def _getData(shape, product, crs, time=None, extra_query=None):
+def _getData(shape, product, crs, time=None, extra_query={}):
     with datacube.Datacube() as dc:
         dc_crs = datacube.utils.geometry.CRS(crs)
         g = geometry.Geometry(shape, crs=dc_crs)
@@ -57,10 +57,9 @@ class GeometryDrill(Process):
 
     def __init__(self, handler, identifier, title, abstract='', profile=[], metadata=[],
                  version='None', store_supported=False, status_supported=False,
-                 product_name=None, output_name=None, geometry_type="polygon", table_style=None,
-                 query=None):
+                 products=[], output_name=None, geometry_type="polygon", table_style=None):
 
-        assert product_name is not None
+        assert len(products) > 0
         assert geometry_type in [ "polygon", "point" ]
         assert table_style is not None
         inputs = [ComplexInput('geometry',
@@ -80,11 +79,10 @@ class GeometryDrill(Process):
                                                         _json_format
                                                    ])]
 
-        self.product_name = product_name
+        self.products = products
         self.custom_handler = handler
         self.table_style = table_style
-        self.query = query
-        self.output_name = output_name if output_name is not None else product_name
+        self.output_name = output_name if output_name is not None else "default"
 
         super(GeometryDrill, self).__init__(
             handler          = self._handler,
@@ -101,7 +99,6 @@ class GeometryDrill(Process):
         # Create geometry
         stream       = request.inputs['geometry'][0].stream
         request_json = json.loads(stream.readline())
-        product      = self.product_name
 
         time = (request.inputs['start'][0].data,
                 request.inputs['end'][0].data)
@@ -127,22 +124,27 @@ class GeometryDrill(Process):
                 # http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
                 crs = 'urn:ogc:def:crs:OGC:1.3:CRS84'
             # Can do custom loading of data here
-            d = _getData(geometry,
-                         product,
-                         crs,
-                         time,
-                         self.query)
-            data.append(d)
+            for p in self.products:
+              product = p['name']
+              query = p.get('additional_query', {})
+              d = _getData(geometry,
+                           product,
+                           crs,
+                           time,
+                           query)
+              if (len(d) > 0):
+                data.append(d)
 
         if len(data) == 0:
             csv = ""
         else:
-            crs_attr = data[0].attrs['crs']
-            data = xarray.merge(data)
-            data.attrs['crs'] = crs_attr
-            mask = geometry_mask([f['geometry'] for f in features], crs, data.geobox, invert=True)
-            data = data.where(mask)
-            csv = self.custom_handler(data)
+            masked = []
+            for d in data:
+              print(data)
+              mask = geometry_mask([f['geometry'] for f in features], crs, d.geobox, invert=True)
+              d_masked = d.where(mask)
+              masked.append(d_masked)
+            csv = self.custom_handler(masked)
 
         output_dict = {
             "data": csv,

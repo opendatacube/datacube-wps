@@ -1,7 +1,10 @@
 FROM opendatacube/datacube-core:latest
 
+RUN pip3 install -e git+https://github.com/roarmstrong/pywps.git@develop#egg=pywps \
+    && rm -rf $HOME/.cache/pip
+
 RUN pip3 install \
-    flask scikit-image gunicorn \
+    flask scikit-image gunicorn rasterio==1.0.2 \
     && rm -rf $HOME/.cache/pip
 
 RUN apt-get update && apt-get install -y \
@@ -10,12 +13,8 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /code
 
-RUN git clone https://github.com/geopython/pywps
-
 ADD . .
 
-WORKDIR /code/pywps
-RUN pip3 install -e . --no-deps
 WORKDIR /code/logs
 WORKDIR /code
 

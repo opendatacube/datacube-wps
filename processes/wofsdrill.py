@@ -15,16 +15,15 @@ from processes.geometrydrill import GeometryDrill
 
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
-def _processData(data, **kwargs):
+def _processData(datas, **kwargs):
+    data = datas[0]
     wet = data.where( data == 128 or data == 132 ).count(['x', 'y']).rename(name_dict={'water': 'wet'})
     dry = data.where( data == 0 or data == 4 ).count(['x', 'y']).rename(name_dict={'water': 'dry'})
     notobservable = data.where( data != 0 or data != 4 or data != 128 or data != 132).count(['x', 'y']).rename(name_dict={ "water": 'notobservable'})
-    print(wet)
-    print(dry)
-    print(notobservable)
+
     final = xarray.merge([wet, dry, notobservable])
     final = final.to_dataframe().to_csv(header=['Wet', 'Dry', 'Not Observable'],
-                                      date_format="%Y-%m-%d");
+                                        date_format="%Y-%m-%d");
     return final
 
 
@@ -59,12 +58,14 @@ class WofsDrill(GeometryDrill):
             store_supported  = True,
             status_supported = True,
             geometry_type    = "polygon",
-            product_name     = "wofs_albers",
+            products         = [{
+                "name": "wofs_albers",
+                "additional_query": {
+                    "output_crs": 'EPSG:3577',
+                    "resolution": (-25, 25)
+                }
+            }],
             output_name      = "WOfS",
-            table_style      = tableStyle,
-            query            = {
-                "output_crs": 'EPSG:3577',
-                "resolution": (-25, 25)
-            })
+            table_style      = tableStyle)
         
 

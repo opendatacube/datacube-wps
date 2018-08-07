@@ -58,7 +58,8 @@ def apply_cors(response):
 # Serving output files for async processing
 @app.route('/outputs/'+'<filename>')
 def outputfile(filename):
-    targetfile = os.path.join('outputs', filename)
+    output_dir = pywps.configuration.get_config_value("server", "outputpath")
+    targetfile = os.path.join(output_dir, filename)
     if os.path.isfile(targetfile):
         file_ext = os.path.splitext(targetfile)[1]
         with open(targetfile, mode='rb') as f:
