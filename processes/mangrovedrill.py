@@ -17,11 +17,11 @@ from processes.geometrydrill import GeometryDrill
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
 def _processData(datas, **kwargs):
     data = datas[0]
-    woodland = data.where( data == 1 ).count(['x', 'y']).rename(name_dict={'canopy_cover_class': 'woodland'})
-    open_forest = data.where( data == 2).count(['x', 'y']).rename(name_dict={'canopy_cover_class': 'open_forest'})
-    closed_forest = data.where( data == 3).count(['x', 'y']).rename(name_dict={ "canopy_cover_class": 'closed_forest'})
+    woodland = data.where( data == 1 ).count(['x', 'y']).drop('extent').rename(name_dict={'canopy_cover_class': 'woodland'})
+    open_forest = data.where( data == 2).count(['x', 'y']).drop('extent').rename(name_dict={'canopy_cover_class': 'open_forest'})
+    closed_forest = data.where( data == 3).count(['x', 'y']).drop('extent').rename(name_dict={ "canopy_cover_class": 'closed_forest'})
 
-    final = xarray.merge([wet, dry, notobservable])
+    final = xarray.merge([woodland, open_forest, closed_forest])
     final = final.to_dataframe().to_csv(header=['Woodland', 'Open Forest', 'Closed Forest'],
                                         date_format="%Y-%m-%d");
     return final
