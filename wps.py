@@ -28,13 +28,15 @@ import pywps
 from pywps import Service, Process, BoundingBoxInput, LiteralOutput
 from processes.fcdrill import FcDrill
 from processes.wofsdrill import WofsDrill
+from processes.mangrovedrill import MangroveDrill
 
 
 app = flask.Flask(__name__)
 
 processes = [
     FcDrill(),
-    WofsDrill()
+    WofsDrill(),
+    MangroveDrill()
 ]
 
 # For the process list on the home page

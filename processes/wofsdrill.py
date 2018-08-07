@@ -31,17 +31,17 @@ tableStyle = {
     "columns": {
         "Wet": {
             "units": "#",
-            "chartLineColor": "blue",
+            "chartLineColor": "#4F81BD",
             "active": True
         },
         "Dry": {
             "units": "#",
-            "chartLineColor": "red",
+            "chartLineColor": "#D99694",
             "active": True
         },
         "Not Observable": {
             "units": "#",
-            "chartLineColor": "grey",
+            "chartLineColor": "#707070",
             "active": True
         }
     }
