@@ -4,6 +4,7 @@ import json
 
 import datacube
 from datacube.utils import geometry
+from datacube.storage.masking import make_mask
 
 import rasterio.features
 
@@ -16,7 +17,34 @@ from processes.geometrydrill import GeometryDrill
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
 def _processData(datas, **kwargs):
+    dc = datacube.Datacube()
+    wofs_product = dc.index.products.get_by_name("wofs_albers")
+
+    wofs_mask_flags = [
+        {
+            "flags": {
+                'dry': True
+            },
+        },
+        {
+            "flags": {
+                "terrain_or_low_angle": False,
+                "high_slope": False,
+                "cloud_shadow": False,
+                "cloud": False,
+                "sea": False
+            }
+        },
+    ]
+
     data = datas[0]
+    mask_data = datas[1].astype('uint8')
+    mask_data.attrs["flags_definition"] = wofs_product.measurements['water']['flags_definition']
+    for m in wofs_mask_flags:
+        mask = make_mask(mask_data, **m['flags'])
+        data = data.where(mask['water'])
+
+    data = data.dropna('time', how='all')
     data = data.mean(dim=('x','y'))
     data = data.to_dataframe().to_csv(header=['Bare Soil',
                                               'Photosynthetic Vegetation',

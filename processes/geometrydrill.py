@@ -140,7 +140,6 @@ class GeometryDrill(Process):
         else:
             masked = []
             for d in data:
-              print(data)
               mask = geometry_mask([f['geometry'] for f in features], crs, d.geobox, invert=True)
               d_masked = d.where(mask)
               masked.append(d_masked)
