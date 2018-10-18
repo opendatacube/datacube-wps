@@ -34,7 +34,6 @@ from processes.mangrovedrill import MangroveDrill
 app = flask.Flask(__name__)
 
 processes = [
-    FcDrill(),
     WofsDrill(),
     MangroveDrill()
 ]

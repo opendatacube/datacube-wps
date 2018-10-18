@@ -2,3 +2,8 @@ logs
 src/
 outputs
 __pycache__
+.idea
+build
+.DS_Store
+*.egg-info/
+dist/

@@ -45,23 +45,38 @@ def _getData(shape, product, crs, time=None, extra_query={}):
             first, second = time;
             time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
             query['time'] = time
+        print("loading data!", query)
         data = dc.load(product=product, group_by='solar_day', **query, **extra_query)
+        print("data load done!")
         return data
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
 def _processData(data, **kwargs):
     data = data.mean(dim=('x','y'))
+
+    output_json = json.dumps(output_obj, cls=DatetimeEncoder)
+
+    output_str = output_json
+
+    response.outputs['timeseries'].output_format = _json_format
+    response.outputs['timeseries'].data = output_str
+
     return data
+
+
+# Product output JSON
+def _createOutputJson(data, **kwargs):
+  pass
 
 class GeometryDrill(Process):
 
     def __init__(self, handler, identifier, title, abstract='', profile=[], metadata=[],
                  version='None', store_supported=False, status_supported=False,
-                 products=[], output_name=None, geometry_type="polygon", table_style=None):
+                 products=[], output_name=None, geometry_type="polygon",
+                 custom_outputs=None):
 
         assert len(products) > 0
         assert geometry_type in [ "polygon", "point" ]
-        assert table_style is not None
         inputs = [ComplexInput('geometry',
                                'Geometry',
                                supported_formats=[
@@ -73,16 +88,20 @@ class GeometryDrill(Process):
                   LiteralInput('end',
                                'End date',
                                data_type='date')]
-        outputs = [ComplexOutput('timeseries',
-                                 'Timeseries Drill',
-                                 supported_formats=[
-                                                        _json_format
-                                                   ])]
+        if custom_outputs is None:
+          outputs = [ComplexOutput('timeseries',
+                                   'Timeseries Drill',
+                                   supported_formats=[
+                                                          _json_format
+                                                     ])]
+        else:
+          outputs = custom_outputs
 
         self.products = products
         self.custom_handler = handler
-        self.table_style = table_style
         self.output_name = output_name if output_name is not None else "default"
+        self.geometry_type = geometry_type
+        self.custom_outputs = custom_outputs
 
         super(GeometryDrill, self).__init__(
             handler          = self._handler,
@@ -135,30 +154,33 @@ class GeometryDrill(Process):
               if (len(d) > 0):
                 data.append(d)
 
-        if len(data) == 0:
-            csv = ""
-        else:
+        masked = []
+        if self.geometry_type == 'point':
+          masked = data
+        elif len(data) != 0:
             masked = []
             for d in data:
               mask = geometry_mask([f['geometry'] for f in features], crs, d.geobox, invert=True)
-              d_masked = d.where(mask)
-              masked.append(d_masked)
-            csv = self.custom_handler(masked)
+              for band in d.data_vars:
+                try:
+                    d[band] = d[band].where(mask, other=d[band].attrs['nodata'])
+                except AttributeError:
+                    d[band] = d[band].where(mask)
+              masked.append(d)
 
-        output_dict = {
-            "data": csv,
-            "isEnabled": True,
-            "type": "csv",
-            "name": self.output_name,
-            "tableStyle": self.table_style
-        }
-
-        output_json = json.dumps(output_dict, cls=DatetimeEncoder)
-
-        output_str = output_json
-
-        response.outputs['timeseries'].output_format = _json_format
-        response.outputs['timeseries'].data = output_str
+        # custom handler should output dict
+        # {
+        #    'outputident': {
+        #      'output_format': format,
+        #      'data': data
+        #    }
+        # }
+        outputs = self.custom_handler(masked, process_id=self.uuid)
+        print(outputs)
+        for ident, output_value in outputs.items():
+          response.outputs[ident].data = output_value['data']
+          if 'output_format' in output_value:
+            response.outputs[ident].output_format = output_value['output_format']
 
         return response
 

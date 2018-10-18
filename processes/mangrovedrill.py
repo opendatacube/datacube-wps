@@ -11,21 +11,7 @@ import csv
 import io
 import boto3
 import xarray
-from processes.geometrydrill import GeometryDrill
-
-
-# Data is a list of Datasets (returned from dc.load and masked if polygons)
-def _processData(datas, **kwargs):
-    data = datas[0]
-    woodland = data.where( data == 1 ).count(['x', 'y']).drop('extent').rename(name_dict={'canopy_cover_class': 'woodland'})
-    open_forest = data.where( data == 2).count(['x', 'y']).drop('extent').rename(name_dict={'canopy_cover_class': 'open_forest'})
-    closed_forest = data.where( data == 3).count(['x', 'y']).drop('extent').rename(name_dict={ "canopy_cover_class": 'closed_forest'})
-
-    final = xarray.merge([woodland, open_forest, closed_forest])
-    final = final.to_dataframe().to_csv(header=['Woodland', 'Open Forest', 'Closed Forest'],
-                                        date_format="%Y-%m-%d");
-    return final
-
+from processes.geometrydrill import GeometryDrill, _json_format, DatetimeEncoder
 
 tableStyle = {
     "columns": {
@@ -47,6 +33,35 @@ tableStyle = {
     }
 }
 
+# Data is a list of Datasets (returned from dc.load and masked if polygons)
+def _processData(datas, **kwargs):
+    data = datas[0]
+    woodland = data.where( data == 1 ).count(['x', 'y']).drop('extent').rename(name_dict={'canopy_cover_class': 'woodland'})
+    open_forest = data.where( data == 2).count(['x', 'y']).drop('extent').rename(name_dict={'canopy_cover_class': 'open_forest'})
+    closed_forest = data.where( data == 3).count(['x', 'y']).drop('extent').rename(name_dict={ "canopy_cover_class": 'closed_forest'})
+
+    final = xarray.merge([woodland, open_forest, closed_forest])
+    final = final.to_dataframe().to_csv(header=['Woodland', 'Open Forest', 'Closed Forest'],
+                                        date_format="%Y-%m-%d");
+
+    output_dict = {
+        "data": final,
+        "isEnabled": True,
+        "type": "csv",
+        "name": "Mangrove Cover",
+        "tableStyle": tableStyle
+    }
+
+    output_json = json.dumps(output_dict, cls=DatetimeEncoder)
+
+    return {
+        'timeseries': {
+            'output_format': _json_format,
+            'data': output_json
+        }
+    }
+
+
 class MangroveDrill(GeometryDrill):
     def __init__(self):
         super(MangroveDrill, self).__init__(
@@ -60,8 +75,6 @@ class MangroveDrill(GeometryDrill):
             geometry_type    = "polygon",
             products     = [{
                     "name": "mangrove_cover"
-                }],
-            table_style      = tableStyle,
-            output_name      = "Mangrove Cover")
+                }])
         
 
