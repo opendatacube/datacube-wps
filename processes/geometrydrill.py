@@ -10,8 +10,38 @@ import rasterio.features
 
 import csv
 import io
-import boto3
 import xarray
+
+import boto3
+import botocore
+from botocore.client import Config
+import pywps.configuration as config
+
+
+def _uploadToS3(filename, data, mimetype):
+    session = boto3.Session(profile_name='dev')
+    bucket = config.get_config_value('s3', 'bucket')
+    s3 = session.client('s3')
+    s3.upload_fileobj(
+        data,
+        bucket,
+        filename,
+        ExtraArgs={
+            'ACL':'public-read',
+            'ContentType': mimetype
+        }
+    )
+    # Create unsigned s3 client for determining public s3 url
+    s3 = session.client('s3', config=Config(signature_version=botocore.UNSIGNED))
+    url = s3.generate_presigned_url(
+        ClientMethod='get_object',
+        ExpiresIn=0,
+        Params={
+            'Bucket': bucket,
+            'Key': filename
+        }
+    )
+    return url
 
 # From https://stackoverflow.com/a/16353080
 class DatetimeEncoder(json.JSONEncoder):
@@ -24,7 +54,8 @@ class DatetimeEncoder(json.JSONEncoder):
 # Defines the format for the returned object
 # in this case a JSON object containing a CSV
 _json_format = Format('application/vnd.terriajs.catalog-member+json',
-                     schema='https://tools.ietf.org/html/rfc7159')
+                     schema='https://tools.ietf.org/html/rfc7159',
+                     encoding="utf-8")
 
 def geometry_mask(geoms, src_crs, geobox, all_touched=False, invert=False):
     gs = [geometry.Geometry(geom, crs=datacube.utils.geometry.CRS(src_crs)).to_crs(geobox.crs) for geom in geoms]
@@ -58,7 +89,7 @@ def _processData(data, **kwargs):
 
     output_str = output_json
 
-    response.outputs['timeseries'].output_format = _json_format
+    response.outputs['timeseries'].output_format = str(_json_format)
     response.outputs['timeseries'].data = output_str
 
     return data
@@ -73,7 +104,7 @@ class GeometryDrill(Process):
     def __init__(self, handler, identifier, title, abstract='', profile=[], metadata=[],
                  version='None', store_supported=False, status_supported=False,
                  products=[], output_name=None, geometry_type="polygon",
-                 custom_outputs=None):
+                 custom_outputs=None, custom_data_loader=None):
 
         assert len(products) > 0
         assert geometry_type in [ "polygon", "point" ]
@@ -93,7 +124,8 @@ class GeometryDrill(Process):
                                    'Timeseries Drill',
                                    supported_formats=[
                                                           _json_format
-                                                     ])]
+                                                     ],
+                                   as_reference=False)]
         else:
           outputs = custom_outputs
 
@@ -102,6 +134,7 @@ class GeometryDrill(Process):
         self.output_name = output_name if output_name is not None else "default"
         self.geometry_type = geometry_type
         self.custom_outputs = custom_outputs
+        self.data_loader = _getData if custom_data_loader is None else custom_data_loader
 
         super(GeometryDrill, self).__init__(
             handler          = self._handler,
@@ -146,11 +179,12 @@ class GeometryDrill(Process):
             for p in self.products:
               product = p['name']
               query = p.get('additional_query', {})
-              d = _getData(geometry,
-                           product,
-                           crs,
-                           time,
-                           query)
+              d = self.data_loader(
+                geometry,
+                product,
+                crs,
+                time,
+                query)
               if (len(d) > 0):
                 data.append(d)
 
@@ -168,19 +202,14 @@ class GeometryDrill(Process):
                     d[band] = d[band].where(mask)
               masked.append(d)
 
-        # custom handler should output dict
-        # {
-        #    'outputident': {
-        #      'output_format': format,
-        #      'data': data
-        #    }
-        # }
-        outputs = self.custom_handler(masked, process_id=self.uuid)
-        print(outputs)
-        for ident, output_value in outputs.items():
-          response.outputs[ident].data = output_value['data']
-          if 'output_format' in output_value:
-            response.outputs[ident].output_format = output_value['output_format']
 
+        outputs = self.custom_handler(masked, process_id=self.uuid)
+        for ident, output_value in outputs.items():
+          if "data" in output_value:
+            response.outputs[ident].data = output_value['data']
+          if "output_format" in output_value:
+            response.outputs[ident].output_format = output_value['output_format']
+          if "url" in output_value:
+            response.outputs[ident].url = output_value['url']
         return response
 

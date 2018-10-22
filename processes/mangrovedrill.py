@@ -12,6 +12,7 @@ import io
 import boto3
 import xarray
 from processes.geometrydrill import GeometryDrill, _json_format, DatetimeEncoder
+from pywps.inout.formats import FORMATS
 
 tableStyle = {
     "columns": {
@@ -54,12 +55,14 @@ def _processData(datas, **kwargs):
 
     output_json = json.dumps(output_dict, cls=DatetimeEncoder)
 
-    return {
-        'timeseries': {
-            'output_format': _json_format,
-            'data': output_json
+    output = {
+        "timeseries": {
+            "output_format": FORMATS.JSON,
+            "data": output_json
         }
     }
+
+    return output
 
 
 class MangroveDrill(GeometryDrill):

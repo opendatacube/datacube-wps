@@ -3,41 +3,17 @@ import json
 import numpy as np
 import io
 
-import boto3
-import botocore
-from botocore.client import Config
 import datacube
 import altair
 
-from processes.geometrydrill import GeometryDrill
+from processes.geometrydrill import GeometryDrill, _uploadToS3
 from pywps import LiteralOutput
 
-import pywps.configuration as config
+from datacube.storage.storage import measurement_paths
+from dea.io.pdrill import PixelDrill
+from dea.aws.rioworkerpool import RioWorkerPool
 
-def _uploadToS3(filename, data, mimetype):
-    session = boto3.Session()
-    bucket = config.get_config_value('s3', 'bucket')
-    s3 = session.client('s3')
-    s3.upload_fileobj(
-        data,
-        bucket,
-        filename,
-        ExtraArgs={
-            'ACL':'public-read',
-            'ContentType': mimetype
-        }
-    )
-    # Create unsigned s3 client for determining public s3 url
-    s3 = session.client('s3', config=Config(signature_version=botocore.UNSIGNED))
-    url = s3.generate_presigned_url(
-        ClientMethod='get_object',
-        ExpiresIn=0,
-        Params={
-            'Bucket': bucket,
-            'Key': filename
-        }
-    )
-    return url
+nthreads = 32
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
 # Must handle empty data case too
