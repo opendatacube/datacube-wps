@@ -99,6 +99,11 @@ def _processData(data, **kwargs):
 def _createOutputJson(data, **kwargs):
   pass
 
+# GeometryDrill is the base class providing Datacube WPS functionality.
+# It is a pywps Process class that has been extended to provide additional
+# functionality specific to Datacube.
+# In order to create a custom drill, GeometryDrill can be subclassed or
+# passed arguments on construction to modify it's behavior.
 class GeometryDrill(Process):
 
     def __init__(self, handler, identifier, title, abstract='', profile=[], metadata=[],
