@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 set -e
 
-if [ "$WPS_CONFIG_URL" ]
+set -e
+
+if [ -e "$WPS_CONFIG_PATH" ]
 then
-    A=$$; ( wget -q "$WPS_CONFIG_URL" -O $A.d && mv $A.d /code/pywps.cfg ) || (rm $A.d; echo "Failed to download WMS config file")
+    cp "$WPS_CONFIG_PATH" /code/pywps.cfg
+elif [ "$WPS_CONFIG_URL" ]
+then
+    A=$$; wget -q "$WPS_CONFIG_URL" -O $A.d && mv $A.d /code/pywps.cfg
 fi
 
 docker-entrypoint.sh "$@"

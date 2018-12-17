@@ -1,0 +1,6 @@
+automat >= 0.3.0
+git+https://github.com/geopython/pywps.git@1d23e09da0ec1f43bee2a62cce078f5a957d26fe
+flask
+scikit-image
+gunicorn
+rasterio >= 1.0.2
