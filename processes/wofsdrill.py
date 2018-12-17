@@ -2,6 +2,7 @@ import pywps
 import json
 import numpy as np
 import io
+from xarray import DataArray, Dataset
 
 import datacube
 import altair
@@ -10,24 +11,65 @@ from processes.geometrydrill import GeometryDrill, _uploadToS3
 from pywps import LiteralOutput
 
 from datacube.storage.storage import measurement_paths
+from datacube.api.query import query_group_by
+from datacube.drivers import new_datasource
+from datacube.utils import geometry
 from dea.io.pdrill import PixelDrill
-from dea.aws.rioworkerpool import RioWorkerPool
 
-nthreads = 32
 
-# Data is a list of Datasets (returned from dc.load and masked if polygons)
-# Must handle empty data case too
+
+def _getData(shape, product, crs, time=None, extra_query={}):
+    with datacube.Datacube() as dc:
+        dc_crs = datacube.utils.geometry.CRS(crs)
+        g = geometry.Geometry(shape, crs=dc_crs)
+        query = {
+            'geopolygon': g
+        }
+        if time is not None:
+            first, second = time;
+            time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
+            query['time'] = time
+        print("finding data!", query)
+        ds = dc.find_datasets(product=product, group_by="solar_day", **query, **extra_query)
+        dss = dc.group_datasets(ds, query_group_by(group_by="solar_day"))
+
+        product = dc.index.products.get_by_name(product)
+
+        lonlat = geometry.Geometry(shape, crs='EPSG:4326').coords[0]
+        measurement = product.measurements['water'].copy()
+        driller = PixelDrill(16)
+        datasources = []
+        for ds in dss.values:
+            for d in ds:
+                datasources.append(new_datasource(d, measurement['name']))
+        datasources = sorted(datasources, key=lambda x: x._dataset.center_time)
+        times = [x._dataset.center_time for x in datasources]
+        files = [s.filename for s in datasources]
+
+        results = [[driller.read(urls=files, lonlat=lonlat)]]
+        array = DataArray(
+            results,
+            dims=('longitude', 'latitude', 'time'),
+            coords={'longitude': np.full(1, lonlat[0]), 'latitude': np.full(1, lonlat[1]), 'time': times})
+
+        return array
+
+
 def _processData(datas, **kwargs):
+
     flag_lut = {'dry': 'dry', 'sea': 'wet', 'wet': 'wet', 'cloud': 'not observable', 'high_slope': 'not observable', 'cloud_shadow': 'not observable', 'noncontiguous': 'not observable', 'terrain_or_low_angle': 'not observable', 'nodata': 'not observable'}
+    with datacube.Datacube() as dc:
+        product = dc.index.products.get_by_name('wofs_albers')
     def get_flags(val):
-        flag_dict = datacube.storage.masking.mask_to_dict(data['water'].flags_definition, val)
+        flag_dict = datacube.storage.masking.mask_to_dict(product.measurements['water'].flags_definition, val)
         flags = filter(flag_dict.get, flag_dict)
         flags_converted = [flag_lut[f] for f in flags]
         return flags_converted[0] if 'not observable' not in flags_converted else 'not observable'
     gf = np.vectorize(get_flags)
-
-    data = datas[0]
-    data['flags'] = data['water'].copy(deep=True)
+    
+    data = Dataset()
+    data['flags'] = datas[0]
+    print(data)
     data['flags'].values = gf(data['flags'].values)
 
     df = data.to_dataframe()
@@ -108,6 +150,8 @@ class WofsDrill(GeometryDrill):
             custom_outputs=[
                 LiteralOutput("image", "Pixel Drill Graph"),
                 LiteralOutput("url", "Pixel Drill Chart")
-            ])
+            ],
+            custom_data_loader=_getData,
+            mask=False)
         
 

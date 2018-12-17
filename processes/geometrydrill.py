@@ -109,7 +109,7 @@ class GeometryDrill(Process):
     def __init__(self, handler, identifier, title, abstract='', profile=[], metadata=[],
                  version='None', store_supported=False, status_supported=False,
                  products=[], output_name=None, geometry_type="polygon",
-                 custom_outputs=None, custom_data_loader=None):
+                 custom_outputs=None, custom_data_loader=None, mask=True):
 
         assert len(products) > 0
         assert geometry_type in [ "polygon", "point" ]
@@ -140,6 +140,7 @@ class GeometryDrill(Process):
         self.geometry_type = geometry_type
         self.custom_outputs = custom_outputs
         self.data_loader = _getData if custom_data_loader is None else custom_data_loader
+        self.do_mask = mask
 
         super(GeometryDrill, self).__init__(
             handler          = self._handler,
@@ -194,7 +195,7 @@ class GeometryDrill(Process):
                 data.append(d)
 
         masked = []
-        if self.geometry_type == 'point':
+        if self.geometry_type == 'point' or not self.do_mask:
           masked = data
         elif len(data) != 0:
             masked = []
