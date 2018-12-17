@@ -20,7 +20,7 @@ jobs:
         - export WPS_TAG=$(git describe --tags | awk -F'[-.]' '{if ($4!="" && $5!="") print $1"."$2"."$3+1"-unstable."$4"."$5; else print $1"."$2"."$3;}')
         - docker build -t opendatacube/wps:$WPS_TAG -t opendatacube/wps:latest .
         # ens4 is specific to Travis Xenial should be changed if moving to another OS / CI provider
-        - "wget https://github.com/arminc/clair-scanner/releases/download/v8/clair-scanner_linux_amd64 && chmod +x clair-scanner_linux_amd64 && ./clair-scanner_linux_amd64 --threshold='High' --report='clair-scan.json' --ip $(ifconfig ens4 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}') --reportAll=false opendatacube/wms:latest"
+        - "wget https://github.com/arminc/clair-scanner/releases/download/v8/clair-scanner_linux_amd64 && chmod +x clair-scanner_linux_amd64 && ./clair-scanner_linux_amd64 --threshold='High' --report='clair-scan.json' --ip $(ifconfig ens4 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}') --reportAll=false opendatacube/wps:latest"
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         - docker push opendatacube/wps:$WPS_TAG
         - docker push opendatacube/wps:latest
