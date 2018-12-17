@@ -19,7 +19,7 @@ import pywps.configuration as config
 
 
 def _uploadToS3(filename, data, mimetype):
-    session = boto3.Session(profile_name='dev')
+    session = boto3.Session()
     bucket = config.get_config_value('s3', 'bucket')
     s3 = session.client('s3')
     s3.upload_fileobj(
