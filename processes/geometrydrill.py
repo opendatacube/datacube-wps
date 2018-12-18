@@ -17,6 +17,7 @@ import botocore
 from botocore.client import Config
 import pywps.configuration as config
 
+from dateutil.parser import parse
 
 def _uploadToS3(filename, data, mimetype):
     session = boto3.Session()
@@ -99,6 +100,9 @@ def _processData(data, **kwargs):
 def _createOutputJson(data, **kwargs):
   pass
 
+def _datetimeExtractor(data):
+  return parse(json.loads(data)["properties"]["timestamp"]["date-time"])
+
 # GeometryDrill is the base class providing Datacube WPS functionality.
 # It is a pywps Process class that has been extended to provide additional
 # functionality specific to Datacube.
@@ -118,12 +122,16 @@ class GeometryDrill(Process):
                                supported_formats=[
                                                     Format('application/vnd.geo+json', schema='http://geojson.org/geojson-spec.html#' + geometry_type)
                                                  ]),
-                  LiteralInput('start',
+                  ComplexInput('start',
                                'Start Date',
-                               data_type='date'),
-                  LiteralInput('end',
+                               supported_formats=[
+                                                    Format('application/vnd.geo+json', schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
+                                                 ]),
+                  ComplexInput('end',
                                'End date',
-                               data_type='date')]
+                               supported_formats=[
+                                                    Format('application/vnd.geo+json', schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
+                                                 ])]
         if custom_outputs is None:
           outputs = [ComplexOutput('timeseries',
                                    'Timeseries Drill',
@@ -157,9 +165,8 @@ class GeometryDrill(Process):
         # Create geometry
         stream       = request.inputs['geometry'][0].stream
         request_json = json.loads(stream.readline())
-
-        time = (request.inputs['start'][0].data,
-                request.inputs['end'][0].data)
+        time = (_datetimeExtractor(request.inputs['start'][0].data),
+                _datetimeExtractor(request.inputs['end'][0].data))
         crs = None
 
         if hasattr(request_json, 'crs'):
