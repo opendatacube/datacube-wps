@@ -47,7 +47,6 @@ def _getData(shape, product, crs, time=None, extra_query={}):
         times = [x._dataset.center_time for x in datasources]
         files = [s.filename for s in datasources]
 
-        print(lonlat)
         results = [[driller.read(urls=files, lonlat=lonlat)]]
         array = DataArray(
             results,
@@ -57,10 +56,7 @@ def _getData(shape, product, crs, time=None, extra_query={}):
         return array
 
 
-def _processData(datas, **kwargs):
-
-    flag_lut = {'dry': 'dry', 'sea': 'wet', 'wet': 'wet', 'cloud': 'not observable', 'high_slope': 'not observable', 'cloud_shadow': 'not observable', 'noncontiguous': 'not observable', 'terrain_or_low_angle': 'not observable', 'nodata': 'not observable'}
-    
+def _processData(datas, **kwargs):    
     rules = [
         {
             'op': any,
