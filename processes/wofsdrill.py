@@ -101,7 +101,12 @@ def _processData(datas, **kwargs):
                     x=altair.X('time:T'),
                     y=altair.Y('observation:nominal', scale=yscale),
                     color=altair.Color('observation:nominal', scale=ascale),
-                    tooltip=['observation:nominal', 'time'])
+                    tooltip=['observation:nominal',
+                             altair.Tooltip(
+                                field='time',
+                                format='%d %B, %Y',
+                                title='Date',
+                                type='temporal')])
 
     assert 'process_id' in kwargs
 
