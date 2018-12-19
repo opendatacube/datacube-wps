@@ -60,13 +60,43 @@ def _getData(shape, product, crs, time=None, extra_query={}):
 def _processData(datas, **kwargs):
 
     flag_lut = {'dry': 'dry', 'sea': 'wet', 'wet': 'wet', 'cloud': 'not observable', 'high_slope': 'not observable', 'cloud_shadow': 'not observable', 'noncontiguous': 'not observable', 'terrain_or_low_angle': 'not observable', 'nodata': 'not observable'}
+    
+    rules = [
+        {
+            'op': any,
+            'flags': ['terrain_or_low_angle', 'cloud_shadow', 'cloud', 'high_slope', 'noncontiguous'],
+            'value': 'not observable'
+        },
+        {
+            'op': all,
+            'flags': ['dry', 'sea'],
+            'value': 'not observable'
+        },
+        {
+            'op': any,
+            'flags': ['dry'],
+            'value': 'dry'
+        },
+        {
+            'op': any,
+            'flags': ['wet', 'sea'],
+            'value': 'wet'
+        }
+    ]
+
     with datacube.Datacube() as dc:
         product = dc.index.products.get_by_name('wofs_albers')
+
     def get_flags(val):
         flag_dict = datacube.storage.masking.mask_to_dict(product.measurements['water'].flags_definition, val)
-        flags = filter(flag_dict.get, flag_dict)
-        flags_converted = [flag_lut[f] for f in flags]
-        return flags_converted[0] if 'not observable' not in flags_converted else 'not observable'
+        flags = list(filter(flag_dict.get, flag_dict))
+        # apply rules in sequence
+        ret_val = 'not observable'
+        for rule in rules:
+            if rule['op']([f in rule['flags'] for f in flags]):
+                ret_val = rule['value']
+                break
+        return ret_val
     gf = np.vectorize(get_flags)
     
     data = Dataset()
