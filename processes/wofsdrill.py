@@ -93,7 +93,7 @@ def _processData(datas, **kwargs):
         # apply rules in sequence
         ret_val = 'not observable'
         for rule in rules:
-            if rule['op']([f in rule['flags'] for f in flags]):
+            if rule['op']([r in flags for r in rule['flags']]):
                 ret_val = rule['value']
                 break
         return ret_val
