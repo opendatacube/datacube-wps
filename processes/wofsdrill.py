@@ -9,6 +9,7 @@ import altair
 
 from processes.geometrydrill import GeometryDrill, _uploadToS3
 from pywps import LiteralOutput
+import pywps.configuration as config
 
 from datacube.storage.storage import measurement_paths
 from datacube.api.query import query_group_by
@@ -46,6 +47,7 @@ def _getData(shape, product, crs, time=None, extra_query={}):
         times = [x._dataset.center_time for x in datasources]
         files = [s.filename for s in datasources]
 
+        print(lonlat)
         results = [[driller.read(urls=files, lonlat=lonlat)]]
         array = DataArray(
             results,
@@ -68,21 +70,38 @@ def _processData(datas, **kwargs):
     gf = np.vectorize(get_flags)
     
     data = Dataset()
-    data['flags'] = datas[0]
+    data['observation'] = datas[0]
     print(data)
-    data['flags'].values = gf(data['flags'].values)
+    data['observation'].values = gf(data['observation'].values)
+
+    pt_lat = data['observation'].coords['latitude'][0].values
+    pt_lon = data['observation'].coords['longitude'][0].values
 
     df = data.to_dataframe()
     df.reset_index(inplace=True)
+
+    width = config.get_config_value('wofs', 'width')
+    height = config.get_config_value('wofs', 'height')
+    width = int(width) if width != '' else 1000
+    height = int(height) if height != '' else 300
 
     yscale = altair.Scale(domain=['wet', 'dry', 'not observable'])
     ascale = altair.Scale(
         domain=['wet','dry','not observable'],
         range=['blue', 'red', 'grey'])
-    chart = altair.Chart(df).mark_tick(thickness=3).encode(
-        x=altair.X('time:T'),
-        y=altair.Y('flags:nominal', scale=yscale),
-        color=altair.Color('flags:nominal', scale=ascale), tooltip='flags:nominal')
+    chart = altair.Chart(
+                    df,
+                    width=width,
+                    height=height,
+                    autosize='fit',
+                    background='white',
+                    title=f"Water Observations for {pt_lat:.6f},{pt_lon:.6f}") \
+                .mark_tick(thickness=3) \
+                .encode(
+                    x=altair.X('time:T'),
+                    y=altair.Y('observation:nominal', scale=yscale),
+                    color=altair.Color('observation:nominal', scale=ascale),
+                    tooltip=['observation:nominal', 'time'])
 
     assert 'process_id' in kwargs
 
