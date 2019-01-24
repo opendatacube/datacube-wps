@@ -1,4 +1,4 @@
-FROM opendatacube/datacube-core:1.6.1
+FROM opendatacube/datacube-core:1.6.2
 
 WORKDIR /code
 
