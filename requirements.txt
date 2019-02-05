@@ -1,5 +1,5 @@
 automat >= 0.3.0
-git+https://github.com/geopython/pywps.git@1d23e09da0ec1f43bee2a62cce078f5a957d26fe
+git+https://github.com/roarmstrong/pywps.git@fa86cc78b6776546828e2127a0b45a858161fff4
 flask
 scikit-image
 gunicorn
