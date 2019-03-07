@@ -185,7 +185,7 @@ class WofsDrill(GeometryDrill):
             handler          = _processData,
             identifier       = 'WOfSDrill',
             version          = '0.2',
-            title            = 'WOfS',
+            title            = 'Water Observations from Space Pixel Drill',
             abstract         = """
 Water Observations from Space Pixel Drill
 
