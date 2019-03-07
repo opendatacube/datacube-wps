@@ -77,8 +77,9 @@ def _getData(shape, product, crs, time=None, extra_query={}):
             first, second = time;
             time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
             query['time'] = time
-        print("loading data!", query)
-        data = dc.load(product=product, group_by='solar_day', **query, **extra_query)
+        final_query = {**query, **extra_query}
+        print("loading data!", final_query)
+        data = dc.load(product=product, group_by='solar_day', **final_query)
         print("data load done!")
         return data
 
@@ -113,25 +114,31 @@ class GeometryDrill(Process):
     def __init__(self, handler, identifier, title, abstract='', profile=[], metadata=[],
                  version='None', store_supported=False, status_supported=False,
                  products=[], output_name=None, geometry_type="polygon",
-                 custom_outputs=None, custom_data_loader=None, mask=True):
+                 custom_inputs=None, custom_outputs=None, custom_data_loader=None,
+                 mask=True):
 
         assert len(products) > 0
         assert geometry_type in [ "polygon", "point" ]
-        inputs = [ComplexInput('geometry',
-                               'Geometry',
-                               supported_formats=[
-                                                    Format('application/vnd.geo+json', schema='http://geojson.org/geojson-spec.html#' + geometry_type)
-                                                 ]),
-                  ComplexInput('start',
-                               'Start Date',
-                               supported_formats=[
-                                                    Format('application/vnd.geo+json', schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
-                                                 ]),
-                  ComplexInput('end',
-                               'End date',
-                               supported_formats=[
-                                                    Format('application/vnd.geo+json', schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
-                                                 ])]
+        if custom_inputs is None:
+          inputs = [ComplexInput('geometry',
+                                 'Geometry',
+                                 supported_formats=[
+                                                      Format('application/vnd.geo+json', schema='http://geojson.org/geojson-spec.html#' + geometry_type)
+                                                   ]),
+                    ComplexInput('start',
+                                 'Start Date',
+                                 supported_formats=[
+                                                      Format('application/vnd.geo+json', schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
+                                                   ],
+                                 min_occurs=0),
+                    ComplexInput('end',
+                                 'End date',
+                                 supported_formats=[
+                                                      Format('application/vnd.geo+json', schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
+                                                   ],
+                                 min_occurs=0)]
+        else:
+          inputs = custom_inputs
         if custom_outputs is None:
           outputs = [ComplexOutput('timeseries',
                                    'Timeseries Drill',
@@ -165,8 +172,11 @@ class GeometryDrill(Process):
         # Create geometry
         stream       = request.inputs['geometry'][0].stream
         request_json = json.loads(stream.readline())
-        time = (_datetimeExtractor(request.inputs['start'][0].data),
-                _datetimeExtractor(request.inputs['end'][0].data))
+        if not 'start' in request.inputs or not 'stop' in request.inputs:
+          time = None
+        else:
+          time = (_datetimeExtractor(request.inputs['start'][0].data),
+                  _datetimeExtractor(request.inputs['end'][0].data))
         crs = None
 
         if hasattr(request_json, 'crs'):

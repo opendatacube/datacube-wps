@@ -8,7 +8,7 @@ import datacube
 import altair
 
 from processes.geometrydrill import GeometryDrill, _uploadToS3
-from pywps import LiteralOutput
+from pywps import LiteralOutput, ComplexInput, Format
 import pywps.configuration as config
 
 from datacube.storage.storage import measurement_paths
@@ -30,8 +30,9 @@ def _getData(shape, product, crs, time=None, extra_query={}):
             first, second = time;
             time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
             query['time'] = time
-        print("finding data!", query)
-        ds = dc.find_datasets(product=product, group_by="solar_day", **query, **extra_query)
+        final_query = {**query, **extra_query}
+        print("finding data!", final_query)
+        ds = dc.find_datasets(product=product, group_by="solar_day", **final_query)
         dss = dc.group_datasets(ds, query_group_by(group_by="solar_day"))
 
         product = dc.index.products.get_by_name(product)
@@ -185,7 +186,16 @@ class WofsDrill(GeometryDrill):
             identifier       = 'WOfSDrill',
             version          = '0.2',
             title            = 'WOfS',
-            abstract         = 'Performs WOfS Pixel Drill',
+            abstract         = """
+Water Observations from Space Pixel Drill
+
+Water Observations from Space (WOfS) provides surface water observations derived from satellite imagery for all of Australia. The current product (Version 2.1.5) includes observations taken from 1986 to the present, from the Landsat 5, 7 and 8 satellites. WOfS covers all of mainland Australia and Tasmania but excludes off-shore Territories.
+
+The WOfS product allows users to get a better understanding of where water is normally present in a landscape, where water is seldom observed, and where inundation has occurred occasionally.
+
+This Pixel Drill will output the water observations for a point through time as graph.
+
+For service status information, see https://status.dea.ga.gov.au""",
             store_supported  = True,
             status_supported = True,
             geometry_type    = "point",
@@ -197,9 +207,16 @@ class WofsDrill(GeometryDrill):
                 }
             }],
             output_name      = "WOfS",
+            custom_inputs=[
+                ComplexInput('geometry',
+                             'Location (Lon,Lat)',
+                             supported_formats=[
+                                                  Format('application/vnd.geo+json', schema='http://geojson.org/geojson-spec.html#point')
+                                               ])
+            ],
             custom_outputs=[
-                LiteralOutput("image", "Pixel Drill Graph"),
-                LiteralOutput("url", "Pixel Drill Chart")
+                LiteralOutput("image", "WOfS Pixel Drill Preview"),
+                LiteralOutput("url", "WOfS Pixel Drill Graph")
             ],
             custom_data_loader=_getData,
             mask=False)
