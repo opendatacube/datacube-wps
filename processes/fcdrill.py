@@ -35,7 +35,7 @@ def _processData(datas, **kwargs):
     for k, d in datas.items():
         if len(d.variables) > 0 and k != 'wofs_albers':
             if len(data.variables) > 0:
-                data += d
+                data = xarray.concat([data, d], dim='time')
             else:
                 data = d
     print(data)
