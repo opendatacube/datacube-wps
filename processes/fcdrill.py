@@ -1,6 +1,7 @@
 import datacube
 from datacube.storage.masking import make_mask
 
+from pywps import LiteralOutput
 from processes.geometrydrill import GeometryDrill
 import altair
 import xarray
@@ -37,6 +38,7 @@ def _processData(datas, **kwargs):
                 data += d
             else:
                 data = d
+    print(data)
     mask_data = datas['wofs_albers'].astype('uint8')
     mask_data.attrs["flags_definition"] = wofs_product.measurements['water']['flags_definition']
     for m in wofs_mask_flags:
@@ -92,10 +94,25 @@ def _processData(datas, **kwargs):
     df = df.melt('time', var_name='Cover Type', value_name='Area')
     print ("pixels", df)
 
-    chart = altair.Chart(df).mark_area().encode(x='time:T',
-        y=altair.Y('Area:Q', stack='normalize'),
-        color=altair.Color('Cover Type:N', scale=altair.Scale(domain=['PV', 'NPV', 'BS'],
-                      range=['green', '#dac586', '#8B0000'])))
+    chart = altair.Chart(df,
+                         width=1000,
+                         height=300,
+                         title='Percentage of Area - Fractional Cover') \
+                  .mark_area() \
+                  .encode(
+                    x='time:T',
+                    y=altair.Y('Area:Q', stack='normalize'),
+                    color=altair.Color('Cover Type:N',
+                                       scale=altair.Scale(domain=['PV', 'NPV', 'BS'],
+                                       range=['green', '#dac586', '#8B0000']))
+                    )
+                    # tooltip=[altair.Tooltip(
+                    #             field='time',
+                    #             format='%d %B, %Y',
+                    #             title='Date',
+                    #             type='temporal'),
+                    #          'Area:Q',
+                    #          'Cover Type:N'])
 
     html_io = io.StringIO()
     chart.save(html_io, format='html')
@@ -110,11 +127,10 @@ def _processData(datas, **kwargs):
     #                                           'Unmixing Error'],
     #                                   date_format="%Y-%m-%d");
     outputs = {
-        'timeseries': {
-            'data': data
+        'url': {
+            'data': html_url
         }
     }
-
     return outputs
 
 
@@ -172,6 +188,7 @@ class FcDrill(GeometryDrill):
                     }
                 }
             ],
-            output_name      = "FC")
+            output_name      = "FC",
+            custom_outputs=[LiteralOutput("url", "Fractional Cover Asset Drill")])
         
 
