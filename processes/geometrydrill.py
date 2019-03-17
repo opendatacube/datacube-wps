@@ -81,7 +81,7 @@ def _getData(shape, product, crs, time=None, extra_query={}):
         final_query = {**query, **extra_query}
         # print("loading data!", final_query)
         data = dc.load(product=product, group_by='solar_day', **final_query)
-        # print("data load done", product, data)
+        print("data load done", product, data)
         return data
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
