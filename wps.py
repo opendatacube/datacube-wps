@@ -34,7 +34,8 @@ from processes.mangrovedrill import MangroveDrill
 app = flask.Flask(__name__)
 
 processes = [
-    WofsDrill()
+    WofsDrill(),
+    FcDrill()
 ]
 
 # For the process list on the home page

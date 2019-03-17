@@ -18,6 +18,7 @@ from botocore.client import Config
 import pywps.configuration as config
 
 from dateutil.parser import parse
+from concurrent.futures import ProcessPoolExecutor
 
 def _uploadToS3(filename, data, mimetype):
     session = boto3.Session()
@@ -78,9 +79,9 @@ def _getData(shape, product, crs, time=None, extra_query={}):
             time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
             query['time'] = time
         final_query = {**query, **extra_query}
-        print("loading data!", final_query)
+        # print("loading data!", final_query)
         data = dc.load(product=product, group_by='solar_day', **final_query)
-        print("data load done!")
+        # print("data load done", product, data)
         return data
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
@@ -129,14 +130,12 @@ class GeometryDrill(Process):
                                  'Start Date',
                                  supported_formats=[
                                                       Format('application/vnd.geo+json', schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
-                                                   ],
-                                 min_occurs=0),
+                                                   ]),
                     ComplexInput('end',
                                  'End date',
                                  supported_formats=[
                                                       Format('application/vnd.geo+json', schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
-                                                   ],
-                                 min_occurs=0)]
+                                                   ])]
         else:
           inputs = custom_inputs
         if custom_outputs is None:
@@ -172,13 +171,12 @@ class GeometryDrill(Process):
         # Create geometry
         stream       = request.inputs['geometry'][0].stream
         request_json = json.loads(stream.readline())
-        if not 'start' in request.inputs or not 'stop' in request.inputs:
+        if not 'start' in request.inputs or not 'end' in request.inputs:
           time = None
         else:
           time = (_datetimeExtractor(request.inputs['start'][0].data),
                   _datetimeExtractor(request.inputs['end'][0].data))
         crs = None
-
         if hasattr(request_json, 'crs'):
             crs = request_json['crs']['properties']['name']
 
@@ -187,7 +185,7 @@ class GeometryDrill(Process):
             # Can't drill if there is no geometry
             raise pywps.InvalidParameterException()
 
-        data = []
+        data = dict()
         for feature in features:
             geometry = feature['geometry']
 
@@ -199,31 +197,36 @@ class GeometryDrill(Process):
                 # http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
                 crs = 'urn:ogc:def:crs:OGC:1.3:CRS84'
             # Can do custom loading of data here
-            for p in self.products:
-              product = p['name']
-              query = p.get('additional_query', {})
-              d = self.data_loader(
-                geometry,
-                product,
-                crs,
-                time,
-                query)
-              if (len(d) > 0):
-                data.append(d)
+            with ProcessPoolExecutor(max_workers=4) as executor:
+              for p in self.products:
+                product = p['name']
+                query = p.get('additional_query', {})
+                future = executor.submit(
+                  self.data_loader,
+                  geometry,
+                  product,
+                  crs,
+                  time,
+                  query)
+                data[product] = future
+              for k, v in data.items():
+                d = v.result()
+                data[k] = d
 
-        masked = []
+        masked = dict()
         if self.geometry_type == 'point' or not self.do_mask:
           masked = data
         elif len(data) != 0:
-            masked = []
-            for d in data:
-              mask = geometry_mask([f['geometry'] for f in features], crs, d.geobox, invert=True)
-              for band in d.data_vars:
-                try:
-                    d[band] = d[band].where(mask, other=d[band].attrs['nodata'])
-                except AttributeError:
-                    d[band] = d[band].where(mask)
-              masked.append(d)
+            masked = dict()
+            for k, d in data.items():
+              if len(d.variables) > 0:
+                mask = geometry_mask([f['geometry'] for f in features], crs, d.geobox, invert=True)
+                for band in d.data_vars:
+                  try:
+                      d[band] = d[band].where(mask, other=d[band].attrs['nodata'])
+                  except AttributeError:
+                      d[band] = d[band].where(mask)
+              masked[k] = d
 
 
         outputs = self.custom_handler(masked, process_id=self.uuid)

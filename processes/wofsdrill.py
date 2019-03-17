@@ -184,7 +184,7 @@ class WofsDrill(GeometryDrill):
         super(WofsDrill, self).__init__(
             handler          = _processData,
             identifier       = 'WOfSDrill',
-            version          = '0.2',
+            version          = '0.3',
             title            = 'Water Observations from Space Pixel Drill',
             abstract         = """
 Water Observations from Space Pixel Drill
