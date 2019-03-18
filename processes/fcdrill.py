@@ -6,6 +6,7 @@ from processes.geometrydrill import GeometryDrill
 import altair
 import xarray
 import io
+import numpy as np
 
 from processes.geometrydrill import _uploadToS3
 
@@ -38,14 +39,13 @@ def _processData(datas, **kwargs):
                 data = xarray.concat([data, d], dim='time')
             else:
                 data = d
-    print(data)
     mask_data = datas['wofs_albers'].astype('uint8')
     mask_data.attrs["flags_definition"] = wofs_product.measurements['water']['flags_definition']
     for m in wofs_mask_flags:
         mask = make_mask(mask_data, **m['flags'])
         data = data.where(mask['water'])
 
-    pixels = (data != -1).sum(dim=['x', 'y'])
+    pixels = (np.isfinite(data)).sum(dim=['x', 'y'])
 
     fc_tester = data.drop(['UE'])
 
@@ -53,7 +53,7 @@ def _processData(datas, **kwargs):
     maxFC = fc_tester.to_array(dim='variable', name='maxFC')
 
     #turn FC array into integer only as nanargmax doesn't seem to handle floats the way we want it to
-    FC_int = maxFC.astype('int8')
+    FC_int = maxFC.astype('int16')
 
     #use numpy.nanargmax to get the index of the maximum value along the variable dimension
     #BSPVNPV=np.nanargmax(FC_int, axis=0)
@@ -82,16 +82,16 @@ def _processData(datas, **kwargs):
     NonPhotosynthetic_veg_percent=(FC_count.NPV/pixels)['NPV']
 
     # print(Bare_soil_percent, Photosynthetic_veg_percent, NonPhotosynthetic_veg_percent) 
+    new_ds = xarray.Dataset({
+        'BS': Bare_soil_percent * 100,
+        'PV': Photosynthetic_veg_percent * 100,
+        'NPV': NonPhotosynthetic_veg_percent *100
+    })
 
-    pixels['BS'] = Bare_soil_percent
-    pixels['PV'] = Photosynthetic_veg_percent
-    pixels['NPV'] = NonPhotosynthetic_veg_percent
-
-    pixels = pixels.drop('UE')
-
-    df = pixels.to_dataframe()
+    df = new_ds.to_dataframe()
     df.reset_index(inplace=True)
     df = df.melt('time', var_name='Cover Type', value_name='Area')
+    df = df.dropna()
     print ("pixels", df)
 
     chart = altair.Chart(df,
@@ -104,15 +104,14 @@ def _processData(datas, **kwargs):
                     y=altair.Y('Area:Q', stack='normalize'),
                     color=altair.Color('Cover Type:N',
                                        scale=altair.Scale(domain=['PV', 'NPV', 'BS'],
-                                       range=['green', '#dac586', '#8B0000']))
-                    )
-                    # tooltip=[altair.Tooltip(
-                    #             field='time',
-                    #             format='%d %B, %Y',
-                    #             title='Date',
-                    #             type='temporal'),
-                    #          'Area:Q',
-                    #          'Cover Type:N'])
+                                       range=['green', '#dac586', '#8B0000'])),
+                    tooltip=[altair.Tooltip(
+                                field='time',
+                                format='%d %B, %Y',
+                                title='Date',
+                                type='temporal'),
+                             'Area:Q',
+                             'Cover Type:N'])
 
     html_io = io.StringIO()
     chart.save(html_io, format='html')
@@ -159,6 +158,12 @@ tableStyle = {
     }
 }
 
+def wofls_fuser(dest, src):
+    import numpy
+    where_nodata = (src & 1) == 0
+    numpy.copyto(dest, src, where=where_nodata)
+    return dest
+
 class FcDrill(GeometryDrill):
     def __init__(self):
         super(FcDrill, self).__init__(
@@ -184,7 +189,8 @@ class FcDrill(GeometryDrill):
                     "name": "wofs_albers",
                     "additional_query": {
                         "output_crs": 'EPSG:3577',
-                        "resolution": (-25, 25)
+                        "resolution": (-25, 25),
+                        "fuse_func": wofls_fuser
                     }
                 }
             ],
