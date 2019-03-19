@@ -97,7 +97,7 @@ def _processData(datas, **kwargs):
     gf = np.vectorize(get_flags)
     
     data = Dataset()
-    data['observation'] = datas[0]
+    data['observation'] = datas['wofs_albers']
     print(data)
     data['observation'].values = gf(data['observation'].values)
 
