@@ -1,14 +1,15 @@
 import datacube
 from datacube.storage.masking import make_mask
 
-from pywps import LiteralOutput
+from pywps import LiteralOutput, ComplexOutput
 from processes.geometrydrill import GeometryDrill
 import altair
 import xarray
 import io
 import numpy as np
+import json
 
-from processes.geometrydrill import _uploadToS3
+from processes.geometrydrill import _uploadToS3, DatetimeEncoder, _json_format
 
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
@@ -90,11 +91,11 @@ def _processData(datas, **kwargs):
 
     df = new_ds.to_dataframe()
     df.reset_index(inplace=True)
-    df = df.melt('time', var_name='Cover Type', value_name='Area')
-    df = df.dropna()
-    print ("pixels", df)
+    melted = df.melt('time', var_name='Cover Type', value_name='Area')
+    melted = melted.dropna()
+    print (melted)
 
-    chart = altair.Chart(df,
+    chart = altair.Chart(melted,
                          width=1000,
                          height=300,
                          title='Percentage of Area - Fractional Cover') \
@@ -118,16 +119,55 @@ def _processData(datas, **kwargs):
     html_bytes = io.BytesIO(html_io.getvalue().encode())
     html_url = _uploadToS3(str(kwargs['process_id']) + '/chart.html', html_bytes, 'text/html')
     print(html_url)
-    # # data = data.dropna('time', how='all')
-    # data = data.mean(dim=('x','y'))
-    # data = data.to_dataframe().to_csv(header=['Bare Soil',
-    #                                           'Photosynthetic Vegetation',
-    #                                           'Non-Photosynthetic Vegetation',
-    #                                           'Unmixing Error'],
-    #                                   date_format="%Y-%m-%d");
+    # data = data.dropna('time', how='all')
+    csv = data.mean(dim=('x','y'))
+    csv = csv.to_dataframe().to_csv(header=['Bare Soil',
+                                              'Photosynthetic Vegetation',
+                                              'Non-Photosynthetic Vegetation',
+                                              'Unmixing Error'],
+                                      date_format="%Y-%m-%d");
+
+    output_dict = {
+        "data": csv,
+        "isEnabled": True,
+        "type": "csv",
+        "name": "FC",
+        "tableStyle": {
+            "columns": {
+                "Bare Soil": {
+                    "units": "%",
+                    "chartLineColor": "#8B0000",
+                    "active": True
+                },
+                "Photosynthetic Vegetation": {
+                    "units": "%",
+                    "chartLineColor": "green",
+                    "active": True
+                },
+                "Non-Photosynthetic Vegetation": {
+                    "units": "%",
+                    "chartLineColor": "#dac586",
+                    "active": True
+                },
+                "Unmixing Error": {
+                    "units": "%",
+                    "chartLineColor": "#6699CC",
+                    "active": False
+                }
+            }
+        }
+    }
+
+    output_json = json.dumps(output_dict, cls=DatetimeEncoder)
+
+    output_str = output_json
+
     outputs = {
         'url': {
             'data': html_url
+        },
+        'timeseries': {
+            'data': output_str
         }
     }
     return outputs
@@ -195,6 +235,13 @@ class FcDrill(GeometryDrill):
                 }
             ],
             output_name      = "FC",
-            custom_outputs=[LiteralOutput("url", "Fractional Cover Asset Drill")])
+            custom_outputs=[
+                LiteralOutput("url", "Fractional Cover Asset Drill"),
+                ComplexOutput('timeseries',
+                              'Timeseries Drill',
+                              supported_formats=[
+                                _json_format
+                              ])
+            ])
         
 
