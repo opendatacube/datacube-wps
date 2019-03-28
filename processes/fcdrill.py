@@ -40,7 +40,8 @@ def _processData(datas, **kwargs):
                 data = xarray.concat([data, d], dim='time')
             else:
                 data = d
-    total = (data).count(dim=['x', 'y'])
+    total = data.count(dim=['x', 'y'])
+    total_valid = (data != -1).sum(dim=['x', 'y'])
 
     mask_data = datas['wofs_albers'].astype('uint8')
     mask_data.attrs["flags_definition"] = wofs_product.measurements['water']['flags_definition']
@@ -48,9 +49,8 @@ def _processData(datas, **kwargs):
         mask = make_mask(mask_data, **m['flags'])
         data = data.where(mask['water'])
 
-    # pixels = (np.isfinite(data)).sum(dim=['x', 'y'])
-
-    not_pixels = (np.isnan(data)).sum(dim=['x', 'y'])
+    total_invalid = (np.isnan(data)).sum(dim=['x', 'y'])
+    not_pixels = total_valid - (total - total_invalid)
 
     fc_tester = data.drop(['UE'])
 
@@ -80,13 +80,13 @@ def _processData(datas, **kwargs):
     #Fractional cover pixel count method
     #Get number of FC pixels, divide by total number of pixels per polygon
 
-    Bare_soil_percent=(FC_count.BS/total)['BS']
+    Bare_soil_percent=(FC_count.BS/total_valid)['BS']
 
-    Photosynthetic_veg_percent=(FC_count.PV/total)['PV']
+    Photosynthetic_veg_percent=(FC_count.PV/total_valid)['PV']
 
-    NonPhotosynthetic_veg_percent=(FC_count.NPV/total)['NPV']
+    NonPhotosynthetic_veg_percent=(FC_count.NPV/total_valid)['NPV']
 
-    Unobservable = (not_pixels / total)['BS']
+    Unobservable = (not_pixels / total_valid)['BS']
 
     # print(Bare_soil_percent, Photosynthetic_veg_percent, NonPhotosynthetic_veg_percent) 
     new_ds = xarray.Dataset({
