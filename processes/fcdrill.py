@@ -40,13 +40,17 @@ def _processData(datas, **kwargs):
                 data = xarray.concat([data, d], dim='time')
             else:
                 data = d
+    total = (data).count(dim=['x', 'y'])
+
     mask_data = datas['wofs_albers'].astype('uint8')
     mask_data.attrs["flags_definition"] = wofs_product.measurements['water']['flags_definition']
     for m in wofs_mask_flags:
         mask = make_mask(mask_data, **m['flags'])
         data = data.where(mask['water'])
 
-    pixels = (np.isfinite(data)).sum(dim=['x', 'y'])
+    # pixels = (np.isfinite(data)).sum(dim=['x', 'y'])
+
+    not_pixels = (np.isnan(data)).sum(dim=['x', 'y'])
 
     fc_tester = data.drop(['UE'])
 
@@ -76,17 +80,20 @@ def _processData(datas, **kwargs):
     #Fractional cover pixel count method
     #Get number of FC pixels, divide by total number of pixels per polygon
 
-    Bare_soil_percent=(FC_count.BS/pixels)['BS']
+    Bare_soil_percent=(FC_count.BS/total)['BS']
 
-    Photosynthetic_veg_percent=(FC_count.PV/pixels)['PV']
+    Photosynthetic_veg_percent=(FC_count.PV/total)['PV']
 
-    NonPhotosynthetic_veg_percent=(FC_count.NPV/pixels)['NPV']
+    NonPhotosynthetic_veg_percent=(FC_count.NPV/total)['NPV']
+
+    Unobservable = (not_pixels / total)['BS']
 
     # print(Bare_soil_percent, Photosynthetic_veg_percent, NonPhotosynthetic_veg_percent) 
     new_ds = xarray.Dataset({
-        'BS': Bare_soil_percent * 100,
-        'PV': Photosynthetic_veg_percent * 100,
-        'NPV': NonPhotosynthetic_veg_percent *100
+        'BS': Bare_soil_percent*100,
+        'PV': Photosynthetic_veg_percent*100,
+        'NPV': NonPhotosynthetic_veg_percent *100,
+        'Unobservable': Unobservable * 100
     })
 
     df = new_ds.to_dataframe()
@@ -104,8 +111,8 @@ def _processData(datas, **kwargs):
                     x='time:T',
                     y=altair.Y('Area:Q', stack='normalize'),
                     color=altair.Color('Cover Type:N',
-                                       scale=altair.Scale(domain=['PV', 'NPV', 'BS'],
-                                       range=['green', '#dac586', '#8B0000'])),
+                                       scale=altair.Scale(domain=['PV', 'NPV', 'BS', 'Unobservable'],
+                                       range=['green', '#dac586', '#8B0000', 'grey'])),
                     tooltip=[altair.Tooltip(
                                 field='time',
                                 format='%d %B, %Y',
