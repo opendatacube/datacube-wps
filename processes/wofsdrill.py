@@ -7,11 +7,10 @@ from xarray import DataArray, Dataset
 import datacube
 import altair
 
-from processes.geometrydrill import GeometryDrill, _uploadToS3
-from pywps import LiteralOutput, ComplexInput, Format
+from processes.geometrydrill import GeometryDrill, _uploadToS3, DatetimeEncoder, _json_format
+from pywps import LiteralOutput, ComplexInput, Format, ComplexOutput
 import pywps.configuration as config
 
-from datacube.storage.storage import measurement_paths
 from datacube.api.query import query_group_by
 from datacube.drivers import new_datasource
 from datacube.utils import geometry
@@ -147,12 +146,27 @@ def _processData(datas, **kwargs):
     img_bytes = io.BytesIO(img_io.getvalue().encode())
     img_url = _uploadToS3(str(kwargs['process_id']) + '/chart.svg', img_bytes, 'image/svg+xml')
 
+    csv = data.squeeze(dim=('latitude', 'longitude'), drop=True).to_dataframe().to_csv(header=['Observation'],
+                                                                                       date_format="%Y-%m-%d")
+
+    output_dict = {
+        "data": csv,
+        "isEnabled": False,
+        "type": "csv",
+        "name": "WOfS"
+    }
+
+    output_json = json.dumps(output_dict, cls=DatetimeEncoder)
+
     outputs = {
         'image': {
             'data': img_url
         },
         'url': {
             'data': html_url
+        },
+        'timeseries': {
+            'data': output_json
         }
     }
 
@@ -216,7 +230,12 @@ For service status information, see https://status.dea.ga.gov.au""",
             ],
             custom_outputs=[
                 LiteralOutput("image", "WOfS Pixel Drill Preview"),
-                LiteralOutput("url", "WOfS Pixel Drill Graph")
+                LiteralOutput("url", "WOfS Pixel Drill Graph"),
+                ComplexOutput('timeseries',
+                              'Timeseries Drill',
+                              supported_formats=[
+                                _json_format
+                              ])
             ],
             custom_data_loader=_getData,
             mask=False)
