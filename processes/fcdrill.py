@@ -127,11 +127,10 @@ def _processData(datas, **kwargs):
     html_url = _uploadToS3(str(kwargs['process_id']) + '/chart.html', html_bytes, 'text/html')
     print(html_url)
     # data = data.dropna('time', how='all')
-    csv = data.mean(dim=('x','y'))
-    csv = csv.to_dataframe().to_csv(header=['Bare Soil',
+    csv = new_ds.to_dataframe().to_csv(header=['Bare Soil',
                                               'Photosynthetic Vegetation',
                                               'Non-Photosynthetic Vegetation',
-                                              'Unmixing Error'],
+                                              'Unobserable'],
                                       date_format="%Y-%m-%d");
 
     output_dict = {
@@ -156,7 +155,7 @@ def _processData(datas, **kwargs):
                     "chartLineColor": "#dac586",
                     "active": True
                 },
-                "Unmixing Error": {
+                "Unobservable": {
                     "units": "%",
                     "chartLineColor": "#6699CC",
                     "active": False
