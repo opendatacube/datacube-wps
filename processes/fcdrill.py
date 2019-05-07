@@ -130,7 +130,7 @@ def _processData(datas, **kwargs):
     csv = new_ds.to_dataframe().to_csv(header=['Bare Soil',
                                               'Photosynthetic Vegetation',
                                               'Non-Photosynthetic Vegetation',
-                                              'Unobserable'],
+                                              'Unobservable'],
                                       date_format="%Y-%m-%d");
 
     output_dict = {
