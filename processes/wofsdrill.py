@@ -13,6 +13,7 @@ import pywps.configuration as config
 
 from datacube.api.query import query_group_by
 from datacube.drivers import new_datasource
+from datacube.storage import BandInfo
 from datacube.utils import geometry
 from dea.io.pdrill import PixelDrill
 
@@ -42,9 +43,9 @@ def _getData(shape, product, crs, time=None, extra_query={}):
         datasources = []
         for ds in dss.values:
             for d in ds:
-                datasources.append(new_datasource(d, measurement['name']))
-        datasources = sorted(datasources, key=lambda x: x._dataset.center_time)
-        times = [x._dataset.center_time for x in datasources]
+                datasources.append(new_datasource(BandInfo(d, measurement['name'])))
+        datasources = sorted(datasources, key=lambda x: x._band_info.center_time)
+        times = [x._band_info.center_time for x in datasources]
         files = [s.filename for s in datasources]
 
         results = [[driller.read(urls=files, lonlat=lonlat)]]
