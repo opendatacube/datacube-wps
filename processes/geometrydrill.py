@@ -67,6 +67,8 @@ def geometry_mask(geoms, src_crs, geobox, all_touched=False, invert=False):
                                            all_touched=all_touched,
                                            invert=invert)
 
+# Default function for querying and loading data for WPS processes
+# Uses dc.load and groups by solar day
 def _getData(shape, product, crs, time=None, extra_query={}):
     with datacube.Datacube() as dc:
         dc_crs = datacube.utils.geometry.CRS(crs)
@@ -84,24 +86,25 @@ def _getData(shape, product, crs, time=None, extra_query={}):
         print("data load done", product, data)
         return data
 
-# Data is a list of Datasets (returned from dc.load and masked if polygons)
-def _processData(data, **kwargs):
-    data = data.mean(dim=('x','y'))
+# Default function for processing loaded data
+# Datas is a list of Datasets (returned from dc.load and masked if polygons)
+def _processData(datas, **kwargs):
 
-    output_json = json.dumps(output_obj, cls=DatetimeEncoder)
+    output_json = json.dumps({"hello": "world"}, cls=DatetimeEncoder)
 
     output_str = output_json
 
     response.outputs['timeseries'].output_format = str(_json_format)
     response.outputs['timeseries'].data = output_str
 
-    return data
+    return response
 
 
 # Product output JSON
 def _createOutputJson(data, **kwargs):
   pass
 
+# Pulls datetime output of JSON start / end date inputs
 def _datetimeExtractor(data):
   return parse(json.loads(data)["properties"]["timestamp"]["date-time"])
 
@@ -110,12 +113,25 @@ def _datetimeExtractor(data):
 # functionality specific to Datacube.
 # In order to create a custom drill, GeometryDrill can be subclassed or
 # passed arguments on construction to modify it's behavior.
+# :param handler: Function to process loaded data. The function should accept a list of xarrays as loaded by datacube
+# :param identifier: String that identifies this process (PyWPS)
+# :param title: Human readable String for the name of this process (PyWPS)
+# :param abstract: Human readable String for defining any information about this process (PyWPS)
+# :param version: String containing a version identifier for this process (PyWPS)
+# :param store_supported: Bool, If true PyWPS will allow storing local files as outputs (PyWPS)
+# :param status_supported: Bool, If true PyWPS will allow storing a status file for tracking the process execution (PyWPS)
+# :param products: List of Strings, Contains the datacube product names of products to be loaded by this process
+# :param geometry_type: currently "polygon" or "point"
+# :param custom_inputs: Optional List of PyWPS Input types, otherwise will default to, geometry, start and end dates
+# :param custom_outputs: Optional List of PyWPS Output types, otherwise will default to a JSON object containing a timeseries
+# :param custom_data_loader: Optional Function for loading data
+# :param mask: Bool, if True, data will be masked to the geometry input
 class GeometryDrill(Process):
 
-    def __init__(self, handler, identifier, title, abstract='', profile=[], metadata=[],
+    def __init__(self, handler, identifier, title, abstract='',
                  version='None', store_supported=False, status_supported=False,
-                 products=[], output_name=None, geometry_type="polygon",
-                 custom_inputs=None, custom_outputs=None, custom_data_loader=None,
+                 products=[], geometry_type="polygon", custom_inputs=None,
+                 custom_outputs=None, custom_data_loader=None,
                  mask=True):
 
         assert len(products) > 0
@@ -150,7 +166,6 @@ class GeometryDrill(Process):
 
         self.products = products
         self.custom_handler = handler
-        self.output_name = output_name if output_name is not None else "default"
         self.geometry_type = geometry_type
         self.custom_outputs = custom_outputs
         self.data_loader = _getData if custom_data_loader is None else custom_data_loader

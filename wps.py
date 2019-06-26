@@ -25,11 +25,9 @@ import os
 import flask
 
 import pywps
-from pywps import Service, Process, BoundingBoxInput, LiteralOutput
+from pywps import Service
 from processes.fcdrill import FcDrill
 from processes.wofsdrill import WofsDrill
-from processes.mangrovedrill import MangroveDrill
-
 
 app = flask.Flask(__name__)
 
@@ -55,23 +53,6 @@ def apply_cors(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Cache-Control'] = 'max-age=0'
     return response
-    
-# Serving output files for async processing
-@app.route('/outputs/'+'<filename>')
-def outputfile(filename):
-    output_dir = pywps.configuration.get_config_value("server", "outputpath")
-    targetfile = os.path.join(output_dir, filename)
-    if os.path.isfile(targetfile):
-        file_ext = os.path.splitext(targetfile)[1]
-        with open(targetfile, mode='rb') as f:
-            file_bytes = f.read()
-        mime_type = None
-        if 'xml' in file_ext:
-            mime_type = 'text/xml'
-        return flask.Response(file_bytes, content_type=mime_type)
-    else:
-        flask.abort(404)
-
 
 @app.route('/', methods=['GET', 'POST'])
 def wps():

@@ -240,7 +240,6 @@ class FcDrill(GeometryDrill):
                     }
                 }
             ],
-            output_name      = "FC",
             custom_outputs=[
                 LiteralOutput("url", "Fractional Cover Asset Drill"),
                 ComplexOutput('timeseries',

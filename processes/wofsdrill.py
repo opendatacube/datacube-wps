@@ -221,7 +221,6 @@ For service status information, see https://status.dea.ga.gov.au""",
                     "resolution": (-25, 25)
                 }
             }],
-            output_name      = "WOfS",
             custom_inputs=[
                 ComplexInput('geometry',
                              'Location (Lon,Lat)',
