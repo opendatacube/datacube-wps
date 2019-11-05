@@ -1,6 +1,6 @@
 automat >= 0.3.0
-git+https://github.com/roarmstrong/pywps.git@fa86cc78b6776546828e2127a0b45a858161fff4
 flask
+git+https://github.com/geopython/pywps.git
 scikit-image
 gunicorn
 rasterio >= 1.0.9
