@@ -12,10 +12,18 @@ ENV PATH="/usr/lib/chromium-browser/:${PATH}"
 
 ADD requirements.txt .
 
+RUN pip3 install --upgrade pip \
+    && rm -rf $HOME/.cache/pip
+
 RUN pip3 install -r requirements.txt \
     && rm -rf $HOME/.cache/pip
 
-RUN pip3 install git+https://github.com/opendatacube/dea-proto.git@2da959d3747e4bb0db8025407220bb2589bbee10 --no-deps \
+RUN pip install -U 'aiobotocore[awscli,boto3]' \
+    && rm -rf $HOME/.cache/pip
+
+RUN pip install --extra-index-url="https://packages.dea.gadevs.ga" \
+    odc-apps-cloud \
+    odc-apps-dc-tools \
     && rm -rf $HOME/.cache/pip
 
 ADD . .
