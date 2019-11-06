@@ -58,6 +58,14 @@ def apply_cors(response):
 def wps():
 
     return service
+
+
+@app.route('/ping')
+def ping():
+
+    return 'system is healthy'
+
+
     
 if __name__ == "__main__":
     import argparse
