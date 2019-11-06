@@ -11,4 +11,8 @@ then
     A=$$; wget -q "$WPS_CONFIG_URL" -O $A.d && mv $A.d /code/pywps.cfg
 fi
 
+
+# create aws credential in /root/.aws/credentials
+echo "aws_access_key_id=$AWS_ACCESSS_KEY_ID" >> /root/.aws/credentials
+echo "aws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> /root/.aws/credentials
 docker-entrypoint.sh "$@"
