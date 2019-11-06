@@ -31,6 +31,8 @@ ADD . .
 WORKDIR /code/logs
 WORKDIR /code
 
+COPY docker/credentials /root/.aws/credentials
+
 COPY docker/wps-entrypoint.sh /usr/local/bin/wps-entrypoint.sh
 
 ENTRYPOINT ["wps-entrypoint.sh"]
