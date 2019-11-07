@@ -22,10 +22,10 @@ RUN pip install -U 'aiobotocore[awscli,boto3]' \
     && rm -rf $HOME/.cache/pip
 
 
-#RUN pip install --extra-index-url="https://packages.dea.gadevs.ga" \
-#    odc-apps-cloud \
-#    odc-apps-dc-tools \
-#    && rm -rf $HOME/.cache/pip
+RUN pip install --extra-index-url="https://packages.dea.gadevs.ga" \
+   odc-apps-cloud \
+   odc-apps-dc-tools \
+   && rm -rf $HOME/.cache/pip
 
 ADD . .
 
