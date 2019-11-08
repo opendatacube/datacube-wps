@@ -55,7 +55,7 @@ def apply_cors(response):
     return response
 
 
-@app.route('/wps', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def wps():
 
     return service
