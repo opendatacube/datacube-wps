@@ -54,7 +54,12 @@ def apply_cors(response):
     response.headers['Cache-Control'] = 'max-age=0'
     return response
 
-@app.route('/', methods=['GET', 'POST'])
+
+@app.route('/')
+def ping():
+    return 'home'
+
+@app.route('/wps', methods=['GET', 'POST'])
 def wps():
 
     return service
@@ -62,11 +67,24 @@ def wps():
 
 @app.route('/ping')
 def ping():
-
     return 'system is healthy'
 
 
-    
+@app.route('//outputs/'+'<path:filename>')
+def outputfile(filename):
+    targetfile = os.path.join('outputs', filename)
+    if os.path.isfile(targetfile):
+        file_ext = os.path.splitext(targetfile)[1]
+        with open(targetfile, mode='rb') as f:
+            file_bytes = f.read()
+        mime_type = None
+        if 'xml' in file_ext:
+            mime_type = 'text/xml'
+        return flask.Response(file_bytes, content_type=mime_type)
+    else:
+        flask.abort(404)
+
+
 if __name__ == "__main__":
     import argparse
 
