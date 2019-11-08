@@ -55,7 +55,15 @@ def apply_cors(response):
     return response
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
+def index():
+    server_url = pywps.configuration.get_config_value("server", "url")
+    request_url = flask.request.url
+    return flask.render_template('home.html', request_url=request_url,
+                                 server_url=server_url,
+                                 process_descriptor=process_descriptor)
+
+@app.route('/wps', methods=['GET', 'POST'])
 def wps():
 
     return service
@@ -66,7 +74,7 @@ def ping():
     return 'system is healthy'
 
 
-@app.route('//outputs/'+'<path:filename>')
+@app.route('/outputs/'+'<path:filename>')
 def outputfile(filename):
     targetfile = os.path.join('outputs', filename)
     if os.path.isfile(targetfile):
