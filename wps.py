@@ -55,10 +55,6 @@ def apply_cors(response):
     return response
 
 
-@app.route('/')
-def ping():
-    return 'home'
-
 @app.route('/wps', methods=['GET', 'POST'])
 def wps():
 
