@@ -4,6 +4,7 @@ git+https://github.com/geopython/pywps.git
 scikit-image
 gunicorn
 rasterio >= 1.0.9
+rasterio[s3]
 altair
 selenium
 python-dateutil
