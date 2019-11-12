@@ -1,10 +1,13 @@
 FROM opendatacube/datacube-core:1.7
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 WORKDIR /code
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium-browser \
     chromium-chromedriver \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # include webdriver installed by apt in path
