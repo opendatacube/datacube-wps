@@ -31,6 +31,8 @@ from processes.wofsdrill import WofsDrill
 
 app = flask.Flask(__name__)
 
+app.url_map.strict_slashes = False
+
 processes = [
     WofsDrill(),
     FcDrill()
