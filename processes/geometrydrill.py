@@ -5,12 +5,14 @@ import json
 
 import datacube
 from datacube.utils import geometry
+from datacube.api.core import output_geobox, query_group_by, apply_aliases
 
 import rasterio.features
 
 import csv
 import io
 import xarray
+import numpy
 
 import boto3
 import botocore
@@ -82,7 +84,33 @@ def _getData(shape, product, crs, time=None, extra_query={}):
             query['time'] = time
         final_query = {**query, **extra_query}
         # print("loading data!", final_query)
-        data = dc.load(product=product, group_by='solar_day', **final_query)
+
+        datasets = fc.find_datasets(product=produt, **final_query)
+        if len(datasets) == 0:
+            return xarray.Dataset()
+        datacube_product = datasets[0].type
+
+        geobox = output_geobox(grid_spec=datacube_product.grid_spec, **final_query)
+        grouped = dc.group_datasets(datasets, query_group_by(group_by='solar_day', **final_query))
+
+        measurement_dicts = datacube_product.lookup_measurements(final_query.get('measurements'))
+
+        byte_count = 1
+        for x in geobox.shape:
+            byte_count *= x
+        for x in grouped.shape:
+            byte_count *= x
+        byte_count *= sum(numpy.dtype(m.dtype).itemsize for m in measurement_dicts)
+
+        print('byte count for query: ', byte_count)
+
+        result = dc.load_data(grouped, geobox, measurement_dicts,
+                              resampling=final_query.get('resampling'),
+                              fuse_func=final_query.get('fuse_func'),
+                              dask_chunks=final_query.get('dask_chunks'),
+                              skip_broken_datasets=final_query.get('skip_broken_datasets', False))
+
+        data = apply_aliases(result, datacube_product, final_query.get('measurements'))
         print("data load done", product, data)
         return data
 
