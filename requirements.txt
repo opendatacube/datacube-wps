@@ -8,5 +8,3 @@ rasterio[s3]
 altair
 selenium
 python-dateutil
-sentry_sdk
-blinker
