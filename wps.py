@@ -23,22 +23,11 @@
 
 import os
 import flask
-import sentry_sdk
-from sentry_sdk.integrations.flask import FlaskIntegration
 
 import pywps
 from pywps import Service
 from processes.fcdrill import FcDrill
 from processes.wofsdrill import WofsDrill
-
-
-
-if os.environ.get("SENTRY_KEY") and os.environ.get("SENTRY_PROJECT"):
-   sentry_sdk.init(
-        dsn="https://%s@sentry.io/%s" % (os.environ["SENTRY_KEY"], os.environ["SENTRY_PROJECT"]),
-        integrations = [FlaskIntegration()]
-   )
-
 
 app = flask.Flask(__name__)
 
