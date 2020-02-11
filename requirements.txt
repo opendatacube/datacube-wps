@@ -10,3 +10,5 @@ selenium
 python-dateutil
 sentry_sdk
 blinker
+gevent
+eventlet
