@@ -1,6 +1,6 @@
 automat >= 0.3.0
 flask
-git+https://github.com/geopython/pywps.git
+pywps
 scikit-image
 gunicorn
 rasterio >= 1.0.9
@@ -10,5 +10,3 @@ selenium
 python-dateutil
 sentry_sdk
 blinker
-gevent
-eventlet

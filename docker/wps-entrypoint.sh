@@ -11,7 +11,7 @@ then
     A=$$; wget -q "$WPS_CONFIG_URL" -O $A.d && mv $A.d /code/pywps.cfg
 fi
 
-pywps -c pywps.cfg migrate
+# pywps -c pywps.cfg migrate
 
 # create aws credential in /root/.aws/credentials
 # echo "[default]" >> /root/.aws/credentials
