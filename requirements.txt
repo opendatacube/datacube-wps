@@ -1,5 +1,5 @@
 automat >= 0.3.0
-gevent
+#gevent wps is not compatabile with gevent
 flask
 pywps
 scikit-image
