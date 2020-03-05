@@ -1,4 +1,5 @@
 from timeit import default_timer as timer
+import multiprocessing
 import datacube
 from datacube.storage.masking import make_mask
 
@@ -101,6 +102,12 @@ def _processData(datas, **kwargs):
         'NPV': NonPhotosynthetic_veg_percent *100,
         'Unobservable': Unobservable * 100
     })
+
+    print('calling dask with', multiprocessing.cpu_count())
+    dask_time = timer()
+    new_ds = new_ds.compute(scheduler='processes')
+    print(new_ds)
+    print('dask took exactly', timer() - dask_time)
 
     df = new_ds.to_dataframe()
     df.reset_index(inplace=True)
