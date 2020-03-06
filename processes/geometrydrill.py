@@ -85,9 +85,14 @@ def _getData(shape, product, crs, time=None, extra_query={}):
             time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
             query['time'] = time
         final_query = {**query, **extra_query}
-        # print("loading data!", final_query)
+        print("loading data!", final_query)
 
-        datasets = fc.find_datasets(product=produt, **final_query)
+        datasets = dc.find_datasets(product=product, **{k: v
+                                                        for k, v in final_query.items()
+                                                        if k not in ['dask_chunks',
+                                                                     'fuse_func',
+                                                                     'resampling',
+                                                                     'skip_broken_datasets']})
         if len(datasets) == 0:
             return xarray.Dataset()
         datacube_product = datasets[0].type
@@ -102,7 +107,7 @@ def _getData(shape, product, crs, time=None, extra_query={}):
             byte_count *= x
         for x in grouped.shape:
             byte_count *= x
-        byte_count *= sum(numpy.dtype(m.dtype).itemsize for m in measurement_dicts)
+        byte_count *= sum(numpy.dtype(m.dtype).itemsize for m in measurement_dicts.values())
 
         print('byte count for query: ', byte_count)
 
