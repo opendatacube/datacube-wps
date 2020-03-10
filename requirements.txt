@@ -1,7 +1,7 @@
 automat >= 0.3.0
 #gevent wps is not compatabile with gevent
 flask
-pywps
+git+https://github.com/geopython/pywps.git@4.2.4
 scikit-image
 gunicorn
 rasterio >= 1.0.9
