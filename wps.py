@@ -31,6 +31,14 @@ from pywps import Service
 from processes.fcdrill import FcDrill
 from processes.wofsdrill import WofsDrill
 
+import logging
+
+logger = logging.getLogger('PYWPS')
+handler = logging.StreamHandler()
+format = '%(asctime)s] [%(levelname)s] file=%(pathname)s line=%(lineno)s module=%(module)s function=%(funcName)s %(message)s'
+handler.setFormatter(logging.Formatter(format))
+logger.addHandler(handler)
+
 
 if os.environ.get("SENTRY_KEY") and os.environ.get("SENTRY_PROJECT"):
    sentry_sdk.init(
