@@ -1,3 +1,5 @@
+from timeit import default_timer as timer
+import multiprocessing
 import datacube
 from datacube.storage.masking import make_mask
 
@@ -14,6 +16,7 @@ from processes.geometrydrill import _uploadToS3, DatetimeEncoder, _json_format
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
 def _processData(datas, **kwargs):
+    start_time = timer()
     dc = datacube.Datacube()
     wofs_product = dc.index.products.get_by_name("wofs_albers")
 
@@ -49,6 +52,9 @@ def _processData(datas, **kwargs):
         mask = make_mask(mask_data, **m['flags'])
         data = data.where(mask['water'])
 
+    print('masking took', timer() - start_time)
+    print('data', data)
+
     total_invalid = (np.isnan(data)).sum(dim=['x', 'y'])
     not_pixels = total_valid - (total - total_invalid)
 
@@ -59,6 +65,7 @@ def _processData(datas, **kwargs):
 
     #turn FC array into integer only as nanargmax doesn't seem to handle floats the way we want it to
     FC_int = maxFC.astype('int16')
+    print('FC_int', FC_int)
 
     #use numpy.nanargmax to get the index of the maximum value along the variable dimension
     #BSPVNPV=np.nanargmax(FC_int, axis=0)
@@ -95,6 +102,12 @@ def _processData(datas, **kwargs):
         'NPV': NonPhotosynthetic_veg_percent *100,
         'Unobservable': Unobservable * 100
     })
+
+    print('calling dask with', multiprocessing.cpu_count())
+    dask_time = timer()
+    new_ds = new_ds.compute(scheduler='processes')
+    print(new_ds)
+    print('dask took exactly', timer() - dask_time)
 
     df = new_ds.to_dataframe()
     df.reset_index(inplace=True)
@@ -176,6 +189,8 @@ def _processData(datas, **kwargs):
             'data': output_str
         }
     }
+
+    print('in processData: ', timer() - start_time)
     return outputs
 
 

@@ -3,14 +3,18 @@ from pywps import Process, ComplexInput, ComplexOutput, LiteralInput, Format, FO
 from osgeo import ogr
 import json
 
+from timeit import default_timer as timer
+
 import datacube
 from datacube.utils import geometry
+from datacube.api.core import output_geobox, query_group_by, apply_aliases
 
 import rasterio.features
 
 import csv
 import io
 import xarray
+import numpy
 
 import boto3
 import botocore
@@ -81,8 +85,39 @@ def _getData(shape, product, crs, time=None, extra_query={}):
             time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
             query['time'] = time
         final_query = {**query, **extra_query}
-        # print("loading data!", final_query)
-        data = dc.load(product=product, group_by='solar_day', **final_query)
+        print("loading data!", final_query)
+
+        datasets = dc.find_datasets(product=product, **{k: v
+                                                        for k, v in final_query.items()
+                                                        if k not in ['dask_chunks',
+                                                                     'fuse_func',
+                                                                     'resampling',
+                                                                     'skip_broken_datasets']})
+        if len(datasets) == 0:
+            return xarray.Dataset()
+        datacube_product = datasets[0].type
+
+        geobox = output_geobox(grid_spec=datacube_product.grid_spec, **final_query)
+        grouped = dc.group_datasets(datasets, query_group_by(group_by='solar_day', **final_query))
+
+        measurement_dicts = datacube_product.lookup_measurements(final_query.get('measurements'))
+
+        byte_count = 1
+        for x in geobox.shape:
+            byte_count *= x
+        for x in grouped.shape:
+            byte_count *= x
+        byte_count *= sum(numpy.dtype(m.dtype).itemsize for m in measurement_dicts.values())
+
+        print('byte count for query: ', byte_count)
+
+        result = dc.load_data(grouped, geobox, measurement_dicts,
+                              resampling=final_query.get('resampling'),
+                              fuse_func=final_query.get('fuse_func'),
+                              dask_chunks=final_query.get('dask_chunks', {'time': 1}),
+                              skip_broken_datasets=final_query.get('skip_broken_datasets', False))
+
+        data = apply_aliases(result, datacube_product, final_query.get('measurements'))
         print("data load done", product, data)
         return data
 
@@ -200,6 +235,7 @@ class GeometryDrill(Process):
             # Can't drill if there is no geometry
             raise pywps.InvalidParameterException()
 
+        start_time = timer()
         data = dict()
         for feature in features:
             geometry = feature['geometry']
@@ -243,8 +279,12 @@ class GeometryDrill(Process):
                       d[band] = d[band].where(mask)
               masked[k] = d
 
+        print('time elasped in load: {}'.format(timer() - start_time))
 
         outputs = self.custom_handler(masked, process_id=self.uuid)
+
+        print('time elasped in process: {}'.format(timer() - start_time))
+
         for ident, output_value in outputs.items():
           if "data" in output_value:
             response.outputs[ident].data = output_value['data']
