@@ -1,5 +1,6 @@
 import pywps
 from pywps import Process, ComplexInput, ComplexOutput, LiteralInput, Format, FORMATS
+from pywps.app.exceptions import ProcessError
 from osgeo import ogr
 import json
 
@@ -110,6 +111,9 @@ def _getData(shape, product, crs, time=None, extra_query={}):
         byte_count *= sum(numpy.dtype(m.dtype).itemsize for m in measurement_dicts.values())
 
         print('byte count for query: ', byte_count)
+        if byte_count > 2.0e9:
+            print('this should raise an error')
+            raise ProcessError("requested area requires {}GB data to load - maximum is 2GB".format(int(byte_count / 1e9)))
 
         result = dc.load_data(grouped, geobox, measurement_dicts,
                               resampling=final_query.get('resampling'),
