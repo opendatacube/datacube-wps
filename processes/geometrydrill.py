@@ -95,7 +95,8 @@ def _getData(shape, product, crs, time=None, extra_query={}):
                                                                      'resampling',
                                                                      'skip_broken_datasets']})
         if len(datasets) == 0:
-            return xarray.Dataset()
+            raise ProcessError("query returned no data")
+
         datacube_product = datasets[0].type
 
         geobox = output_geobox(grid_spec=datacube_product.grid_spec, **final_query)
@@ -112,7 +113,6 @@ def _getData(shape, product, crs, time=None, extra_query={}):
 
         print('byte count for query: ', byte_count)
         if byte_count > 2.0e9:
-            print('this should raise an error')
             raise ProcessError("requested area requires {}GB data to load - maximum is 2GB".format(int(byte_count / 1e9)))
 
         result = dc.load_data(grouped, geobox, measurement_dicts,
