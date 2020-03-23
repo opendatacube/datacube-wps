@@ -4,6 +4,7 @@ import datacube
 from datacube.storage.masking import make_mask
 
 from pywps import LiteralOutput, ComplexOutput
+from pywps.app.exceptions import ProcessError
 from processes.geometrydrill import GeometryDrill
 import altair
 import xarray
@@ -43,6 +44,9 @@ def _processData(datas, **kwargs):
                 data = xarray.concat([data, d], dim='time')
             else:
                 data = d
+    if not data or not datas['wofs_albers']:
+        raise ProcessError('query returned no data')
+
     total = data.count(dim=['x', 'y'])
     total_valid = (data != -1).sum(dim=['x', 'y'])
 
