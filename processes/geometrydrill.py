@@ -95,7 +95,7 @@ def _getData(shape, product, crs, time=None, extra_query={}):
                                                                      'resampling',
                                                                      'skip_broken_datasets']})
         if len(datasets) == 0:
-            raise ProcessError("query returned no data")
+            return xarray.Dataset()
 
         datacube_product = datasets[0].type
 
@@ -103,6 +103,10 @@ def _getData(shape, product, crs, time=None, extra_query={}):
         grouped = dc.group_datasets(datasets, query_group_by(group_by='solar_day', **final_query))
 
         measurement_dicts = datacube_product.lookup_measurements(final_query.get('measurements'))
+
+        GB = 1.e9
+        MAX_BYTES_IN_GB = 20.0
+        MAX_BYTES_PER_OBS_IN_GB = 2.0
 
         byte_count = 1
         for x in geobox.shape:
@@ -112,8 +116,16 @@ def _getData(shape, product, crs, time=None, extra_query={}):
         byte_count *= sum(numpy.dtype(m.dtype).itemsize for m in measurement_dicts.values())
 
         print('byte count for query: ', byte_count)
-        if byte_count > 2.0e9:
-            raise ProcessError("requested area requires {}GB data to load - maximum is 2GB".format(int(byte_count / 1e9)))
+        if byte_count > MAX_BYTES_IN_GB * GB:
+            raise ProcessError(("requested area requires {}GB data to load - "
+                                "maximum is {}GB").format(int(byte_count / GB), MAX_BYTES_IN_GB))
+
+        print('grouped shape', grouped.shape)
+        assert len(grouped.shape) == 1
+        bytes_per_obs = byte_count / grouped.shape[0]
+        if bytes_per_obs > MAX_BYTES_PER_OBS_IN_GB * GB:
+            raise ProcessError(("requested time slices each requires {}GB data to load - "
+                                "maximum is {}GB").format(int(bytes_per_obs / GB), MAX_BYTES_PER_OBS_IN_GB))
 
         result = dc.load_data(grouped, geobox, measurement_dicts,
                               resampling=final_query.get('resampling'),
