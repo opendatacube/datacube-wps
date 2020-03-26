@@ -6,6 +6,10 @@ Datacube Web Processing Service
 
 Datacube WPS is based on PYWPS (https://github.com/geopython/pywps) version 2.4
 
+Available processes are below:
+* fcdrill
+* wofsdrill
+
 ## Flask Dev Server
 
 To run the WPS on localhost modify `pywps.cfg` to point `url` and `outputurl` to `localhost`. `workdir` and `outputpath` should be left as `tmp` and `outputs` respectively for a local dev server and `base_route` should be `/` see example:
