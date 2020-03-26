@@ -4,7 +4,7 @@ Datacube Web Processing Service
 
 * Free software: Apache Software License 2.0
 
-Currently the datacube WPS software runs on a [fork]((git+https://github.com/roarmstrong/pywps.git@fa86cc78b6776546828e2127a0b45a858161fff4) of PyWPS which allows storing files on AWS S3. For accessing and storing data onto AWS S3 WPS must be run with IAM permissions to read data from S3 and be provided with an S3 bucket for results and permissions to write to that bucket.
+Datacube WPS is based on PYWPS (https://github.com/geopython/pywps) version 2.4
 
 ## Flask Dev Server
 
