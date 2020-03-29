@@ -6,6 +6,7 @@ from datacube.storage.masking import make_mask
 from pywps import LiteralOutput, ComplexOutput
 from pywps.app.exceptions import ProcessError
 from processes.geometrydrill import GeometryDrill
+
 import altair
 import xarray
 import io
@@ -13,9 +14,11 @@ import numpy as np
 import json
 
 from processes.geometrydrill import _uploadToS3, DatetimeEncoder, _json_format
+from processes.utils import log_call
 
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
+@log_call
 def _processData(datas, **kwargs):
     start_time = timer()
     dc = datacube.Datacube()

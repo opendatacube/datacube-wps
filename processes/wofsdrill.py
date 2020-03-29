@@ -17,8 +17,10 @@ from datacube.storage import BandInfo
 from datacube.utils import geometry
 from dea.io.pdrill import PixelDrill
 
+from processes.utils import log_call
 
 
+@log_call
 def _getData(shape, product, crs, time=None, extra_query={}):
     with datacube.Datacube() as dc:
         dc_crs = datacube.utils.geometry.CRS(crs)
@@ -57,6 +59,7 @@ def _getData(shape, product, crs, time=None, extra_query={}):
         return array
 
 
+@log_call
 def _processData(datas, **kwargs):    
     rules = [
         {

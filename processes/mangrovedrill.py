@@ -14,6 +14,9 @@ import xarray
 from processes.geometrydrill import GeometryDrill, _json_format, DatetimeEncoder
 from pywps.inout.formats import FORMATS
 
+from processes.utils import log_call
+
+
 tableStyle = {
     "columns": {
         "Woodland": {
@@ -35,6 +38,7 @@ tableStyle = {
 }
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
+@log_call
 def _processData(datas, **kwargs):
     data = datas[0]
     woodland = data.where( data == 1 ).count(['x', 'y']).drop('extent').rename(name_dict={'canopy_cover_class': 'woodland'})
@@ -79,5 +83,3 @@ class MangroveDrill(GeometryDrill):
             products     = [{
                     "name": "mangrove_cover"
                 }])
-        
-
