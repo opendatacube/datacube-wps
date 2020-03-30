@@ -31,14 +31,17 @@ app = flask.Flask(__name__)
 
 app.url_map.strict_slashes = False
 
+process_classes = {
+    'WOfSDrill': WOfSDrill,
+    'FCDrill': FCDrill,
+    'MangroveDrill': MangroveDrill
+}
+
 with open('DEA_WPS_config.yaml') as fl:
     config = yaml.load(fl)
 
-processes = [
-    WOfSDrill(config['processes']['WOfSDrill']['about'], config['processes']['WOfSDrill']['style']),
-    FCDrill(config['processes']['FCDrill']['about'], config['processes']['FCDrill']['style']),
-    MangroveDrill(config['processes']['MangroveDrill']['about'], config['processes']['MangroveDrill']['style'])
-]
+processes = [process_classes[proc_name](proc_settings['about'], proc_settings['style'])
+             for proc_name, proc_settings in config['processes'].items()]
 
 service = Service(processes, ['pywps.cfg'])
 
