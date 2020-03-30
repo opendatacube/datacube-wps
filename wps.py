@@ -32,6 +32,7 @@ from processes.fcdrill import FcDrill
 from processes.wofsdrill import WofsDrill
 
 import logging
+import yaml
 
 logger = logging.getLogger('PYWPS')
 handler = logging.StreamHandler()
@@ -50,9 +51,12 @@ app = flask.Flask(__name__)
 
 app.url_map.strict_slashes = False
 
+with open('DEA_WPS_config.yaml') as fl:
+    config = yaml.load(fl)
+
 processes = [
-    WofsDrill(),
-    FcDrill()
+    WofsDrill(**config['processes']['WOfSDrill']['about']),
+    FcDrill(**config['processes']['FCDrill']['about'])
 ]
 
 # For the process list on the home page
