@@ -40,15 +40,6 @@ processes = [
     MangroveDrill(config['processes']['MangroveDrill']['about'], config['processes']['MangroveDrill']['style'])
 ]
 
-# For the process list on the home page
-
-process_descriptor = {}
-for process in processes:
-    abstract = process.abstract
-    identifier = process.identifier
-    process_descriptor[identifier] = abstract
-
-# This is, how you start PyWPS instance
 service = Service(processes, ['pywps.cfg'])
 
 
@@ -59,17 +50,8 @@ def apply_cors(response):
     return response
 
 
-# @app.route('/')
-# def index():
-#     server_url = pywps.configuration.get_config_value("server", "url")
-#     request_url = flask.request.url
-#     return flask.render_template('home.html', request_url=request_url,
-#                                  server_url=server_url,
-#                                  process_descriptor=process_descriptor)
-
 @app.route('/', methods=['GET', 'POST'])
 def wps():
-
     return service
 
 
@@ -96,14 +78,7 @@ def outputfile(filename):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="""Script for starting an example PyWPS
-                       instance with sample processes""",
-        epilog="""Do not use this service in a production environment.
-         It's intended to be running in test environment only!
-        For more documentation, visit http://pywps.org/doc
-        """
-        )
+    parser = argparse.ArgumentParser(description="Script for starting an datacube-wps instance")
     parser.add_argument('-d', '--daemon',
                         action='store_true', help="run in daemon mode")
     parser.add_argument('-a','--all-addresses',

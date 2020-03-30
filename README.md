@@ -4,11 +4,11 @@ Datacube Web Processing Service
 
 * Free software: Apache Software License 2.0
 
-Datacube WPS is based on PYWPS (https://github.com/geopython/pywps) version 2.4
+Datacube WPS is based on PYWPS (https://github.com/geopython/pywps) version 4.2.4
 
 Available processes are below:
-* fcdrill
-* wofsdrill
+* FCDrill
+* WOfSDrill
 
 ## Flask Dev Server
 
@@ -40,4 +40,4 @@ outputurl=https://wps.services.dea.ga.gov.au/outputs/
 * The wps can be started using gunicorn: `gunicorn -b 0.0.0.0:8000 wps:app`
 
 ## Changing Processes in WPS
-The processes which are available to users of the WPS are enumerated in the `processes` array in `wps.py`. In order to change which processes import the process definition and add it to the `processes` array.
+The processes which are available to users of the WPS are enumerated in the `DEA_WPS_config.yaml` file.
