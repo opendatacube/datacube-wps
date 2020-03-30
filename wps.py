@@ -55,8 +55,8 @@ with open('DEA_WPS_config.yaml') as fl:
     config = yaml.load(fl)
 
 processes = [
-    WofsDrill(**config['processes']['WOfSDrill']['about']),
-    FcDrill(**config['processes']['FCDrill']['about'])
+    WofsDrill(config['processes']['WOfSDrill']['about'], config['processes']['WOfSDrill']['style']),
+    FcDrill(config['processes']['FCDrill']['about'], config['processes']['FCDrill']['style'])
 ]
 
 # For the process list on the home page

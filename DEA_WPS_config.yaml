@@ -20,6 +20,21 @@ processes:
             status_supported: True
             geometry_type: "point"
 
+        style:
+            columns:
+                Wet:
+                    units: "#"
+                    chartLineColor: "#4F81BD"
+                    active: True
+                Dry:
+                    units: "#"
+                    chartLineColor: "#D99694"
+                    active: True
+                Not Observable:
+                    units: "#"
+                    chartLineColor: "#707070"
+                    active: True
+
     FCDrill:
         about:
             identifier: FractionalCoverDrill
@@ -29,3 +44,22 @@ processes:
             store_supported: True
             status_supported: True
             geometry_type: polygon
+
+        style:
+            columns:
+                Bare Soil:
+                    units: "%"
+                    chartLineColor: "#8B0000"
+                    active: True
+                Photosynthetic Vegetation:
+                    units: "%"
+                    chartLineColor: "green"
+                    active: True
+                Non-Photosynthetic Vegetation:
+                    units: "%"
+                    chartLineColor: "#dac586"
+                    active: True
+                Unobservable:
+                    units: "%"
+                    chartLineColor: "#6699CC"
+                    active": False

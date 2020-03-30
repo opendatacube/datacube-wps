@@ -3,6 +3,7 @@ import json
 import numpy as np
 import io
 from xarray import DataArray, Dataset
+from functools import partial
 
 import datacube
 import altair
@@ -153,10 +154,12 @@ def _processData(datas, **kwargs):
     csv = data.squeeze(dim=('latitude', 'longitude'), drop=True).to_dataframe().to_csv(header=['Observation'],
                                                                                        date_format="%Y-%m-%d")
 
+    # not sure why style was never applied
     output_dict = {
         "data": csv,
         "isEnabled": False,
         "type": "csv",
+        # "tableStyle": style,
         "name": "WOfS"
     }
 
@@ -177,30 +180,11 @@ def _processData(datas, **kwargs):
     return outputs
 
 
-tableStyle = {
-    "columns": {
-        "Wet": {
-            "units": "#",
-            "chartLineColor": "#4F81BD",
-            "active": True
-        },
-        "Dry": {
-            "units": "#",
-            "chartLineColor": "#D99694",
-            "active": True
-        },
-        "Not Observable": {
-            "units": "#",
-            "chartLineColor": "#707070",
-            "active": True
-        }
-    }
-}
 
 class WofsDrill(GeometryDrill):
-    def __init__(self, **kwargs):
+    def __init__(self, about, style):
         super(WofsDrill, self).__init__(
-            handler          = _processData,
+            handler          = partial(_processData, style=style),
             products         = [{
                 "name": "wofs_albers",
                 "additional_query": {
@@ -226,6 +210,4 @@ class WofsDrill(GeometryDrill):
             ],
             custom_data_loader=_getData,
             mask=False,
-            **kwargs)
-        
-
+            **about)
