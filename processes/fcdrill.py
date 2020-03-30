@@ -233,16 +233,9 @@ def wofls_fuser(dest, src):
     return dest
 
 class FcDrill(GeometryDrill):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(FcDrill, self).__init__(
             handler          = _processData,
-            identifier       = 'FractionalCoverDrill',
-            version          = '0.2',
-            title            = 'Fractional Cover',
-            abstract         = 'Performs Fractional Cover Polygon Drill',
-            store_supported  = True,
-            status_supported = True,
-            geometry_type    = "polygon",
             products         = [
                 {
                     "name": "ls8_fc_albers"
@@ -269,6 +262,4 @@ class FcDrill(GeometryDrill):
                               supported_formats=[
                                 _json_format
                               ])
-            ])
-        
-
+            ], **kwargs)

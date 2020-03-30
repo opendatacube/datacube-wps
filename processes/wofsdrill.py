@@ -198,25 +198,9 @@ tableStyle = {
 }
 
 class WofsDrill(GeometryDrill):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(WofsDrill, self).__init__(
             handler          = _processData,
-            identifier       = 'WOfSDrill',
-            version          = '0.3',
-            title            = 'Water Observations from Space Pixel Drill',
-            abstract         = """
-Water Observations from Space Pixel Drill
-
-Water Observations from Space (WOfS) provides surface water observations derived from satellite imagery for all of Australia. The current product (Version 2.1.5) includes observations taken from 1986 to the present, from the Landsat 5, 7 and 8 satellites. WOfS covers all of mainland Australia and Tasmania but excludes off-shore Territories.
-
-The WOfS product allows users to get a better understanding of where water is normally present in a landscape, where water is seldom observed, and where inundation has occurred occasionally.
-
-This Pixel Drill will output the water observations for a point through time as graph.
-
-For service status information, see https://status.dea.ga.gov.au""",
-            store_supported  = True,
-            status_supported = True,
-            geometry_type    = "point",
             products         = [{
                 "name": "wofs_albers",
                 "additional_query": {
@@ -241,6 +225,7 @@ For service status information, see https://status.dea.ga.gov.au""",
                               ])
             ],
             custom_data_loader=_getData,
-            mask=False)
+            mask=False,
+            **kwargs)
         
 
