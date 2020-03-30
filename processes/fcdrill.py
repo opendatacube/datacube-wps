@@ -2,6 +2,7 @@ from timeit import default_timer as timer
 import multiprocessing
 import datacube
 from datacube.storage.masking import make_mask
+from functools import partial
 
 from pywps import LiteralOutput, ComplexOutput
 from pywps.app.exceptions import ProcessError
@@ -19,7 +20,7 @@ from processes.utils import log_call
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
 @log_call
-def _processData(datas, **kwargs):
+def _processData(datas, style, **kwargs):
     start_time = timer()
     dc = datacube.Datacube()
     wofs_product = dc.index.products.get_by_name("wofs_albers")
@@ -158,30 +159,7 @@ def _processData(datas, **kwargs):
         "isEnabled": True,
         "type": "csv",
         "name": "FC",
-        "tableStyle": {
-            "columns": {
-                "Bare Soil": {
-                    "units": "%",
-                    "chartLineColor": "#8B0000",
-                    "active": True
-                },
-                "Photosynthetic Vegetation": {
-                    "units": "%",
-                    "chartLineColor": "green",
-                    "active": True
-                },
-                "Non-Photosynthetic Vegetation": {
-                    "units": "%",
-                    "chartLineColor": "#dac586",
-                    "active": True
-                },
-                "Unobservable": {
-                    "units": "%",
-                    "chartLineColor": "#6699CC",
-                    "active": False
-                }
-            }
-        }
+        "tableStyle": style
     }
 
     output_json = json.dumps(output_dict, cls=DatetimeEncoder)
@@ -201,30 +179,6 @@ def _processData(datas, **kwargs):
     return outputs
 
 
-tableStyle = {
-    "columns": {
-        "Bare Soil": {
-            "units": "%",
-            "chartLineColor": "#8B0000",
-            "active": True
-        },
-        "Photosynthetic Vegetation": {
-            "units": "%",
-            "chartLineColor": "green",
-            "active": True
-        },
-        "Non-Photosynthetic Vegetation": {
-            "units": "%",
-            "chartLineColor": "#dac586",
-            "active": True
-        },
-        "Unmixing Error": {
-            "units": "%",
-            "chartLineColor": "#6699CC",
-            "active": False
-        }
-    }
-}
 
 def wofls_fuser(dest, src):
     import numpy
@@ -232,10 +186,11 @@ def wofls_fuser(dest, src):
     numpy.copyto(dest, src, where=where_nodata)
     return dest
 
+
 class FcDrill(GeometryDrill):
-    def __init__(self, **kwargs):
+    def __init__(self, about, style):
         super(FcDrill, self).__init__(
-            handler          = _processData,
+            handler          = partial(_processData, style=style),
             products         = [
                 {
                     "name": "ls8_fc_albers"
@@ -262,4 +217,4 @@ class FcDrill(GeometryDrill):
                               supported_formats=[
                                 _json_format
                               ])
-            ], **kwargs)
+            ], **about)
