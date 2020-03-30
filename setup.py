@@ -1,38 +1,30 @@
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup, find_packages
 
 with open('VERSION.txt') as ff:
     VERSION = ff.read().strip()
 
 with open('requirements.txt') as f:
-    INSTALL_REQUIRES = f.read().splitlines()[:-1]
-    INSTALL_REQUIRES.append('pywps=='+VERSION)
+    INSTALL_REQUIRES = f.read().splitlines()
 
 DESCRIPTION = (
-'''PyWPS is an implementation of the Web Processing Service standard from the
-Open Geospatial Consortium. PyWPS is written in Python.
-PyWPS-Flask is an example service using the PyWPS server, distributed along 
-with a basic set of sample processes and sample configuration file. It's 
-usually used for testing and development purposes.
-''')
+'''datacube-wps is an implementation of the Web Processing Service standard from the
+Open Geospatial Consortium.''')
 
-KEYWORDS = 'PyWPS WPS OGC processing'
+KEYWORDS = 'ODC WPS OGC processing'
 
 config = {
     'description': DESCRIPTION,
     'keywords': KEYWORDS,
-    'author': 'PyWPS PSC',
+    'author': 'Digital Earth Australia',
     'license': 'MIT',
     'platforms': 'all',
-    'url': 'http://pywps.org',
-    'download_url': 'https://github.com/lazaa32/pywps-flask',
-    'author_email': 'luis.a.de.sousa@gmail.com',
-    'maintainer': 'Luis de Sousa',
-    'maintainer_email': 'luis.de.sousa@protonmail.ch',
+    'url': 'http://www.ga.gov.au/dea',
+    'download_url': 'https://github.com/opendatacube/datacube-wps',
+    'author_email': 'earth.observation@ga.gov.au',
+    'maintainer': 'Digital Earth Australia',
+    'maintainer_email': 'earth.observation@ga.gov.au',
     'classifiers': [
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
@@ -43,12 +35,8 @@ config = {
     ],
     'version': VERSION,
     'install_requires': INSTALL_REQUIRES,
-    'dependency_links': [
-        'git+https://github.com/geopython/pywps.git@pywps-'+VERSION+'#egg=pywps-'+VERSION
-     ],
-    'packages': ['processes', 'tests'],
-    'scripts': ['demo.py'],
-    'name': 'pywps-flask'
+    'packages': find_packages(),
+    'name': 'datacube-wps'
 }
 
 setup(**config)
