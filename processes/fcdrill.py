@@ -187,9 +187,9 @@ def wofls_fuser(dest, src):
     return dest
 
 
-class FcDrill(GeometryDrill):
+class FCDrill(GeometryDrill):
     def __init__(self, about, style):
-        super(FcDrill, self).__init__(
+        super().__init__(
             handler          = partial(_processData, style=style),
             products         = [
                 {

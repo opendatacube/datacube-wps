@@ -181,9 +181,9 @@ def _processData(datas, **kwargs):
 
 
 
-class WofsDrill(GeometryDrill):
+class WOfSDrill(GeometryDrill):
     def __init__(self, about, style):
-        super(WofsDrill, self).__init__(
+        super().__init__(
             handler          = partial(_processData, style=style),
             products         = [{
                 "name": "wofs_albers",

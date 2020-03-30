@@ -1,6 +1,7 @@
 import pywps
 from osgeo import ogr
 import json
+from functools import partial
 
 import datacube
 from datacube.utils import geometry
@@ -17,29 +18,9 @@ from pywps.inout.formats import FORMATS
 from processes.utils import log_call
 
 
-tableStyle = {
-    "columns": {
-        "Woodland": {
-            "units": "#",
-            "chartLineColor": "#9FFF4C",
-            "active": True
-        },
-        "Open Forest": {
-            "units": "#",
-            "chartLineColor": "#5ECC00",
-            "active": True
-        },
-        "Closed Forest": {
-            "units": "#",
-            "chartLineColor": "#3B7F00",
-            "active": True
-        }
-    }
-}
-
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
 @log_call
-def _processData(datas, **kwargs):
+def _processData(datas, style, **kwargs):
     data = datas[0]
     woodland = data.where( data == 1 ).count(['x', 'y']).drop('extent').rename(name_dict={'canopy_cover_class': 'woodland'})
     open_forest = data.where( data == 2).count(['x', 'y']).drop('extent').rename(name_dict={'canopy_cover_class': 'open_forest'})
@@ -54,7 +35,7 @@ def _processData(datas, **kwargs):
         "isEnabled": True,
         "type": "csv",
         "name": "Mangrove Cover",
-        "tableStyle": tableStyle
+        "tableStyle": style
     }
 
     output_json = json.dumps(output_dict, cls=DatetimeEncoder)
@@ -70,16 +51,10 @@ def _processData(datas, **kwargs):
 
 
 class MangroveDrill(GeometryDrill):
-    def __init__(self):
-        super(MangroveDrill, self).__init__(
-            handler          = _processData,
-            identifier       = 'Mangrove Cover Drill',
-            version          = '0.1',
-            title            = 'Mangrove Cover',
-            abstract         = 'Performs Mangrove Polygon Drill',
-            store_supported  = True,
-            status_supported = True,
-            geometry_type    = "polygon",
+    def __init__(self, about, style):
+        super().__init__(
+            handler          = partial(_processData, style=style),
             products     = [{
                     "name": "mangrove_cover"
-                }])
+                }],
+            **about)
