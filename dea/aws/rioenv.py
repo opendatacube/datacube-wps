@@ -8,7 +8,7 @@ from botocore.credentials import ReadOnlyCredentials
 import botocore.session
 from types import SimpleNamespace
 
-from . import auto_find_region, get_creds_with_retry
+from odc.aws import auto_find_region, get_creds_with_retry
 
 
 _thread_lcl = threading.local()

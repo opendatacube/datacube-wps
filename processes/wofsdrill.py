@@ -17,8 +17,10 @@ from datacube.storage import BandInfo
 from datacube.utils import geometry
 from dea.io.pdrill import PixelDrill
 
+from processes.utils import log_call
 
 
+@log_call
 def _getData(shape, product, crs, time=None, extra_query={}):
     with datacube.Datacube() as dc:
         dc_crs = datacube.utils.geometry.CRS(crs)
@@ -52,11 +54,13 @@ def _getData(shape, product, crs, time=None, extra_query={}):
         array = DataArray(
             results,
             dims=('longitude', 'latitude', 'time'),
-            coords={'longitude': np.full(1, lonlat[0]), 'latitude': np.full(1, lonlat[1]), 'time': times})
+            coords={'longitude': np.full(1, lonlat[0]), 'latitude': np.full(1, lonlat[1]), 'time': times},
+            attrs={'flags_definition': measurement['flags_definition']})
 
         return array
 
 
+@log_call
 def _processData(datas, **kwargs):    
     rules = [
         {
@@ -81,11 +85,10 @@ def _processData(datas, **kwargs):
         }
     ]
 
-    with datacube.Datacube() as dc:
-        product = dc.index.products.get_by_name('wofs_albers')
+    water = datas['wofs_albers']
 
     def get_flags(val):
-        flag_dict = datacube.storage.masking.mask_to_dict(product.measurements['water'].flags_definition, val)
+        flag_dict = datacube.storage.masking.mask_to_dict(water.attrs['flags_definition'], val)
         flags = list(filter(flag_dict.get, flag_dict))
         # apply rules in sequence
         ret_val = 'not observable'
@@ -97,7 +100,7 @@ def _processData(datas, **kwargs):
     gf = np.vectorize(get_flags)
     
     data = Dataset()
-    data['observation'] = datas['wofs_albers']
+    data['observation'] = water
     print(data)
     data['observation'].values = gf(data['observation'].values)
 

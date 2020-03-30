@@ -23,8 +23,10 @@ from botocore.client import Config
 import pywps.configuration as config
 
 from dateutil.parser import parse
-from concurrent.futures import ProcessPoolExecutor
+from processes.utils import log_call
 
+
+@log_call
 def _uploadToS3(filename, data, mimetype):
     session = boto3.Session()
     bucket = config.get_config_value('s3', 'bucket')
@@ -74,6 +76,7 @@ def geometry_mask(geoms, src_crs, geobox, all_touched=False, invert=False):
 
 # Default function for querying and loading data for WPS processes
 # Uses dc.load and groups by solar day
+@log_call
 def _getData(shape, product, crs, time=None, extra_query={}):
     with datacube.Datacube() as dc:
         dc_crs = datacube.utils.geometry.CRS(crs)
@@ -139,6 +142,7 @@ def _getData(shape, product, crs, time=None, extra_query={}):
 
 # Default function for processing loaded data
 # Datas is a list of Datasets (returned from dc.load and masked if polygons)
+@log_call
 def _processData(datas, **kwargs):
 
     output_json = json.dumps({"hello": "world"}, cls=DatetimeEncoder)
@@ -263,22 +267,11 @@ class GeometryDrill(Process):
                 # Must assume the crs according to spec
                 # http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
                 crs = 'urn:ogc:def:crs:OGC:1.3:CRS84'
-            # Can do custom loading of data here
-            with ProcessPoolExecutor(max_workers=4) as executor:
-              for p in self.products:
-                product = p['name']
-                query = p.get('additional_query', {})
-                future = executor.submit(
-                  self.data_loader,
-                  geometry,
-                  product,
-                  crs,
-                  time,
-                  query)
-                data[product] = future
-              for k, v in data.items():
-                d = v.result()
-                data[k] = d
+                # Can do custom loading of data here
+                for p in self.products:
+                    product = p['name']
+                    query = p.get('additional_query', {})
+                    data[product] = self.data_loader(geometry, product, crs, time, query)
 
         masked = dict()
         if self.geometry_type == 'point' or not self.do_mask:
