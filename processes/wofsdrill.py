@@ -19,6 +19,7 @@ from datacube.utils import geometry
 from dea.io.pdrill import PixelDrill
 
 from processes.utils import log_call
+from timeit import default_timer
 
 
 @log_call
@@ -31,28 +32,22 @@ def _getData(shape, product, crs, time=None, extra_query={}):
             time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
             query['time'] = time
         final_query = {**query, **extra_query}
-        print("finding data!", final_query)
-        ds = dc.find_datasets(product=product, group_by="solar_day", **final_query)
-        dss = dc.group_datasets(ds, query_group_by(group_by="solar_day"))
+        print("query to datacube:", final_query)
 
-        product = dc.index.products.get_by_name(product)
+        dask_data = dc.load(product=product, group_by='time', dask_chunks={'time': 1}, **final_query)
+        start_time = default_timer()
+        data = dask_data.compute(scheduler='threads', num_workers=16)
+        print('dask took', default_timer() - start_time, 'seconds')
+        dc_product = dc.index.products.get_by_name(product)
 
         lonlat = geometry.Geometry(shape, crs='EPSG:4326').coords[0]
-        measurement = product.measurements['water'].copy()
-        driller = PixelDrill(16)
-        datasources = []
-        for ds in dss.values:
-            for d in ds:
-                datasources.append(new_datasource(BandInfo(d, measurement['name'])))
-        datasources = sorted(datasources, key=lambda x: x._band_info.center_time)
-        times = [x._band_info.center_time for x in datasources]
-        files = [s.filename for s in datasources]
+        measurement = dc_product.measurements['water'].copy()
 
-        results = [[driller.read(urls=files, lonlat=lonlat)]]
-        array = DataArray(results,
-                          dims=('longitude', 'latitude', 'time'),
-                          coords={'longitude': np.full(1, lonlat[0]), 'latitude': np.full(1, lonlat[1]), 'time': times},
-                          attrs={'flags_definition': measurement['flags_definition']})
+        array = DataArray(
+            data['water'].data,
+            dims=('time', 'longitude', 'latitude'),
+            coords={'time': data.time, 'longitude': np.full(1, lonlat[0]), 'latitude': np.full(1, lonlat[1])},
+            attrs={'flags_definition': measurement['flags_definition']})
 
         return array
 
