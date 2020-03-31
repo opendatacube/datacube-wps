@@ -25,12 +25,9 @@ from processes.utils import log_call
 def _getData(shape, product, crs, time=None, extra_query={}):
     with datacube.Datacube() as dc:
         dc_crs = datacube.utils.geometry.CRS(crs)
-        g = geometry.Geometry(shape, crs=dc_crs)
-        query = {
-            'geopolygon': g
-        }
+        query = {'geopolygon': geometry.Geometry(shape, crs=dc_crs)}
         if time is not None:
-            first, second = time;
+            first, second = time
             time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
             query['time'] = time
         final_query = {**query, **extra_query}
@@ -52,17 +49,16 @@ def _getData(shape, product, crs, time=None, extra_query={}):
         files = [s.filename for s in datasources]
 
         results = [[driller.read(urls=files, lonlat=lonlat)]]
-        array = DataArray(
-            results,
-            dims=('longitude', 'latitude', 'time'),
-            coords={'longitude': np.full(1, lonlat[0]), 'latitude': np.full(1, lonlat[1]), 'time': times},
-            attrs={'flags_definition': measurement['flags_definition']})
+        array = DataArray(results,
+                          dims=('longitude', 'latitude', 'time'),
+                          coords={'longitude': np.full(1, lonlat[0]), 'latitude': np.full(1, lonlat[1]), 'time': times},
+                          attrs={'flags_definition': measurement['flags_definition']})
 
         return array
 
 
 @log_call
-def _processData(datas, **kwargs):    
+def _processData(datas, **kwargs):
     rules = [
         {
             'op': any,
@@ -99,7 +95,7 @@ def _processData(datas, **kwargs):
                 break
         return ret_val
     gf = np.vectorize(get_flags)
-    
+
     data = Dataset()
     data['observation'] = water
     print(data)
@@ -117,27 +113,23 @@ def _processData(datas, **kwargs):
     height = int(height) if height != '' else 300
 
     yscale = altair.Scale(domain=['wet', 'dry', 'not observable'])
-    ascale = altair.Scale(
-        domain=['wet','dry','not observable'],
-        range=['blue', 'red', 'grey'])
-    chart = altair.Chart(
-                    df,
-                    width=width,
-                    height=height,
-                    autosize='fit',
-                    background='white',
-                    title=f"Water Observations for {pt_lat:.6f},{pt_lon:.6f}") \
-                .mark_tick(thickness=3) \
-                .encode(
-                    x=altair.X('time:T'),
-                    y=altair.Y('observation:nominal', scale=yscale),
-                    color=altair.Color('observation:nominal', scale=ascale),
-                    tooltip=['observation:nominal',
-                             altair.Tooltip(
-                                field='time',
-                                format='%d %B, %Y',
-                                title='Date',
-                                type='temporal')])
+    ascale = altair.Scale(domain=['wet', 'dry', 'not observable'],
+                          range=['blue', 'red', 'grey'])
+    chart = altair.Chart(df,
+                         width=width,
+                         height=height,
+                         autosize='fit',
+                         background='white',
+                         title=f"Water Observations for {pt_lat:.6f},{pt_lon:.6f}")
+    chart = chart.mark_tick(thickness=3)
+    chart = chart.encode(x=altair.X('time:T'),
+                         y=altair.Y('observation:nominal', scale=yscale),
+                         color=altair.Color('observation:nominal', scale=ascale),
+                         tooltip=['observation:nominal',
+                                  altair.Tooltip(field='time',
+                                                 format='%d %B, %Y',
+                                                 title='Date',
+                                                 type='temporal')])
 
     assert 'process_id' in kwargs
 
@@ -166,48 +158,34 @@ def _processData(datas, **kwargs):
     output_json = json.dumps(output_dict, cls=DatetimeEncoder)
 
     outputs = {
-        'image': {
-            'data': img_url
-        },
-        'url': {
-            'data': html_url
-        },
-        'timeseries': {
-            'data': output_json
-        }
+        'image': {'data': img_url},
+        'url': {'data': html_url},
+        'timeseries': {'data': output_json}
     }
 
     return outputs
 
 
+_point_format = Format('application/vnd.geo+json', schema='http://geojson.org/geojson-spec.html#point')
+
 
 class WOfSDrill(GeometryDrill):
     def __init__(self, about, style):
-        super().__init__(
-            handler          = partial(_processData, style=style),
-            products         = [{
-                "name": "wofs_albers",
-                "additional_query": {
-                    "output_crs": 'EPSG:3577',
-                    "resolution": (-25, 25)
-                }
-            }],
-            custom_inputs=[
-                ComplexInput('geometry',
-                             'Location (Lon,Lat)',
-                             supported_formats=[
-                                                  Format('application/vnd.geo+json', schema='http://geojson.org/geojson-spec.html#point')
-                                               ])
-            ],
-            custom_outputs=[
-                LiteralOutput("image", "WOfS Pixel Drill Preview"),
-                LiteralOutput("url", "WOfS Pixel Drill Graph"),
-                ComplexOutput('timeseries',
-                              'Timeseries Drill',
-                              supported_formats=[
-                                _json_format
-                              ])
-            ],
-            custom_data_loader=_getData,
-            mask=False,
-            **about)
+        super().__init__(handler=partial(_processData, style=style),
+                         products=[{"name": "wofs_albers",
+                                    "additional_query": {"output_crs": 'EPSG:3577', "resolution": (-25, 25)}}],
+                         custom_inputs=[
+                             ComplexInput('geometry',
+                                          'Location (Lon,Lat)',
+                                          supported_formats=[_point_format])
+                         ],
+                         custom_outputs=[
+                             LiteralOutput("image", "WOfS Pixel Drill Preview"),
+                             LiteralOutput("url", "WOfS Pixel Drill Graph"),
+                             ComplexOutput('timeseries',
+                                           'Timeseries Drill',
+                                           supported_formats=[_json_format])
+                         ],
+                         custom_data_loader=_getData,
+                         mask=False,
+                         **about)

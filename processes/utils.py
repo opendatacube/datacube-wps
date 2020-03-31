@@ -2,6 +2,7 @@ from functools import wraps
 
 from timeit import default_timer
 
+
 def log_call(func):
     @wraps(func)
     def log_wrapper(*args, **kwargs):
@@ -9,7 +10,7 @@ def log_call(func):
         for index, arg in enumerate(args):
             try:
                 arg_name = func.__code__.co_varnames[index]
-            except:
+            except (AttributeError, KeyError, IndexError):
                 arg_name = f'arg #{index}'
             print(f'{name} {arg_name}: {arg}')
         for key, value in kwargs.items():

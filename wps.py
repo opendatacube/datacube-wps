@@ -16,16 +16,17 @@ import yaml
 
 logger = logging.getLogger('PYWPS')
 handler = logging.StreamHandler()
-format = '%(asctime)s] [%(levelname)s] file=%(pathname)s line=%(lineno)s module=%(module)s function=%(funcName)s %(message)s'
+format = ('%(asctime)s] [%(levelname)s] file=%(pathname)s line=%(lineno)s '
+          'module=%(module)s function=%(funcName)s %(message)s')
 handler.setFormatter(logging.Formatter(format))
 logger.addHandler(handler)
 
 
 if os.environ.get("SENTRY_KEY") and os.environ.get("SENTRY_PROJECT"):
-   sentry_sdk.init(
+    sentry_sdk.init(
         dsn="https://%s@sentry.io/%s" % (os.environ["SENTRY_KEY"], os.environ["SENTRY_PROJECT"]),
-        integrations = [FlaskIntegration()]
-   )
+        integrations=[FlaskIntegration()]
+    )
 
 app = flask.Flask(__name__)
 
@@ -84,15 +85,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Script for starting an datacube-wps instance")
     parser.add_argument('-d', '--daemon',
                         action='store_true', help="run in daemon mode")
-    parser.add_argument('-a','--all-addresses',
-                        action='store_true', help="run flask using IPv4 0.0.0.0 (all network interfaces),"  +  
-                            "otherwise bind to 127.0.0.1 (localhost).  This maybe necessary in systems that only run Flask") 
+    parser.add_argument('-a', '--all-addresses',
+                        action='store_true', help=("run flask using IPv4 0.0.0.0 (all network interfaces), "
+                                                   "otherwise bind to 127.0.0.1 (localhost). "
+                                                   "This maybe necessary in systems that only run Flask"))
     args = parser.parse_args()
-    
+
     if args.all_addresses:
-        bind_host='0.0.0.0'
+        bind_host = '0.0.0.0'
     else:
-        bind_host='127.0.0.1'
+        bind_host = '127.0.0.1'
 
     if args.daemon:
         pid = None
@@ -103,8 +105,8 @@ if __name__ == "__main__":
 
         if (pid == 0):
             os.setsid()
-            app.run(threaded=True,host=bind_host)
+            app.run(threaded=True, host=bind_host)
         else:
             os._exit(0)
     else:
-        app.run(threaded=True,host=bind_host)
+        app.run(threaded=True, host=bind_host)

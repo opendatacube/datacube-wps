@@ -36,7 +36,7 @@ def _uploadToS3(filename, data, mimetype):
         bucket,
         filename,
         ExtraArgs={
-            'ACL':'public-read',
+            'ACL': 'public-read',
             'ContentType': mimetype
         }
     )
@@ -52,6 +52,7 @@ def _uploadToS3(filename, data, mimetype):
     )
     return url
 
+
 # From https://stackoverflow.com/a/16353080
 class DatetimeEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -60,19 +61,23 @@ class DatetimeEncoder(json.JSONEncoder):
         except TypeError:
             return str(obj)
 
+
 # Defines the format for the returned object
 # in this case a JSON object containing a CSV
 _json_format = Format('application/vnd.terriajs.catalog-member+json',
-                     schema='https://tools.ietf.org/html/rfc7159',
-                     encoding="utf-8")
+                      schema='https://tools.ietf.org/html/rfc7159',
+                      encoding="utf-8")
+
 
 def geometry_mask(geoms, src_crs, geobox, all_touched=False, invert=False):
-    gs = [geometry.Geometry(geom, crs=datacube.utils.geometry.CRS(src_crs)).to_crs(geobox.crs) for geom in geoms]
+    gs = [geometry.Geometry(geom, crs=datacube.utils.geometry.CRS(src_crs)).to_crs(geobox.crs)
+          for geom in geoms]
     return rasterio.features.geometry_mask(gs,
                                            out_shape=geobox.shape,
                                            transform=geobox.affine,
                                            all_touched=all_touched,
                                            invert=invert)
+
 
 # Default function for querying and loading data for WPS processes
 # Uses dc.load and groups by solar day
@@ -80,12 +85,9 @@ def geometry_mask(geoms, src_crs, geobox, all_touched=False, invert=False):
 def _getData(shape, product, crs, time=None, extra_query={}):
     with datacube.Datacube() as dc:
         dc_crs = datacube.utils.geometry.CRS(crs)
-        g = geometry.Geometry(shape, crs=dc_crs)
-        query = {
-            'geopolygon': g
-        }
+        query = {'geopolygon': geometry.Geometry(shape, crs=dc_crs)}
         if time is not None:
-            first, second = time;
+            first, second = time
             time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
             query['time'] = time
         final_query = {**query, **extra_query}
@@ -144,7 +146,6 @@ def _getData(shape, product, crs, time=None, extra_query={}):
 # Datas is a list of Datasets (returned from dc.load and masked if polygons)
 @log_call
 def _processData(datas, **kwargs):
-
     output_json = json.dumps({"hello": "world"}, cls=DatetimeEncoder)
 
     output_str = output_json
@@ -157,11 +158,13 @@ def _processData(datas, **kwargs):
 
 # Product output JSON
 def _createOutputJson(data, **kwargs):
-  pass
+    pass
+
 
 # Pulls datetime output of JSON start / end date inputs
 def _datetimeExtractor(data):
-  return parse(json.loads(data)["properties"]["timestamp"]["date-time"])
+    return parse(json.loads(data)["properties"]["timestamp"]["date-time"])
+
 
 # GeometryDrill is the base class providing Datacube WPS functionality.
 # It is a pywps Process class that has been extended to provide additional
@@ -174,11 +177,13 @@ def _datetimeExtractor(data):
 # :param abstract: Human readable String for defining any information about this process (PyWPS)
 # :param version: String containing a version identifier for this process (PyWPS)
 # :param store_supported: Bool, If true PyWPS will allow storing local files as outputs (PyWPS)
-# :param status_supported: Bool, If true PyWPS will allow storing a status file for tracking the process execution (PyWPS)
+# :param status_supported:
+#      Bool, If true PyWPS will allow storing a status file for tracking the process execution (PyWPS)
 # :param products: List of Strings, Contains the datacube product names of products to be loaded by this process
 # :param geometry_type: currently "polygon" or "point"
 # :param custom_inputs: Optional List of PyWPS Input types, otherwise will default to, geometry, start and end dates
-# :param custom_outputs: Optional List of PyWPS Output types, otherwise will default to a JSON object containing a timeseries
+# :param custom_outputs:
+#      Optional List of PyWPS Output types, otherwise will default to a JSON object containing a timeseries
 # :param custom_data_loader: Optional Function for loading data
 # :param mask: Bool, if True, data will be masked to the geometry input
 class GeometryDrill(Process):
@@ -190,34 +195,25 @@ class GeometryDrill(Process):
                  mask=True):
 
         assert len(products) > 0
-        assert geometry_type in [ "polygon", "point" ]
+        assert geometry_type in ["polygon", "point"]
+
         if custom_inputs is None:
-          inputs = [ComplexInput('geometry',
-                                 'Geometry',
-                                 supported_formats=[
-                                                      Format('application/vnd.geo+json', schema='http://geojson.org/geojson-spec.html#' + geometry_type)
-                                                   ]),
-                    ComplexInput('start',
-                                 'Start Date',
-                                 supported_formats=[
-                                                      Format('application/vnd.geo+json', schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
-                                                   ]),
-                    ComplexInput('end',
-                                 'End date',
-                                 supported_formats=[
-                                                      Format('application/vnd.geo+json', schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
-                                                   ])]
+            _geom_format = Format('application/vnd.geo+json',
+                                  schema='http://geojson.org/geojson-spec.html#' + geometry_type)
+            _datetime_format = Format('application/vnd.geo+json',
+                                      schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
+
+            inputs = [ComplexInput('geometry', 'Geometry', supported_formats=[_geom_format]),
+                      ComplexInput('start', 'Start Date', supported_formats=[_datetime_format]),
+                      ComplexInput('end', 'End date', supported_formats=[_datetime_format])]
         else:
-          inputs = custom_inputs
+            inputs = custom_inputs
+
         if custom_outputs is None:
-          outputs = [ComplexOutput('timeseries',
-                                   'Timeseries Drill',
-                                   supported_formats=[
-                                                          _json_format
-                                                     ],
-                                   as_reference=False)]
+            outputs = [ComplexOutput('timeseries', 'Timeseries Drill',
+                                     supported_formats=[_json_format], as_reference=False)]
         else:
-          outputs = custom_outputs
+            outputs = custom_outputs
 
         self.products = products
         self.custom_handler = handler
@@ -226,26 +222,25 @@ class GeometryDrill(Process):
         self.data_loader = _getData if custom_data_loader is None else custom_data_loader
         self.do_mask = mask
 
-        super(GeometryDrill, self).__init__(
-            handler          = self._handler,
-            identifier       = identifier,
-            version          = version,
-            title            = title,
-            abstract         = abstract,
-            inputs           = inputs,
-            outputs          = outputs,
-            store_supported  = store_supported,
-            status_supported = status_supported)
+        super().__init__(handler=self._handler,
+                         identifier=identifier,
+                         version=version,
+                         title=title,
+                         abstract=abstract,
+                         inputs=inputs,
+                         outputs=outputs,
+                         store_supported=store_supported,
+                         status_supported=status_supported)
 
     def _handler(self, request, response):
         # Create geometry
-        stream       = request.inputs['geometry'][0].stream
+        stream = request.inputs['geometry'][0].stream
         request_json = json.loads(stream.readline())
-        if not 'start' in request.inputs or not 'end' in request.inputs:
-          time = None
+        if 'start' not in request.inputs or 'end' not in request.inputs:
+            time = None
         else:
-          time = (_datetimeExtractor(request.inputs['start'][0].data),
-                  _datetimeExtractor(request.inputs['end'][0].data))
+            time = (_datetimeExtractor(request.inputs['start'][0].data),
+                    _datetimeExtractor(request.inputs['end'][0].data))
         crs = None
         if hasattr(request_json, 'crs'):
             crs = request_json['crs']['properties']['name']
@@ -275,18 +270,18 @@ class GeometryDrill(Process):
 
         masked = dict()
         if self.geometry_type == 'point' or not self.do_mask:
-          masked = data
+            masked = data
         elif len(data) != 0:
             masked = dict()
             for k, d in data.items():
-              if len(d.variables) > 0:
-                mask = geometry_mask([f['geometry'] for f in features], crs, d.geobox, invert=True)
-                for band in d.data_vars:
-                  try:
-                      d[band] = d[band].where(mask, other=d[band].attrs['nodata'])
-                  except AttributeError:
-                      d[band] = d[band].where(mask)
-              masked[k] = d
+                if len(d.variables) > 0:
+                    mask = geometry_mask([f['geometry'] for f in features], crs, d.geobox, invert=True)
+                    for band in d.data_vars:
+                        try:
+                            d[band] = d[band].where(mask, other=d[band].attrs['nodata'])
+                        except AttributeError:
+                            d[band] = d[band].where(mask)
+                masked[k] = d
 
         print('time elasped in load: {}'.format(timer() - start_time))
 
@@ -295,11 +290,10 @@ class GeometryDrill(Process):
         print('time elasped in process: {}'.format(timer() - start_time))
 
         for ident, output_value in outputs.items():
-          if "data" in output_value:
-            response.outputs[ident].data = output_value['data']
-          if "output_format" in output_value:
-            response.outputs[ident].output_format = output_value['output_format']
-          if "url" in output_value:
-            response.outputs[ident].url = output_value['url']
+            if "data" in output_value:
+                response.outputs[ident].data = output_value['data']
+            if "output_format" in output_value:
+                response.outputs[ident].output_format = output_value['output_format']
+            if "url" in output_value:
+                response.outputs[ident].url = output_value['url']
         return response
-

@@ -6,9 +6,8 @@ with open('VERSION.txt') as ff:
 with open('requirements.txt') as f:
     INSTALL_REQUIRES = f.read().splitlines()
 
-DESCRIPTION = (
-'''datacube-wps is an implementation of the Web Processing Service standard from the
-Open Geospatial Consortium.''')
+DESCRIPTION = ("datacube-wps is an implementation of the Web Processing Service standard "
+               "from the Open Geospatial Consortium.")
 
 KEYWORDS = 'ODC WPS OGC processing'
 
