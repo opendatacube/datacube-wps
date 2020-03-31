@@ -1,7 +1,15 @@
 pull_request_rules:
-  default:
-    protection:
-      required_pull_request_reviews:
-        required_approving_review_count: 1
-      required_status_checks:
-        contexts: []
+  - name: delete head branch after merge
+    conditions:
+      - merged
+    actions:
+      delete_head_branch: {}
+  - name: merge when all requested reviews are valid
+    conditions:
+      - "#approved-reviews-by>=1"
+      - "#review-requested=0"
+      - "#changes-requested-reviews-by=0"
+      - "#commented-reviews-by=0"
+    actions:
+        merge:
+          method: merge
