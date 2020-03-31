@@ -1,4 +1,4 @@
-rules:
+pull_request_rules:
   default:
     protection:
       required_pull_request_reviews:
