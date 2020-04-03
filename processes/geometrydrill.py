@@ -1,3 +1,6 @@
+from functools import wraps
+from timeit import default_timer
+
 import pywps
 from pywps import Process, ComplexInput, ComplexOutput, LiteralInput, Format, FORMATS
 from pywps.app.exceptions import ProcessError
@@ -41,6 +44,28 @@ FORMATS = {
 }
 
 
+def log_call(func):
+    @wraps(func)
+    def log_wrapper(*args, **kwargs):
+        name = func.__name__
+        for index, arg in enumerate(args):
+            try:
+                arg_name = func.__code__.co_varnames[index]
+            except (AttributeError, KeyError, IndexError):
+                arg_name = f'arg #{index}'
+            print(f'{name} {arg_name}: {arg}')
+        for key, value in kwargs.items():
+            print(f'{name} {key}: {value}')
+        start = default_timer()
+        result = func(*args, **kwargs)
+        end = default_timer()
+        print('{} returned {}'.format(name, result))
+        print('{} took {:.3f}s'.format(name, end - start))
+        return result
+
+    return log_wrapper
+
+
 @log_call
 def _uploadToS3(filename, data, mimetype):
     session = boto3.Session()
@@ -75,8 +100,6 @@ class DatetimeEncoder(json.JSONEncoder):
             return super(DatetimeEncoder, obj).default(obj)
         except TypeError:
             return str(obj)
-
-
 
 
 def geometry_mask(geoms, src_crs, geobox, all_touched=False, invert=False):

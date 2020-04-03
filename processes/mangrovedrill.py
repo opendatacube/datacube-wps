@@ -12,10 +12,8 @@ import csv
 import io
 import boto3
 import xarray
-from processes.geometrydrill import GeometryDrill, FORMATS, DatetimeEncoder
+from processes.geometrydrill import GeometryDrill, FORMATS, DatetimeEncoder, log_call
 from pywps.inout.formats import FORMATS
-
-from processes.utils import log_call
 
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)

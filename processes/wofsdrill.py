@@ -8,7 +8,7 @@ from functools import partial
 import datacube
 import altair
 
-from processes.geometrydrill import GeometryDrill, _uploadToS3, DatetimeEncoder, FORMATS
+from processes.geometrydrill import GeometryDrill, _uploadToS3, DatetimeEncoder, FORMATS, log_call
 from pywps import LiteralOutput, ComplexInput, Format, ComplexOutput
 import pywps.configuration as config
 
@@ -17,8 +17,6 @@ from datacube.drivers import new_datasource
 from datacube.storage import BandInfo
 from datacube.utils import geometry
 from dea.io.pdrill import PixelDrill
-
-from processes.utils import log_call
 
 
 @log_call

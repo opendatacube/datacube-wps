@@ -6,7 +6,6 @@ from functools import partial
 
 from pywps import LiteralOutput, ComplexOutput
 from pywps.app.exceptions import ProcessError
-from processes.geometrydrill import GeometryDrill
 
 import altair
 import xarray
@@ -14,8 +13,7 @@ import io
 import numpy as np
 import json
 
-from processes.geometrydrill import _uploadToS3, DatetimeEncoder, FORMATS
-from processes.utils import log_call
+from processes.geometrydrill import _uploadToS3, DatetimeEncoder, FORMATS, log_call, GeometryDrill
 
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
