@@ -26,6 +26,21 @@ from dateutil.parser import parse
 from processes.utils import log_call
 
 
+FORMATS = {
+    # Defines the format for the returned object
+    # in this case a JSON object containing a CSV
+    'output_json': Format('application/vnd.terriajs.catalog-member+json',
+                          schema='https://tools.ietf.org/html/rfc7159',
+                          encoding="utf-8"),
+    'point': Format('application/vnd.geo+json',
+                    schema='http://geojson.org/geojson-spec.html#point'),
+    'polygon': Format('application/vnd.geo+json',
+                      schema='http://geojson.org/geojson-spec.html#polygon'),
+    'datetime': Format('application/vnd.geo+json',
+                       schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
+}
+
+
 @log_call
 def _uploadToS3(filename, data, mimetype):
     session = boto3.Session()
@@ -62,11 +77,6 @@ class DatetimeEncoder(json.JSONEncoder):
             return str(obj)
 
 
-# Defines the format for the returned object
-# in this case a JSON object containing a CSV
-_json_format = Format('application/vnd.terriajs.catalog-member+json',
-                      schema='https://tools.ietf.org/html/rfc7159',
-                      encoding="utf-8")
 
 
 def geometry_mask(geoms, src_crs, geobox, all_touched=False, invert=False):
@@ -150,7 +160,7 @@ def _processData(datas, **kwargs):
 
     output_str = output_json
 
-    response.outputs['timeseries'].output_format = str(_json_format)
+    response.outputs['timeseries'].output_format = str(FORMATS['output_json'])
     response.outputs['timeseries'].data = output_str
 
     return response
@@ -198,20 +208,16 @@ class GeometryDrill(Process):
         assert geometry_type in ["polygon", "point"]
 
         if custom_inputs is None:
-            _geom_format = Format('application/vnd.geo+json',
-                                  schema='http://geojson.org/geojson-spec.html#' + geometry_type)
-            _datetime_format = Format('application/vnd.geo+json',
-                                      schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
 
-            inputs = [ComplexInput('geometry', 'Geometry', supported_formats=[_geom_format]),
-                      ComplexInput('start', 'Start Date', supported_formats=[_datetime_format]),
-                      ComplexInput('end', 'End date', supported_formats=[_datetime_format])]
+            inputs = [ComplexInput('geometry', 'Geometry', supported_formats=[FORMATS[geometry_type]]),
+                      ComplexInput('start', 'Start Date', supported_formats=[FORMATS['datetime']]),
+                      ComplexInput('end', 'End date', supported_formats=[FORMATS['datetime']])]
         else:
             inputs = custom_inputs
 
         if custom_outputs is None:
             outputs = [ComplexOutput('timeseries', 'Timeseries Drill',
-                                     supported_formats=[_json_format], as_reference=False)]
+                                     supported_formats=[FORMATS['output_json']], as_reference=False)]
         else:
             outputs = custom_outputs
 

@@ -14,7 +14,7 @@ import io
 import numpy as np
 import json
 
-from processes.geometrydrill import _uploadToS3, DatetimeEncoder, _json_format
+from processes.geometrydrill import _uploadToS3, DatetimeEncoder, FORMATS
 from processes.utils import log_call
 
 
@@ -179,6 +179,6 @@ class FCDrill(GeometryDrill):
                              LiteralOutput("url", "Fractional Cover Asset Drill"),
                              ComplexOutput('timeseries',
                                            'Timeseries Drill',
-                                           supported_formats=[_json_format])
+                                           supported_formats=[FORMATS['output_json']])
                          ],
                          **about)

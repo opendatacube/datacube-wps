@@ -8,7 +8,7 @@ from functools import partial
 import datacube
 import altair
 
-from processes.geometrydrill import GeometryDrill, _uploadToS3, DatetimeEncoder, _json_format
+from processes.geometrydrill import GeometryDrill, _uploadToS3, DatetimeEncoder, FORMATS
 from pywps import LiteralOutput, ComplexInput, Format, ComplexOutput
 import pywps.configuration as config
 
@@ -166,9 +166,6 @@ def _processData(datas, **kwargs):
     return outputs
 
 
-_point_format = Format('application/vnd.geo+json', schema='http://geojson.org/geojson-spec.html#point')
-
-
 class WOfSDrill(GeometryDrill):
     def __init__(self, about, style):
         super().__init__(handler=partial(_processData, style=style),
@@ -176,14 +173,14 @@ class WOfSDrill(GeometryDrill):
                          custom_inputs=[
                              ComplexInput('geometry',
                                           'Location (Lon,Lat)',
-                                          supported_formats=[_point_format])
+                                          supported_formats=[FORMATS['point']])
                          ],
                          custom_outputs=[
                              LiteralOutput("image", "WOfS Pixel Drill Preview"),
                              LiteralOutput("url", "WOfS Pixel Drill Graph"),
                              ComplexOutput('timeseries',
                                            'Timeseries Drill',
-                                           supported_formats=[_json_format])
+                                           supported_formats=[FORMATS['output_json']])
                          ],
                          custom_data_loader=_getData,
                          mask=False,

@@ -12,7 +12,7 @@ import csv
 import io
 import boto3
 import xarray
-from processes.geometrydrill import GeometryDrill, _json_format, DatetimeEncoder
+from processes.geometrydrill import GeometryDrill, FORMATS, DatetimeEncoder
 from pywps.inout.formats import FORMATS
 
 from processes.utils import log_call
@@ -45,7 +45,7 @@ def _processData(datas, style, **kwargs):
 
     output = {
         "timeseries": {
-            "output_format": FORMATS.JSON,
+            "output_format": FORMATS['output_json'],
             "data": output_json
         }
     }
