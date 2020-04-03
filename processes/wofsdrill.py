@@ -172,8 +172,7 @@ _point_format = Format('application/vnd.geo+json', schema='http://geojson.org/ge
 class WOfSDrill(GeometryDrill):
     def __init__(self, about, style):
         super().__init__(handler=partial(_processData, style=style),
-                         products=[{"name": "wofs_albers",
-                                    "additional_query": {"output_crs": 'EPSG:3577', "resolution": (-25, 25)}}],
+                         products=[{"name": "wofs_albers"}],
                          custom_inputs=[
                              ComplexInput('geometry',
                                           'Location (Lon,Lat)',

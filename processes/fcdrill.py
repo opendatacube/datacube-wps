@@ -173,14 +173,7 @@ class FCDrill(GeometryDrill):
                              {"name": "ls8_fc_albers"},
                              {"name": "ls7_fc_albers"},
                              {"name": "ls5_fc_albers"},
-                             {
-                                 "name": "wofs_albers",
-                                 "additional_query": {
-                                      "output_crs": 'EPSG:3577',
-                                      "resolution": (-25, 25),
-                                      "fuse_func": wofls_fuser
-                                 }
-                             }
+                             {"name": "wofs_albers", "additional_query": {"fuse_func": wofls_fuser}}
                          ],
                          custom_outputs=[
                              LiteralOutput("url", "Fractional Cover Asset Drill"),
