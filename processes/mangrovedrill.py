@@ -1,19 +1,8 @@
-import pywps
-from osgeo import ogr
 import json
 from functools import partial
 
-import datacube
-from datacube.utils import geometry
-
-import rasterio.features
-
-import csv
-import io
-import boto3
 import xarray
 from processes.geometrydrill import GeometryDrill, FORMATS, DatetimeEncoder, log_call
-from pywps.inout.formats import FORMATS
 
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)

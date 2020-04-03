@@ -1,4 +1,3 @@
-import pywps
 import json
 import numpy as np
 import io
@@ -9,7 +8,7 @@ import datacube
 import altair
 
 from processes.geometrydrill import GeometryDrill, _uploadToS3, DatetimeEncoder, FORMATS, log_call
-from pywps import LiteralOutput, ComplexInput, Format, ComplexOutput
+from pywps import LiteralOutput, ComplexInput, ComplexOutput
 import pywps.configuration as config
 
 from datacube.api.query import query_group_by
@@ -20,7 +19,10 @@ from dea.io.pdrill import PixelDrill
 
 
 @log_call
-def _getData(shape, product, crs, time=None, extra_query={}):
+def _getData(shape, product, crs, time=None, extra_query=None):
+    if extra_query is None:
+        extra_query = {}
+
     with datacube.Datacube() as dc:
         dc_crs = datacube.utils.geometry.CRS(crs)
         query = {'geopolygon': geometry.Geometry(shape, crs=dc_crs)}
@@ -49,7 +51,7 @@ def _getData(shape, product, crs, time=None, extra_query={}):
         results = [[driller.read(urls=files, lonlat=lonlat)]]
         array = DataArray(results,
                           dims=('longitude', 'latitude', 'time'),
-                          coords={'longitude': np.full(1, lonlat[0]), 'latitude': np.full(1, lonlat[1]), 'time': times},
+                          coords={'longitude': np.array([lonlat[0]]), 'latitude': np.array([lonlat[1]]), 'time': times},
                           attrs={'flags_definition': measurement['flags_definition']})
 
         return array

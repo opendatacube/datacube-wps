@@ -158,9 +158,8 @@ def _processData(datas, style, **kwargs):
 
 
 def wofls_fuser(dest, src):
-    import numpy
     where_nodata = (src & 1) == 0
-    numpy.copyto(dest, src, where=where_nodata)
+    np.copyto(dest, src, where=where_nodata)
     return dest
 
 

@@ -1,13 +1,10 @@
 from functools import wraps
 from timeit import default_timer
-
-import pywps
-from pywps import Process, ComplexInput, ComplexOutput, LiteralInput, Format, FORMATS
-from pywps.app.exceptions import ProcessError
-from osgeo import ogr
 import json
 
-from timeit import default_timer as timer
+from pywps import Process, ComplexInput, ComplexOutput, Format
+from pywps.app.exceptions import ProcessError
+import pywps.configuration as config
 
 import datacube
 from datacube.utils import geometry
@@ -15,18 +12,14 @@ from datacube.api.core import output_geobox, query_group_by, apply_aliases
 
 import rasterio.features
 
-import csv
-import io
 import xarray
 import numpy
 
 import boto3
 import botocore
 from botocore.client import Config
-import pywps.configuration as config
 
 from dateutil.parser import parse
-from processes.utils import log_call
 
 
 FORMATS = {
@@ -115,7 +108,10 @@ def geometry_mask(geoms, src_crs, geobox, all_touched=False, invert=False):
 # Default function for querying and loading data for WPS processes
 # Uses dc.load and groups by solar day
 @log_call
-def _getData(shape, product, crs, time=None, extra_query={}):
+def _getData(shape, product, crs, time=None, extra_query=None):
+    if extra_query is None:
+        extra_query = {}
+
     with datacube.Datacube() as dc:
         dc_crs = datacube.utils.geometry.CRS(crs)
         query = {'geopolygon': geometry.Geometry(shape, crs=dc_crs)}
@@ -179,19 +175,7 @@ def _getData(shape, product, crs, time=None, extra_query={}):
 # Datas is a list of Datasets (returned from dc.load and masked if polygons)
 @log_call
 def _processData(datas, **kwargs):
-    output_json = json.dumps({"hello": "world"}, cls=DatetimeEncoder)
-
-    output_str = output_json
-
-    response.outputs['timeseries'].output_format = str(FORMATS['output_json'])
-    response.outputs['timeseries'].data = output_str
-
-    return response
-
-
-# Product output JSON
-def _createOutputJson(data, **kwargs):
-    pass
+    raise ProcessError('no _processData specified')
 
 
 # Pulls datetime output of JSON start / end date inputs
@@ -223,15 +207,14 @@ class GeometryDrill(Process):
 
     def __init__(self, handler, identifier, title, abstract='',
                  version='None', store_supported=False, status_supported=False,
-                 products=[], geometry_type="polygon", custom_inputs=None,
+                 products=None, geometry_type="polygon", custom_inputs=None,
                  custom_outputs=None, custom_data_loader=None,
                  mask=True):
 
-        assert len(products) > 0
+        assert products is not None
         assert geometry_type in ["polygon", "point"]
 
         if custom_inputs is None:
-
             inputs = [ComplexInput('geometry', 'Geometry', supported_formats=[FORMATS[geometry_type]]),
                       ComplexInput('start', 'Start Date', supported_formats=[FORMATS['datetime']]),
                       ComplexInput('end', 'End date', supported_formats=[FORMATS['datetime']])]
@@ -277,13 +260,11 @@ class GeometryDrill(Process):
         features = request_json['features']
         if len(features) < 1:
             # Can't drill if there is no geometry
-            raise pywps.InvalidParameterException()
+            raise ProcessError("no features specified")
 
-        start_time = timer()
+        start_time = default_timer()
         data = dict()
         for feature in features:
-            geometry = feature['geometry']
-
             if crs is None and hasattr(feature, 'crs'):
                 crs = feature['crs']['properties']['name']
             elif crs is None and not hasattr(feature, 'crs'):
@@ -295,7 +276,7 @@ class GeometryDrill(Process):
                 for p in self.products:
                     product = p['name']
                     query = p.get('additional_query', {})
-                    data[product] = self.data_loader(geometry, product, crs, time, query)
+                    data[product] = self.data_loader(feature['geometry'], product, crs, time, query)
 
         masked = dict()
         if self.geometry_type == 'point' or not self.do_mask:
@@ -312,11 +293,11 @@ class GeometryDrill(Process):
                             d[band] = d[band].where(mask)
                 masked[k] = d
 
-        print('time elasped in load: {}'.format(timer() - start_time))
+        print('time elasped in load: {}'.format(default_timer() - start_time))
 
         outputs = self.custom_handler(masked, process_id=self.uuid)
 
-        print('time elasped in process: {}'.format(timer() - start_time))
+        print('time elasped in process: {}'.format(default_timer() - start_time))
 
         for ident, output_value in outputs.items():
             if "data" in output_value:
