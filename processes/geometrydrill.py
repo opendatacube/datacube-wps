@@ -1,6 +1,7 @@
 from functools import wraps
 from timeit import default_timer
 import json
+import io
 
 from pywps import Process, ComplexInput, ComplexOutput, Format
 from pywps.app.exceptions import ProcessError
@@ -84,6 +85,22 @@ def _uploadToS3(filename, data, mimetype):
         }
     )
     return url
+
+
+@log_call
+def upload_chart_html_to_S3(chart, process_id):
+    html_io = io.StringIO()
+    chart.save(html_io, format='html')
+    html_bytes = io.BytesIO(html_io.getvalue().encode())
+    return _uploadToS3(process_id + '/chart.html', html_bytes, 'text/html')
+
+
+@log_call
+def upload_chart_svg_to_S3(chart, process_id):
+    img_io = io.StringIO()
+    chart.save(img_io, format='svg')
+    img_bytes = io.BytesIO(img_io.getvalue().encode())
+    return _uploadToS3(process_id + '/chart.svg', img_bytes, 'image/svg+xml')
 
 
 # From https://stackoverflow.com/a/16353080

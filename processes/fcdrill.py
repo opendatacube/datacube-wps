@@ -1,25 +1,25 @@
-from timeit import default_timer as timer
+from timeit import default_timer
 import multiprocessing
+from functools import partial
+import json
+
+import altair
+import xarray
+import numpy as np
+
 import datacube
 from datacube.storage.masking import make_mask
-from functools import partial
 
 from pywps import LiteralOutput, ComplexOutput
 from pywps.app.exceptions import ProcessError
 
-import altair
-import xarray
-import io
-import numpy as np
-import json
-
-from processes.geometrydrill import _uploadToS3, DatetimeEncoder, FORMATS, log_call, GeometryDrill
+from processes.geometrydrill import upload_chart_html_to_S3, DatetimeEncoder, FORMATS, log_call, GeometryDrill
 
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
 @log_call
 def _processData(datas, style, **kwargs):
-    start_time = timer()
+    start_time = default_timer()
     dc = datacube.Datacube()
     wofs_product = dc.index.products.get_by_name("wofs_albers")
 
@@ -47,7 +47,7 @@ def _processData(datas, style, **kwargs):
         mask = make_mask(mask_data, **m)
         data = data.where(mask['water'])
 
-    print('masking took', timer() - start_time)
+    print('masking took', default_timer() - start_time)
     print('data', data)
 
     total_invalid = (np.isnan(data)).sum(dim=['x', 'y'])
@@ -99,10 +99,10 @@ def _processData(datas, style, **kwargs):
     })
 
     print('calling dask with', multiprocessing.cpu_count())
-    dask_time = timer()
+    dask_time = default_timer()
     new_ds = new_ds.compute(scheduler='processes')
     print(new_ds)
-    print('dask took exactly', timer() - dask_time)
+    print('dask took exactly', default_timer() - dask_time)
 
     df = new_ds.to_dataframe()
     df.reset_index(inplace=True)
@@ -124,11 +124,7 @@ def _processData(datas, style, **kwargs):
                                   'Area:Q',
                                   'Cover Type:N'])
 
-    html_io = io.StringIO()
-    chart.save(html_io, format='html')
-    html_bytes = io.BytesIO(html_io.getvalue().encode())
-    html_url = _uploadToS3(str(kwargs['process_id']) + '/chart.html', html_bytes, 'text/html')
-    print(html_url)
+    html_url = upload_chart_html_to_S3(chart, str(kwargs['process_id']))
     # data = data.dropna('time', how='all')
     csv = new_ds.to_dataframe().to_csv(header=['Bare Soil',
                                                'Photosynthetic Vegetation',
@@ -153,7 +149,7 @@ def _processData(datas, style, **kwargs):
         'timeseries': {'data': output_str}
     }
 
-    print('in processData: ', timer() - start_time)
+    print('in processData: ', default_timer() - start_time)
     return outputs
 
 

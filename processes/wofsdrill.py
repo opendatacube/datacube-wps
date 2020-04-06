@@ -1,13 +1,11 @@
 import json
-import numpy as np
-import io
-from xarray import DataArray, Dataset
 from functools import partial
 
+import numpy as np
 import datacube
 import altair
+from xarray import DataArray, Dataset
 
-from processes.geometrydrill import GeometryDrill, _uploadToS3, DatetimeEncoder, FORMATS, log_call
 from pywps import LiteralOutput, ComplexInput, ComplexOutput
 import pywps.configuration as config
 
@@ -17,6 +15,8 @@ from datacube.storage import BandInfo
 from datacube.utils import geometry
 from dea.io.pdrill import PixelDrill
 
+from processes.geometrydrill import GeometryDrill, DatetimeEncoder, FORMATS, log_call
+from processes.geometrydrill import upload_chart_svg_to_S3, upload_chart_html_to_S3
 
 @log_call
 def _getData(shape, product, crs, time=None, extra_query=None):
@@ -35,10 +35,10 @@ def _getData(shape, product, crs, time=None, extra_query=None):
         ds = dc.find_datasets(product=product, group_by="solar_day", **final_query)
         dss = dc.group_datasets(ds, query_group_by(group_by="solar_day"))
 
-        product = dc.index.products.get_by_name(product)
+        dc_product = dc.index.products.get_by_name(product)
 
         lonlat = geometry.Geometry(shape, crs='EPSG:4326').coords[0]
-        measurement = product.measurements['water'].copy()
+        measurement = dc_product.measurements['water'].copy()
         driller = PixelDrill(16)
         datasources = []
         for ds in dss.values:
@@ -133,15 +133,8 @@ def _processData(datas, **kwargs):
 
     assert 'process_id' in kwargs
 
-    html_io = io.StringIO()
-    chart.save(html_io, format='html')
-    html_bytes = io.BytesIO(html_io.getvalue().encode())
-    html_url = _uploadToS3(str(kwargs['process_id']) + '/chart.html', html_bytes, 'text/html')
-
-    img_io = io.StringIO()
-    chart.save(img_io, format='svg')
-    img_bytes = io.BytesIO(img_io.getvalue().encode())
-    img_url = _uploadToS3(str(kwargs['process_id']) + '/chart.svg', img_bytes, 'image/svg+xml')
+    html_url = upload_chart_html_to_S3(chart, str(kwargs['process_id']))
+    img_url = upload_chart_svg_to_S3(chart, str(kwargs['process_id']))
 
     csv = data.squeeze(dim=('latitude', 'longitude'), drop=True).to_dataframe().to_csv(header=['Observation'],
                                                                                        date_format="%Y-%m-%d")
