@@ -23,6 +23,12 @@ processes:
             status_supported: True
             geometry_type: "point"
 
+        input:
+            product: wofs_albers
+            measurements: [water]
+            group_by: solar_day
+            fuse_func: wofls_fuser
+
         style:
             columns:
                 Wet:
@@ -49,6 +55,23 @@ processes:
             store_supported: True
             status_supported: True
             geometry_type: polygon
+
+        input:
+            juxtapose:
+                - collate:
+                       - product: ls5_fc_albers
+                         group_by: solar_day
+                         measurements: [BS, PV, NPV]
+                       - product: ls7_fc_albers
+                         group_by: solar_day
+                         measurements: [BS, PV, NPV]
+                       - product: ls8_fc_albers
+                         group_by: solar_day
+                         measurements: [BS, PV, NPV]
+                - product: wofs_albers
+                  measurements: [water]
+                  group_by: solar_day
+                  fuse_func: TODO
 
         style:
             columns:
@@ -80,6 +103,10 @@ processes:
             store_supported: True
             status_supported: True
             geometry_type: polygon
+
+        input:
+            product: mangrove_cover
+            measurements: [canopy_cover_class]
 
         style:
             columns:
