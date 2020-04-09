@@ -43,4 +43,4 @@ COPY docker/wps-entrypoint.sh /usr/local/bin/wps-entrypoint.sh
 
 ENTRYPOINT ["wps-entrypoint.sh"]
 
-CMD gunicorn -b 0.0.0.0:8000 wps:app
+CMD gunicorn -b 0.0.0.0:8000 datacube_wps:app

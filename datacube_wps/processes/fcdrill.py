@@ -13,7 +13,7 @@ from datacube.storage.masking import make_mask
 from pywps import LiteralOutput, ComplexOutput
 from pywps.app.exceptions import ProcessError
 
-from processes.geometrydrill import upload_chart_html_to_S3, DatetimeEncoder, FORMATS, log_call, GeometryDrill
+from .geometrydrill import upload_chart_html_to_S3, DatetimeEncoder, FORMATS, log_call, GeometryDrill
 
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)

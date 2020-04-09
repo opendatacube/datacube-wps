@@ -15,8 +15,8 @@ from datacube.storage import BandInfo
 from datacube.utils import geometry
 from dea.io.pdrill import PixelDrill
 
-from processes.geometrydrill import GeometryDrill, DatetimeEncoder, FORMATS, log_call
-from processes.geometrydrill import upload_chart_svg_to_S3, upload_chart_html_to_S3
+from .geometrydrill import GeometryDrill, DatetimeEncoder, FORMATS, log_call
+from .geometrydrill import upload_chart_svg_to_S3, upload_chart_html_to_S3
 
 @log_call
 def _getData(shape, product, crs, time=None, extra_query=None):

@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 
 import os
+import logging
+
 import flask
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 
+import yaml
+
 import pywps
 from pywps import Service
-from processes.fcdrill import FCDrill
-from processes.wofsdrill import WOfSDrill
-from processes.mangrovedrill import MangroveDrill
 
-import logging
-import yaml
+from .processes.fcdrill import FCDrill
+from .processes.wofsdrill import WOfSDrill
+from .processes.mangrovedrill import MangroveDrill
+
 
 logger = logging.getLogger('PYWPS')
 handler = logging.StreamHandler()
@@ -75,8 +78,8 @@ def outputfile(filename):
         if 'xml' in file_ext:
             mime_type = 'text/xml'
         return flask.Response(file_bytes, content_type=mime_type)
-    else:
-        flask.abort(404)
+
+    flask.abort(404)
 
 
 if __name__ == "__main__":
@@ -103,7 +106,7 @@ if __name__ == "__main__":
         except OSError as e:
             raise Exception("%s [%d]" % (e.strerror, e.errno))
 
-        if (pid == 0):
+        if pid == 0:
             os.setsid()
             app.run(threaded=True, host=bind_host)
         else:
