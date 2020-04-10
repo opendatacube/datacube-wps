@@ -150,7 +150,7 @@ def _processData(datas, **kwargs):
 
 
 class WOfSDrill(GeometryDrill):
-    def __init__(self, about, style):
+    def __init__(self, about, input, style):
         super().__init__(handler=partial(_processData, style=style),
                          products=[{"name": "wofs_albers"}],
                          custom_inputs=[

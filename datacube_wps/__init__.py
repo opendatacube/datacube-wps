@@ -12,9 +12,8 @@ import yaml
 import pywps
 from pywps import Service
 
-from .processes.fcdrill import FCDrill
-from .processes.wofsdrill import WOfSDrill
-from .processes.mangrovedrill import MangroveDrill
+from datacube.utils import import_function
+from datacube.virtual import construct
 
 
 LOG_FORMAT = ('%(asctime)s] [%(levelname)s] file=%(pathname)s line=%(lineno)s '
@@ -41,17 +40,19 @@ app = flask.Flask(__name__)
 
 app.url_map.strict_slashes = False
 
-process_classes = {
-    'WOfSDrill': WOfSDrill,
-    'FCDrill': FCDrill,
-    'MangroveDrill': MangroveDrill
-}
-
 with open('DEA_WPS_config.yaml') as fl:
     config = yaml.load(fl)
 
-processes = [process_classes[proc_name](proc_settings['about'], proc_settings['style'])
-             for proc_name, proc_settings in config['processes'].items()]
+
+def create_process(settings):
+    process_class = import_function(settings['process'])
+    process_input = construct(**settings['input'])
+    process_args = {key: value for key, value in settings.items() if key not in ['process', 'input']}
+    return process_class(input=process_input, **process_args)
+
+
+processes = [create_process(settings)
+             for settings in config['processes'].values()]
 
 service = Service(processes, ['pywps.cfg'])
 

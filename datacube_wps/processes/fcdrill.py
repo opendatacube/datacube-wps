@@ -155,7 +155,7 @@ def _processData(datas, style, **kwargs):
 
 
 class FCDrill(GeometryDrill):
-    def __init__(self, about, style):
+    def __init__(self, input, about, style):
         super().__init__(handler=partial(_processData, style=style),
                          products=[
                              {"name": "ls8_fc_albers"},

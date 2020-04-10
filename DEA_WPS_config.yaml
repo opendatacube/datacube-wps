@@ -5,7 +5,7 @@ processes:
 
     WOfSDrill:
 
-        process: datacube_wps.processes.WOfSDrill
+        process: datacube_wps.processes.wofsdrill.WOfSDrill
 
         about:
             identifier: WOfSDrill
@@ -29,7 +29,7 @@ processes:
             product: wofs_albers
             measurements: [water]
             group_by: solar_day
-            fuse_func: datacube_wps.geometrydrill.wofls_fuser
+            fuse_func: datacube_wps.processes.geometrydrill.wofls_fuser
 
         style:
             columns:
@@ -49,7 +49,7 @@ processes:
 
     FCDrill:
 
-        process: datacube_wps.processes.FCDrill
+        process: datacube_wps.processes.fcdrill.FCDrill
 
         about:
             identifier: FractionalCoverDrill
@@ -75,7 +75,7 @@ processes:
                 - product: wofs_albers
                   measurements: [water]
                   group_by: solar_day
-                  fuse_func: datacube_wps.geometrydrill.wofls_fuser
+                  fuse_func: datacube_wps.processes.geometrydrill.wofls_fuser
 
         style:
             columns:
@@ -99,7 +99,7 @@ processes:
 
     MangroveDrill:
 
-        process: datacube_wps.processes.MangroveDrill
+        process: datacube_wps.processes.mangrovedrill.MangroveDrill
 
         about:
             identifier: Mangrove Cover Drill
