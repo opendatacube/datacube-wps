@@ -31,30 +31,27 @@ setup_logger()
 
 
 if os.environ.get("SENTRY_KEY") and os.environ.get("SENTRY_PROJECT"):
-    sentry_sdk.init(
-        dsn="https://%s@sentry.io/%s" % (os.environ["SENTRY_KEY"], os.environ["SENTRY_PROJECT"]),
-        integrations=[FlaskIntegration()]
-    )
+    sentry_sdk.init(dsn="https://%s@sentry.io/%s" % (os.environ["SENTRY_KEY"], os.environ["SENTRY_PROJECT"]),
+                    integrations=[FlaskIntegration()])
 
 app = flask.Flask(__name__)
 
 app.url_map.strict_slashes = False
 
-with open('DEA_WPS_config.yaml') as fl:
-    config = yaml.load(fl)
+
+def create_process(process, input, **settings):
+    process_class = import_function(process)
+    return process_class(input=construct(**input), **settings)
 
 
-def create_process(settings):
-    process_class = import_function(settings['process'])
-    process_input = construct(**settings['input'])
-    process_args = {key: value for key, value in settings.items() if key not in ['process', 'input']}
-    return process_class(input=process_input, **process_args)
+def read_process_catalog(catalog_filename):
+    with open(catalog_filename) as fl:
+        config = yaml.load(fl)
+
+    return [create_process(**settings) for settings in config['processes']]
 
 
-processes = [create_process(settings)
-             for settings in config['processes'].values()]
-
-service = Service(processes, ['pywps.cfg'])
+service = Service(read_process_catalog('DEA_WPS_config.yaml'), ['pywps.cfg'])
 
 
 @app.after_request
