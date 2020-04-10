@@ -20,25 +20,15 @@ from .geometrydrill import upload_chart_svg_to_S3, upload_chart_html_to_S3
 
 
 @log_call
-def _getData(shape, product, crs, time=None, extra_query=None):
-    if extra_query is None:
-        extra_query = {}
-
+def _getData(product, query):
     with datacube.Datacube() as dc:
-        dc_crs = datacube.utils.geometry.CRS(crs)
-        query = {'geopolygon': geometry.Geometry(shape, crs=dc_crs)}
-        if time is not None:
-            first, second = time
-            time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
-            query['time'] = time
-        final_query = {**query, **extra_query}
-        print("finding data!", final_query)
-        ds = dc.find_datasets(product=product, group_by="solar_day", **final_query)
+        print("finding data!", query)
+        ds = dc.find_datasets(product=product, group_by="solar_day", **query)
         dss = dc.group_datasets(ds, query_group_by(group_by="solar_day"))
 
         dc_product = dc.index.products.get_by_name(product)
 
-        lonlat = geometry.Geometry(shape, crs='EPSG:4326').coords[0]
+        lonlat = query['geopolygon'].coords[0]
         measurement = dc_product.measurements['water'].copy()
         driller = PixelDrill(16)
         datasources = []

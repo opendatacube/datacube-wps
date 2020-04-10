@@ -8,7 +8,7 @@ from pywps.app.exceptions import ProcessError
 import pywps.configuration as config
 
 import datacube
-from datacube.utils import geometry
+from datacube.utils.geometry import Geometry, CRS
 from datacube.api.core import output_geobox, query_group_by, apply_aliases
 
 import rasterio.features
@@ -37,6 +37,10 @@ FORMATS = {
                        schema='http://www.w3.org/TR/xmlschema-2/#dateTime')
 }
 
+GB = 1.e9
+MAX_BYTES_IN_GB = 20.0
+MAX_BYTES_PER_OBS_IN_GB = 2.0
+
 
 def log_call(func):
     @wraps(func)
@@ -50,6 +54,7 @@ def log_call(func):
             print(f'{name} {arg_name}: {arg}')
         for key, value in kwargs.items():
             print(f'{name} {key}: {value}')
+
         start = default_timer()
         result = func(*args, **kwargs)
         end = default_timer()
@@ -102,10 +107,8 @@ class DatetimeEncoder(json.JSONEncoder):
             return str(obj)
 
 
-def geometry_mask(geoms, src_crs, geobox, all_touched=False, invert=False):
-    gs = [geometry.Geometry(geom, crs=datacube.utils.geometry.CRS(src_crs)).to_crs(geobox.crs)
-          for geom in geoms]
-    return rasterio.features.geometry_mask(gs,
+def geometry_mask(geom, geobox, all_touched=False, invert=False):
+    return rasterio.features.geometry_mask([geom.to_crs(geobox.crs)],
                                            out_shape=geobox.shape,
                                            transform=geobox.affine,
                                            all_touched=all_touched,
@@ -115,22 +118,12 @@ def geometry_mask(geoms, src_crs, geobox, all_touched=False, invert=False):
 # Default function for querying and loading data for WPS processes
 # Uses dc.load and groups by solar day
 @log_call
-def _getData(shape, product, crs, time=None, extra_query=None):
-    if extra_query is None:
-        extra_query = {}
-
+def _getData(product, query):
     with datacube.Datacube() as dc:
-        dc_crs = datacube.utils.geometry.CRS(crs)
-        query = {'geopolygon': geometry.Geometry(shape, crs=dc_crs)}
-        if time is not None:
-            first, second = time
-            time = (first.strftime("%Y-%m-%d"), second.strftime("%Y-%m-%d"))
-            query['time'] = time
-        final_query = {**query, **extra_query}
-        print("loading data!", final_query)
+        print("loading data!", query)
 
         datasets = dc.find_datasets(product=product, **{k: v
-                                                        for k, v in final_query.items()
+                                                        for k, v in query.items()
                                                         if k not in ['dask_chunks',
                                                                      'fuse_func',
                                                                      'resampling',
@@ -140,14 +133,10 @@ def _getData(shape, product, crs, time=None, extra_query=None):
 
         datacube_product = datasets[0].type
 
-        geobox = output_geobox(grid_spec=datacube_product.grid_spec, **final_query)
-        grouped = dc.group_datasets(datasets, query_group_by(group_by='solar_day', **final_query))
+        geobox = output_geobox(grid_spec=datacube_product.grid_spec, **query)
+        grouped = dc.group_datasets(datasets, query_group_by(group_by='solar_day', **query))
 
-        measurement_dicts = datacube_product.lookup_measurements(final_query.get('measurements'))
-
-        GB = 1.e9
-        MAX_BYTES_IN_GB = 20.0
-        MAX_BYTES_PER_OBS_IN_GB = 2.0
+        measurement_dicts = datacube_product.lookup_measurements(query.get('measurements'))
 
         byte_count = 1
         for x in geobox.shape:
@@ -169,12 +158,12 @@ def _getData(shape, product, crs, time=None, extra_query=None):
                                 "maximum is {}GB").format(int(bytes_per_obs / GB), MAX_BYTES_PER_OBS_IN_GB))
 
         result = dc.load_data(grouped, geobox, measurement_dicts,
-                              resampling=final_query.get('resampling'),
-                              fuse_func=final_query.get('fuse_func'),
-                              dask_chunks=final_query.get('dask_chunks', {'time': 1}),
-                              skip_broken_datasets=final_query.get('skip_broken_datasets', False))
+                              resampling=query.get('resampling'),
+                              fuse_func=query.get('fuse_func'),
+                              dask_chunks=query.get('dask_chunks', {'time': 1}),
+                              skip_broken_datasets=query.get('skip_broken_datasets', False))
 
-        data = apply_aliases(result, datacube_product, final_query.get('measurements'))
+        data = apply_aliases(result, datacube_product, query.get('measurements'))
         print("data load done", product, data)
         return data
 
@@ -188,6 +177,43 @@ def _processData(datas, **kwargs):
 # Pulls datetime output of JSON start / end date inputs
 def _datetimeExtractor(data):
     return parse(json.loads(data)["properties"]["timestamp"]["date-time"])
+
+
+def _get_feature(request):
+    stream = request.inputs['geometry'][0].stream
+    request_json = json.loads(stream.readline())
+
+    features = request_json['features']
+    if len(features) < 1:
+        # can't drill if there is no geometry
+        raise ProcessError("no features specified")
+
+    if len(features) > 1:
+        # do we need multipolygon support here?
+        raise ProcessError("multiple features specified")
+
+    feature = features[0]
+
+    if hasattr(request_json, 'crs'):
+        crs = CRS(request_json['crs']['properties']['name'])
+    elif hasattr(feature, 'crs'):
+        crs = CRS(feature['crs']['properties']['name'])
+    else:
+        # http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
+        crs = CRS('urn:ogc:def:crs:OGC:1.3:CRS84')
+
+    return Geometry(feature['geometry'], crs)
+
+
+def _get_time(request):
+    if 'start' not in request.inputs or 'end' not in request.inputs:
+        return None
+
+    def _datetimeExtractor(data):
+        return parse(json.loads(data)["properties"]["timestamp"]["date-time"])
+
+    return (_datetimeExtractor(request.inputs['start'][0].data),
+            _datetimeExtractor(request.inputs['end'][0].data))
 
 
 # GeometryDrill is the base class providing Datacube WPS functionality.
@@ -252,38 +278,19 @@ class GeometryDrill(Process):
                          status_supported=status_supported)
 
     def _handler(self, request, response):
-        # Create geometry
-        stream = request.inputs['geometry'][0].stream
-        request_json = json.loads(stream.readline())
-        if 'start' not in request.inputs or 'end' not in request.inputs:
-            time = None
-        else:
-            time = (_datetimeExtractor(request.inputs['start'][0].data),
-                    _datetimeExtractor(request.inputs['end'][0].data))
-        crs = None
-        if hasattr(request_json, 'crs'):
-            crs = request_json['crs']['properties']['name']
-
-        features = request_json['features']
-        if len(features) < 1:
-            # Can't drill if there is no geometry
-            raise ProcessError("no features specified")
+        time = _get_time(request)
+        feature = _get_feature(request)
 
         start_time = default_timer()
         data = dict()
-        for feature in features:
-            if crs is None and hasattr(feature, 'crs'):
-                crs = feature['crs']['properties']['name']
-            elif crs is None and not hasattr(feature, 'crs'):
-                # Terria doesn't provide the CRS for the polygon
-                # Must assume the crs according to spec
-                # http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
-                crs = 'urn:ogc:def:crs:OGC:1.3:CRS84'
-                # Can do custom loading of data here
-                for p in self.products:
-                    product = p['name']
-                    query = p.get('additional_query', {})
-                    data[product] = self.data_loader(feature['geometry'], product, crs, time, query)
+        for p in self.products:
+            product = p['name']
+            query = {'geopolygon': feature}
+            if time is not None:
+                query.update({'time': time})
+            if 'additional_query' in p:
+                query.update(p['additional_query'])
+            data[product] = self.data_loader(product, query)
 
         masked = dict()
         if self.geometry_type == 'point' or not self.do_mask:
@@ -292,7 +299,7 @@ class GeometryDrill(Process):
             masked = dict()
             for k, d in data.items():
                 if len(d.variables) > 0:
-                    mask = geometry_mask([f['geometry'] for f in features], crs, d.geobox, invert=True)
+                    mask = geometry_mask(feature, d.geobox, invert=True)
                     for band in d.data_vars:
                         try:
                             d[band] = d[band].where(mask, other=d[band].attrs['nodata'])
