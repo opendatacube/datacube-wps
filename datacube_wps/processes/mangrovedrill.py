@@ -2,7 +2,7 @@ import json
 from functools import partial
 
 import xarray
-from .geometrydrill import GeometryDrill, FORMATS, DatetimeEncoder, log_call
+from . import GeometryDrill, FORMATS, DatetimeEncoder, log_call
 
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)

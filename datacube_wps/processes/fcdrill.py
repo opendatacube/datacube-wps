@@ -13,8 +13,8 @@ from datacube.storage.masking import make_mask
 from pywps import LiteralOutput, ComplexOutput
 from pywps.app.exceptions import ProcessError
 
-from .geometrydrill import upload_chart_html_to_S3, DatetimeEncoder, FORMATS, log_call
-from .geometrydrill import GeometryDrill, wofls_fuser
+from . import upload_chart_html_to_S3, DatetimeEncoder, FORMATS, log_call
+from . import GeometryDrill, wofls_fuser
 
 
 # Data is a list of Datasets (returned from dc.load and masked if polygons)
@@ -155,7 +155,7 @@ def _processData(datas, style, **kwargs):
 
 
 class FCDrill(GeometryDrill):
-    def __init__(self, input, about, style):
+    def __init__(self, about, input, style):
         super().__init__(handler=partial(_processData, style=style),
                          products=[
                              {"name": "ls8_fc_albers"},

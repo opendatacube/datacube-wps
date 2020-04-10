@@ -14,8 +14,8 @@ from datacube.drivers import new_datasource
 from datacube.storage import BandInfo
 from dea.io.pdrill import PixelDrill
 
-from .geometrydrill import GeometryDrill, DatetimeEncoder, FORMATS, log_call
-from .geometrydrill import upload_chart_svg_to_S3, upload_chart_html_to_S3
+from . import GeometryDrill, DatetimeEncoder, FORMATS, log_call
+from . import upload_chart_svg_to_S3, upload_chart_html_to_S3
 
 
 @log_call
