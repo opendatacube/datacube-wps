@@ -14,7 +14,7 @@ from datacube.api.core import output_geobox, query_group_by, apply_aliases
 import rasterio.features
 
 import xarray
-import numpy
+import numpy as np
 
 import boto3
 import botocore
@@ -115,6 +115,12 @@ def geometry_mask(geom, geobox, all_touched=False, invert=False):
                                            invert=invert)
 
 
+def wofls_fuser(dest, src):
+    where_nodata = (src & 1) == 0
+    np.copyto(dest, src, where=where_nodata)
+    return dest
+
+
 # Default function for querying and loading data for WPS processes
 # Uses dc.load and groups by solar day
 @log_call
@@ -143,7 +149,7 @@ def _getData(product, query):
             byte_count *= x
         for x in grouped.shape:
             byte_count *= x
-        byte_count *= sum(numpy.dtype(m.dtype).itemsize for m in measurement_dicts.values())
+        byte_count *= sum(np.dtype(m.dtype).itemsize for m in measurement_dicts.values())
 
         print('byte count for query: ', byte_count)
         if byte_count > MAX_BYTES_IN_GB * GB:

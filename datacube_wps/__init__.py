@@ -17,12 +17,18 @@ from .processes.wofsdrill import WOfSDrill
 from .processes.mangrovedrill import MangroveDrill
 
 
-logger = logging.getLogger('PYWPS')
-handler = logging.StreamHandler()
-format = ('%(asctime)s] [%(levelname)s] file=%(pathname)s line=%(lineno)s '
-          'module=%(module)s function=%(funcName)s %(message)s')
-handler.setFormatter(logging.Formatter(format))
-logger.addHandler(handler)
+LOG_FORMAT = ('%(asctime)s] [%(levelname)s] file=%(pathname)s line=%(lineno)s '
+              'module=%(module)s function=%(funcName)s %(message)s')
+
+
+def setup_logger():
+    logger = logging.getLogger('PYWPS')
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    logger.addHandler(handler)
+
+
+setup_logger()
 
 
 if os.environ.get("SENTRY_KEY") and os.environ.get("SENTRY_PROJECT"):

@@ -12,7 +12,6 @@ import pywps.configuration as config
 from datacube.api.query import query_group_by
 from datacube.drivers import new_datasource
 from datacube.storage import BandInfo
-from datacube.utils import geometry
 from dea.io.pdrill import PixelDrill
 
 from .geometrydrill import GeometryDrill, DatetimeEncoder, FORMATS, log_call
