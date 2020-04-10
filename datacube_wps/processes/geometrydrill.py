@@ -65,26 +65,16 @@ def _uploadToS3(filename, data, mimetype):
     session = boto3.Session()
     bucket = config.get_config_value('s3', 'bucket')
     s3 = session.client('s3')
-    s3.upload_fileobj(
-        data,
-        bucket,
-        filename,
-        ExtraArgs={
-            'ACL': 'public-read',
-            'ContentType': mimetype
-        }
-    )
+    s3.upload_fileobj(data,
+                      bucket,
+                      filename,
+                      ExtraArgs={'ACL': 'public-read', 'ContentType': mimetype})
+
     # Create unsigned s3 client for determining public s3 url
     s3 = session.client('s3', config=Config(signature_version=botocore.UNSIGNED))
-    url = s3.generate_presigned_url(
-        ClientMethod='get_object',
-        ExpiresIn=0,
-        Params={
-            'Bucket': bucket,
-            'Key': filename
-        }
-    )
-    return url
+    return s3.generate_presigned_url(ClientMethod='get_object',
+                                     ExpiresIn=0,
+                                     Params={'Bucket': bucket, 'Key': filename})
 
 
 @log_call

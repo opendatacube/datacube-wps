@@ -18,6 +18,7 @@ from dea.io.pdrill import PixelDrill
 from .geometrydrill import GeometryDrill, DatetimeEncoder, FORMATS, log_call
 from .geometrydrill import upload_chart_svg_to_S3, upload_chart_html_to_S3
 
+
 @log_call
 def _getData(shape, product, crs, time=None, extra_query=None):
     if extra_query is None:
