@@ -1,54 +1,20 @@
 import json
-from functools import partial
 
 import numpy as np
 import datacube
 import altair
-from xarray import DataArray, Dataset
+from xarray import Dataset
 
 from pywps import LiteralOutput, ComplexInput, ComplexOutput
 import pywps.configuration as config
 
-from datacube.api.query import query_group_by
-from datacube.drivers import new_datasource
-from datacube.storage import BandInfo
-from dea.io.pdrill import PixelDrill
-
-from . import GeometryDrill, DatetimeEncoder, FORMATS, log_call
+from . import PixelDrill, DatetimeEncoder, FORMATS, log_call
 from . import upload_chart_svg_to_S3, upload_chart_html_to_S3
 
 
-@log_call
-def _getData(product, query):
-    with datacube.Datacube() as dc:
-        print("finding data!", query)
-        ds = dc.find_datasets(product=product, group_by="solar_day", **query)
-        dss = dc.group_datasets(ds, query_group_by(group_by="solar_day"))
-
-        dc_product = dc.index.products.get_by_name(product)
-
-        lonlat = query['geopolygon'].coords[0]
-        measurement = dc_product.measurements['water'].copy()
-        driller = PixelDrill(16)
-        datasources = []
-        for ds in dss.values:
-            for d in ds:
-                datasources.append(new_datasource(BandInfo(d, measurement['name'])))
-        datasources = sorted(datasources, key=lambda x: x._band_info.center_time)
-        times = [x._band_info.center_time for x in datasources]
-        files = [s.filename for s in datasources]
-
-        results = [[driller.read(urls=files, lonlat=lonlat)]]
-        array = DataArray(results,
-                          dims=('longitude', 'latitude', 'time'),
-                          coords={'longitude': np.array([lonlat[0]]), 'latitude': np.array([lonlat[1]]), 'time': times},
-                          attrs={'flags_definition': measurement['flags_definition']})
-
-        return array
-
 
 @log_call
-def _processData(datas, **kwargs):
+def _processData(data, **kwargs):
     rules = [
         {
             'op': any,
@@ -72,7 +38,7 @@ def _processData(datas, **kwargs):
         }
     ]
 
-    water = datas['wofs_albers']
+    water = data.data_vars['water']
 
     def get_flags(val):
         flag_dict = datacube.storage.masking.mask_to_dict(water.attrs['flags_definition'], val)
@@ -88,8 +54,8 @@ def _processData(datas, **kwargs):
 
     data = Dataset()
     data['observation'] = water
-    print(data)
     data['observation'].values = gf(data['observation'].values)
+    print(data)
 
     pt_lat = data['observation'].coords['latitude'][0].values
     pt_lon = data['observation'].coords['longitude'][0].values
@@ -149,22 +115,14 @@ def _processData(datas, **kwargs):
     return outputs
 
 
-class WOfSDrill(GeometryDrill):
-    def __init__(self, about, input, style):
-        super().__init__(handler=partial(_processData, style=style),
-                         products=[{"name": "wofs_albers"}],
-                         custom_inputs=[
-                             ComplexInput('geometry',
-                                          'Location (Lon,Lat)',
-                                          supported_formats=[FORMATS['point']])
-                         ],
-                         custom_outputs=[
-                             LiteralOutput("image", "WOfS Pixel Drill Preview"),
-                             LiteralOutput("url", "WOfS Pixel Drill Graph"),
-                             ComplexOutput('timeseries',
-                                           'Timeseries Drill',
-                                           supported_formats=[FORMATS['output_json']])
-                         ],
-                         custom_data_loader=_getData,
-                         mask=False,
-                         **about)
+class WOfSDrill(PixelDrill):
+    def input_formats(self):
+        return [ComplexInput('geometry', 'Location (Lon, Lat)', supported_formats=[FORMATS['point']])]
+
+    def output_formats(self):
+        return [LiteralOutput("image", "WOfS Pixel Drill Preview"),
+                LiteralOutput("url", "WOfS Pixel Drill Graph"),
+                ComplexOutput('timeseries', 'Timeseries Drill', supported_formats=[FORMATS['output_json']])]
+
+    def process_data(self, data):
+        return _processData(data, process_id=self.uuid)

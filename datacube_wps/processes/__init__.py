@@ -11,6 +11,9 @@ import datacube
 from datacube.utils.geometry import Geometry, CRS
 from datacube.api.core import output_geobox, query_group_by, apply_aliases
 
+from datacube.drivers import new_datasource
+from datacube.storage import BandInfo
+
 import rasterio.features
 
 import xarray
@@ -21,6 +24,7 @@ import botocore
 from botocore.client import Config
 
 from dateutil.parser import parse
+from dea.io.pdrill import PixelDrill as PD
 
 
 FORMATS = {
@@ -220,6 +224,89 @@ def _get_time(request):
 
     return (_datetimeExtractor(request.inputs['start'][0].data),
             _datetimeExtractor(request.inputs['end'][0].data))
+
+
+class PixelDrill(Process):
+    def __init__(self, about, input, style):
+        if 'geometry_type' in about:
+            assert about['geometry_type'] == 'point'
+
+        super().__init__(handler=self.request_handler,
+                         inputs=self.input_formats(),
+                         outputs=self.output_formats(),
+                         **{key: value for key, value in about.items() if key not in ['geometry_type']})
+
+        self.about = about
+        self.input = input
+        self.style = style
+
+    def input_formats(self):
+        return [ComplexInput('geometry', 'Location (Lon, Lat)', supported_formats=[FORMATS['point']]),
+                ComplexInput('start', 'Start Date', supported_formats=[FORMATS['datetime']]),
+                ComplexInput('end', 'End date', supported_formats=[FORMATS['datetime']])]
+
+    def output_formats(self):
+        return [ComplexOutput('timeseries', 'Timeseries Drill',
+                              supported_formats=[FORMATS['output_json']])]
+
+    def request_handler(self, request, response):
+        time = _get_time(request)
+        feature = _get_feature(request)
+
+        start_time = default_timer()
+        with datacube.Datacube() as dc:
+            data = self.input_data(dc, time, feature)
+        print('loaded data')
+        print(data)
+        print('time elasped in load: {}'.format(default_timer() - start_time))
+
+        start_time = default_timer()
+        outputs = self.process_data(data)
+        print('time elasped in process: {}'.format(default_timer() - start_time))
+
+        for ident, output_value in outputs.items():
+            if "data" in output_value:
+                response.outputs[ident].data = output_value['data']
+            if "output_format" in output_value:
+                response.outputs[ident].output_format = output_value['output_format']
+            if "url" in output_value:
+                response.outputs[ident].url = output_value['url']
+        return response
+
+    def input_data(self, dc, time, feature):
+        if time is None:
+            bag = self.input.query(dc, geopolygon=feature)
+        else:
+            bag = self.input.query(dc, time=time, geopolygon=feature)
+        measurements = self.input.output_measurements(bag.product_definitions)
+
+        # TODO group
+        # TODO customize the number of processes
+        driller = PD(16)
+
+        lonlat = feature.coords[0]
+
+        # for now pixel drill only supports an existing datacube product
+        datasets = sorted(list(bag.pile), key=lambda x: x.center_time)
+        coords = {'longitude': np.array([lonlat[0]]),
+                  'latitude': np.array([lonlat[1]]),
+                  'time': [d.center_time for d in datasets]}
+        dims = ('longitude', 'latitude', 'time')
+
+        def urls(measurement_name):
+            return [new_datasource(BandInfo(dataset, measurement_name)).filename for dataset in datasets]
+
+        result = xarray.Dataset()
+        for measurement_name, measurement in measurements.items():
+            result[measurement_name] = xarray.DataArray([[driller.read(urls=urls(measurement_name), lonlat=lonlat)]],
+                                                        dims=dims, coords=coords,
+                                                        attrs={key: value
+                                                               for key, value in measurement.items()
+                                                               if key in ['flags_definition']})
+        return result
+
+    def process_data(self, data):
+        raise NotImplementedError
 
 
 # GeometryDrill is the base class providing Datacube WPS functionality.
