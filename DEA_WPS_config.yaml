@@ -27,22 +27,23 @@ processes:
        product: wofs_albers
        measurements: [water]
        group_by: solar_day
-       fuse_func: datacube_wps.processes.geometrydrill.wofls_fuser
+       fuse_func: datacube_wps.processes.wofls_fuser
 
    style:
-       columns:
-           Wet:
-               units: "#"
-               chartLineColor: "#4F81BD"
-               active: True
-           Dry:
-               units: "#"
-               chartLineColor: "#D99694"
-               active: True
-           Not Observable:
-               units: "#"
-               chartLineColor: "#707070"
-               active: True
+       table:
+           columns:
+               Wet:
+                   units: "#"
+                   chartLineColor: "#4F81BD"
+                   active: True
+               Dry:
+                   units: "#"
+                   chartLineColor: "#D99694"
+                   active: True
+               Not Observable:
+                   units: "#"
+                   chartLineColor: "#707070"
+                   active: True
 
 
  - process: datacube_wps.processes.fcdrill.FCDrill
@@ -71,26 +72,27 @@ processes:
            - product: wofs_albers
              measurements: [water]
              group_by: solar_day
-             fuse_func: datacube_wps.processes.geometrydrill.wofls_fuser
+             fuse_func: datacube_wps.processes.wofls_fuser
 
    style:
-       columns:
-           Bare Soil:
-               units: "%"
-               chartLineColor: "#8B0000"
-               active: True
-           Photosynthetic Vegetation:
-               units: "%"
-               chartLineColor: "green"
-               active: True
-           Non-Photosynthetic Vegetation:
-               units: "%"
-               chartLineColor: "#dac586"
-               active: True
-           Unobservable:
-               units: "%"
-               chartLineColor: "#6699CC"
-               active: False
+       table:
+           columns:
+               Bare Soil:
+                   units: "%"
+                   chartLineColor: "#8B0000"
+                   active: True
+               Photosynthetic Vegetation:
+                   units: "%"
+                   chartLineColor: "green"
+                   active: True
+               Non-Photosynthetic Vegetation:
+                   units: "%"
+                   chartLineColor: "#dac586"
+                   active: True
+               Unobservable:
+                   units: "%"
+                   chartLineColor: "#6699CC"
+                   active: False
 
 
  - process: datacube_wps.processes.mangrovedrill.MangroveDrill
@@ -109,16 +111,17 @@ processes:
        measurements: [canopy_cover_class]
 
    style:
-       columns:
-           Woodland:
-               units: "#"
-               chartLineColor: "#9FFF4C"
-               active: True
-           Open Forest:
-               units: "#"
-               chartLineColor: "#5ECC00"
-               active: True
-           Closed Forest:
-               units: "#"
-               chartLineColor: "#3B7F00"
-               active: True
+       table:
+           columns:
+               Woodland:
+                   units: "#"
+                   chartLineColor: "#9FFF4C"
+                   active: True
+               Open Forest:
+                   units: "#"
+                   chartLineColor: "#5ECC00"
+                   active: True
+               Closed Forest:
+                   units: "#"
+                   chartLineColor: "#3B7F00"
+                   active: True

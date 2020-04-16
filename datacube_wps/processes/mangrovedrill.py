@@ -25,7 +25,7 @@ def _processData(datas, style, **kwargs):
         "isEnabled": True,
         "type": "csv",
         "name": "Mangrove Cover",
-        "tableStyle": style
+        "tableStyle": style['table']
     }
 
     output_json = json.dumps(output_dict, cls=DatetimeEncoder)

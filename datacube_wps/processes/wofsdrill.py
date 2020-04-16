@@ -134,7 +134,7 @@ def _processData(datas, **kwargs):
         "data": csv,
         "isEnabled": False,
         "type": "csv",
-        # "tableStyle": style,
+        # "tableStyle": style['table'],
         "name": "WOfS"
     }
 

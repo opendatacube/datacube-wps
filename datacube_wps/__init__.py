@@ -2,6 +2,7 @@
 
 import os
 import logging
+import argparse
 
 import flask
 import sentry_sdk
@@ -51,7 +52,7 @@ def read_process_catalog(catalog_filename):
     return [create_process(**settings) for settings in config['processes']]
 
 
-service = Service(read_process_catalog('DEA_WPS_config.yaml'), ['pywps.cfg'])
+service = []
 
 
 @app.after_request
@@ -63,7 +64,9 @@ def apply_cors(response):
 
 @app.route('/', methods=['GET', 'POST'])
 def wps():
-    return service
+    if not service:
+        service.append(Service(read_process_catalog('DEA_WPS_config.yaml'), ['pywps.cfg']))
+    return service[0]
 
 
 @app.route('/ping')
@@ -71,7 +74,7 @@ def ping():
     return 'system is healthy'
 
 
-@app.route('/outputs/'+'<path:filename>')
+@app.route('/outputs/' + '<path:filename>')
 def outputfile(filename):
     targetfile = os.path.join('outputs', filename)
     if os.path.isfile(targetfile):
@@ -87,8 +90,6 @@ def outputfile(filename):
 
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser(description="Script for starting an datacube-wps instance")
     parser.add_argument('-d', '--daemon',
                         action='store_true', help="run in daemon mode")
