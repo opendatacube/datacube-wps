@@ -18,6 +18,8 @@ import rasterio.features
 
 import xarray
 import numpy as np
+import pandas
+import altair
 
 import boto3
 import botocore
@@ -86,7 +88,6 @@ def _uploadToS3(filename, data, mimetype):
                                      Params={'Bucket': bucket, 'Key': filename})
 
 
-@log_call
 def upload_chart_html_to_S3(chart, process_id):
     html_io = io.StringIO()
     chart.save(html_io, format='html')
@@ -94,7 +95,6 @@ def upload_chart_html_to_S3(chart, process_id):
     return _uploadToS3(process_id + '/chart.html', html_bytes, 'text/html')
 
 
-@log_call
 def upload_chart_svg_to_S3(chart, process_id):
     img_io = io.StringIO()
     chart.save(img_io, format='svg')
@@ -177,14 +177,7 @@ def _getData(product, query):
         print("data load done", product, data)
         return data
 
-# Default function for processing loaded data
-# Datas is a list of Datasets (returned from dc.load and masked if polygons)
-@log_call
-def _processData(datas, **kwargs):
-    raise ProcessError('no _processData specified')
 
-
-# Pulls datetime output of JSON start / end date inputs
 def _datetimeExtractor(data):
     return parse(json.loads(data)["properties"]["timestamp"]["date-time"])
 
@@ -226,6 +219,16 @@ def _get_time(request):
             _datetimeExtractor(request.inputs['end'][0].data))
 
 
+def _populate_response(response, outputs):
+    for ident, output_value in outputs.items():
+        if "data" in output_value:
+            response.outputs[ident].data = output_value['data']
+        if "output_format" in output_value:
+            response.outputs[ident].output_format = output_value['output_format']
+        if "url" in output_value:
+            response.outputs[ident].url = output_value['url']
+
+
 class PixelDrill(Process):
     def __init__(self, about, input, style):
         if 'geometry_type' in about:
@@ -253,25 +256,21 @@ class PixelDrill(Process):
         time = _get_time(request)
         feature = _get_feature(request)
 
-        start_time = default_timer()
+        outputs = self.query_handler(time, feature)
+
+        _populate_response(response, outputs)
+        return response
+
+    @log_call
+    def query_handler(self, time, feature):
         with datacube.Datacube() as dc:
             data = self.input_data(dc, time, feature)
-        print('loaded data')
-        print(data)
-        print('time elasped in load: {}'.format(default_timer() - start_time))
 
-        start_time = default_timer()
-        outputs = self.process_data(data)
-        print('time elasped in process: {}'.format(default_timer() - start_time))
+        df = self.process_data(data)
+        chart = self.render_chart(df)
+        outputs = self.render_outputs(df, chart)
 
-        for ident, output_value in outputs.items():
-            if "data" in output_value:
-                response.outputs[ident].data = output_value['data']
-            if "output_format" in output_value:
-                response.outputs[ident].output_format = output_value['output_format']
-            if "url" in output_value:
-                response.outputs[ident].url = output_value['url']
-        return response
+        return outputs
 
     def input_data(self, dc, time, feature):
         if time is None:
@@ -305,8 +304,48 @@ class PixelDrill(Process):
                                                                if key in ['flags_definition']})
         return result
 
-    def process_data(self, data):
+    def process_data(self, data: xarray.Dataset) -> pandas.DataFrame:
         raise NotImplementedError
+
+    def render_chart(self, df: pandas.DataFrame) -> altair.Chart:
+        raise NotImplementedError
+
+    def render_outputs(self, df: pandas.DataFrame, chart: altair.Chart,
+                       is_enabled=True, name="Timeseries", header=True):
+
+        html_url = upload_chart_html_to_S3(chart, str(self.uuid))
+        img_url = upload_chart_svg_to_S3(chart, str(self.uuid))
+
+        try:
+            csv_df = df.drop(columns=['latitude', 'longitude'])
+        except KeyError:
+            csv_df = df
+
+        csv_df.set_index('time', inplace=True)
+        csv = csv_df.to_csv(header=header, date_format="%Y-%m-%d")
+
+        if 'table' in self.style:
+            table_style = {'tableStyle': self.style['table']}
+        else:
+            table_style = {}
+
+        output_dict = {
+            "data": csv,
+            "isEnabled": is_enabled,
+            "type": "csv",
+            "name": name,
+            **table_style
+        }
+
+        output_json = json.dumps(output_dict, cls=DatetimeEncoder)
+
+        outputs = {
+            'image': {'data': img_url},
+            'url': {'data': html_url},
+            'timeseries': {'data': output_json}
+        }
+
+        return outputs
 
 
 # GeometryDrill is the base class providing Datacube WPS functionality.
@@ -406,11 +445,5 @@ class GeometryDrill(Process):
 
         print('time elasped in process: {}'.format(default_timer() - start_time))
 
-        for ident, output_value in outputs.items():
-            if "data" in output_value:
-                response.outputs[ident].data = output_value['data']
-            if "output_format" in output_value:
-                response.outputs[ident].output_format = output_value['output_format']
-            if "url" in output_value:
-                response.outputs[ident].url = output_value['url']
+        _populate_response(response, outputs)
         return response
