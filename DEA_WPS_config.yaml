@@ -35,22 +35,20 @@ processes:
            width: 1000
            height: 300
 
-       # not sure why WOfS style isn't applied
-       #
-       # table:
-       #     columns:
-       #         Wet:
-       #             units: "#"
-       #             chartLineColor: "#4F81BD"
-       #             active: True
-       #         Dry:
-       #             units: "#"
-       #             chartLineColor: "#D99694"
-       #             active: True
-       #         Not Observable:
-       #             units: "#"
-       #             chartLineColor: "#707070"
-       #             active: True
+       table:
+           columns:
+               Wet:
+                   units: "#"
+                   chartLineColor: "#4F81BD"
+                   active: True
+               Dry:
+                   units: "#"
+                   chartLineColor: "#D99694"
+                   active: True
+               Not Observable:
+                   units: "#"
+                   chartLineColor: "#707070"
+                   active: True
 
 
  - process: datacube_wps.processes.fcdrill.FCDrill
