@@ -4,7 +4,7 @@ import altair
 
 from pywps import LiteralOutput, ComplexInput, ComplexOutput
 
-from . import PixelDrill, FORMATS, log_call
+from . import PixelDrill, FORMATS, log_call, chart_dimensions
 
 
 class WOfSDrill(PixelDrill):
@@ -18,6 +18,8 @@ class WOfSDrill(PixelDrill):
 
     @log_call
     def process_data(self, data):
+        # TODO raise ProcessError('query returned no data') when appropriate
+
         rules = [
             {
                 'op': any,
@@ -64,14 +66,7 @@ class WOfSDrill(PixelDrill):
 
     @log_call
     def render_chart(self, df):
-        if 'chart' in self.style and 'width' in self.style['chart']:
-            width = self.style['chart']['width']
-        else:
-            width = 1000
-        if 'height' in self.style and 'height' in self.style['chart']:
-            height = self.style['chart']['height']
-        else:
-            height = 300
+        width, height = chart_dimensions(self.style)
 
         pt_lat = df['latitude'].iat[0]
         pt_lon = df['longitude'].iat[0]

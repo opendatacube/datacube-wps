@@ -1,172 +1,116 @@
 from timeit import default_timer
 import multiprocessing
-from functools import partial
-import json
 
 import altair
 import xarray
 import numpy as np
 
-import datacube
 from datacube.storage.masking import make_mask
 
-from pywps import LiteralOutput, ComplexOutput
 from pywps.app.exceptions import ProcessError
 
-from . import upload_chart_html_to_S3, DatetimeEncoder, FORMATS, log_call
-from . import GeometryDrill, wofls_fuser
+from . import PolygonDrill, log_call, chart_dimensions
 
 
-# Data is a list of Datasets (returned from dc.load and masked if polygons)
-@log_call
-def _processData(datas, style, **kwargs):
-    start_time = default_timer()
-    dc = datacube.Datacube()
-    wofs_product = dc.index.products.get_by_name("wofs_albers")
+class FCDrill(PolygonDrill):
+    SHORT_NAMES = ['BS', 'PV', 'NPV', 'Unobservable']
+    LONG_NAMES = ['Bare Soil',
+                  'Photosynthetic Vegetation',
+                  'Non-Photosynthetic Vegetation',
+                  'Unobservable']
 
-    wofs_mask_flags = [
-        dict(dry=True),
-        dict(terrain_or_low_angle=False, high_slope=False, cloud_shadow=False, cloud=False, sea=False)
-    ]
+    @log_call
+    def process_data(self, data):
+        # TODO raise ProcessError('query returned no data') when appropriate
+        wofs_mask_flags = [
+            dict(dry=True),
+            dict(terrain_or_low_angle=False, high_slope=False, cloud_shadow=False, cloud=False, sea=False)
+        ]
 
-    data = xarray.Dataset()
-    for k, d in datas.items():
-        if len(d.variables) > 0 and k != 'wofs_albers':
-            if len(data.variables) > 0:
-                data = xarray.concat([data, d], dim='time')
-            else:
-                data = d
-    if not data or not datas['wofs_albers']:
-        raise ProcessError('query returned no data')
+        water = data.data_vars['water']
+        data = data.drop(['water'])
 
-    total = data.count(dim=['x', 'y'])
-    total_valid = (data != -1).sum(dim=['x', 'y'])
+        total = data.count(dim=['x', 'y'])
+        total_valid = (data != -1).sum(dim=['x', 'y'])
 
-    mask_data = datas['wofs_albers'].astype('uint8')
-    mask_data.attrs["flags_definition"] = wofs_product.measurements['water']['flags_definition']
-    for m in wofs_mask_flags:
-        mask = make_mask(mask_data, **m)
-        data = data.where(mask['water'])
+        for m in wofs_mask_flags:
+            mask = make_mask(water, **m)
+            data = data.where(mask)
 
-    print('masking took', default_timer() - start_time)
-    print('data', data)
+        total_invalid = (np.isnan(data)).sum(dim=['x', 'y'])
+        not_pixels = total_valid - (total - total_invalid)
 
-    total_invalid = (np.isnan(data)).sum(dim=['x', 'y'])
-    not_pixels = total_valid - (total - total_invalid)
+        # following robbi's advice, cast the dataset to a dataarray
+        maxFC = data.to_array(dim='variable', name='maxFC')
 
-    fc_tester = data.drop(['UE'])
+        # turn FC array into integer only as nanargmax doesn't seem to handle floats the way we want it to
+        FC_int = maxFC.astype('int16')
+        print('FC_int', FC_int)
 
-    # following robbi's advice, cast the dataset to a dataarray
-    maxFC = fc_tester.to_array(dim='variable', name='maxFC')
+        # use numpy.nanargmax to get the index of the maximum value along the variable dimension
+        # BSPVNPV=np.nanargmax(FC_int, axis=0)
+        BSPVNPV = FC_int.argmax(dim='variable')
 
-    # turn FC array into integer only as nanargmax doesn't seem to handle floats the way we want it to
-    FC_int = maxFC.astype('int16')
-    print('FC_int', FC_int)
+        FC_mask = xarray.ufuncs.isfinite(maxFC).all(dim='variable')
 
-    # use numpy.nanargmax to get the index of the maximum value along the variable dimension
-    # BSPVNPV=np.nanargmax(FC_int, axis=0)
-    BSPVNPV = FC_int.argmax(dim='variable')
+        # #re-mask with nans to remove no-data
+        BSPVNPV = BSPVNPV.where(FC_mask)
 
-    FC_mask = xarray.ufuncs.isfinite(maxFC).all(dim='variable')
+        FC_dominant = xarray.Dataset({
+            'BS': (BSPVNPV == 0).where(FC_mask),
+            'PV': (BSPVNPV == 1).where(FC_mask),
+            'NPV': (BSPVNPV == 2).where(FC_mask)
+        })
 
-    # #re-mask with nans to remove no-data
-    BSPVNPV = BSPVNPV.where(FC_mask)
+        FC_count = FC_dominant.sum(dim=['x', 'y'])
 
-    FC_dominant = xarray.Dataset({
-        'BS': (BSPVNPV == 0).where(FC_mask),
-        'PV': (BSPVNPV == 1).where(FC_mask),
-        'NPV': (BSPVNPV == 2).where(FC_mask)
-    })
+        # Fractional cover pixel count method
+        # Get number of FC pixels, divide by total number of pixels per polygon
+        new_ds = xarray.Dataset({
+            'BS': (FC_count.BS / total_valid)['BS'] * 100,
+            'PV': (FC_count.PV / total_valid)['PV'] * 100,
+            'NPV': (FC_count.NPV / total_valid)['NPV'] * 100,
+            'Unobservable': (not_pixels / total_valid)['BS'] * 100
+        })
 
-    FC_count = FC_dominant.sum(dim=['x', 'y'])
+        print('calling dask with', multiprocessing.cpu_count())
+        dask_time = default_timer()
+        new_ds = new_ds.compute(scheduler='processes')
+        print(new_ds)
+        print('dask took exactly', default_timer() - dask_time)
 
-    # Fractional cover pixel count method
-    # Get number of FC pixels, divide by total number of pixels per polygon
+        df = new_ds.to_dataframe()
+        df.reset_index(inplace=True)
+        return df
 
-    Bare_soil_percent = (FC_count.BS / total_valid)['BS']
+    def render_chart(self, df):
+        width, height = chart_dimensions(self.style)
 
-    Photosynthetic_veg_percent = (FC_count.PV / total_valid)['PV']
+        melted = df.melt('time', var_name='Cover Type', value_name='Area')
+        melted = melted.dropna()
 
-    NonPhotosynthetic_veg_percent = (FC_count.NPV / total_valid)['NPV']
+        print('melted')
+        print(melted)
 
-    Unobservable = (not_pixels / total_valid)['BS']
+        style = self.style['table']['columns']
 
-    # print(Bare_soil_percent, Photosynthetic_veg_percent, NonPhotosynthetic_veg_percent)
-    new_ds = xarray.Dataset({
-        'BS': Bare_soil_percent * 100,
-        'PV': Photosynthetic_veg_percent * 100,
-        'NPV': NonPhotosynthetic_veg_percent * 100,
-        'Unobservable': Unobservable * 100
-    })
+        chart = altair.Chart(melted,
+                             width=width,
+                             height=height,
+                             title='Percentage of Area - Fractional Cover')
+        chart = chart.mark_area()
+        chart = chart.encode(x='time:T',
+                             y=altair.Y('Area:Q', stack='normalize'),
+                             color=altair.Color('Cover Type:N',
+                                                scale=altair.Scale(domain=self.SHORT_NAMES,
+                                                                   range=[style[name]['chartLineColor']
+                                                                          for name in self.LONG_NAMES])),
+                             tooltip=[altair.Tooltip(field='time', format='%d %B, %Y', title='Date', type='temporal'),
+                                      'Area:Q',
+                                      'Cover Type:N'])
 
-    print('calling dask with', multiprocessing.cpu_count())
-    dask_time = default_timer()
-    new_ds = new_ds.compute(scheduler='processes')
-    print(new_ds)
-    print('dask took exactly', default_timer() - dask_time)
+        return chart
 
-    df = new_ds.to_dataframe()
-    df.reset_index(inplace=True)
-    melted = df.melt('time', var_name='Cover Type', value_name='Area')
-    melted = melted.dropna()
-    print(melted)
-
-    chart = altair.Chart(melted,
-                         width=1000,
-                         height=300,
-                         title='Percentage of Area - Fractional Cover')
-    chart = chart.mark_area()
-    chart = chart.encode(x='time:T',
-                         y=altair.Y('Area:Q', stack='normalize'),
-                         color=altair.Color('Cover Type:N',
-                                            scale=altair.Scale(domain=['PV', 'NPV', 'BS', 'Unobservable'],
-                                                               range=['green', '#dac586', '#8B0000', 'grey'])),
-                         tooltip=[altair.Tooltip(field='time', format='%d %B, %Y', title='Date', type='temporal'),
-                                  'Area:Q',
-                                  'Cover Type:N'])
-
-    html_url = upload_chart_html_to_S3(chart, str(kwargs['process_id']))
-    # data = data.dropna('time', how='all')
-    csv = new_ds.to_dataframe().to_csv(header=['Bare Soil',
-                                               'Photosynthetic Vegetation',
-                                               'Non-Photosynthetic Vegetation',
-                                               'Unobservable'],
-                                       date_format="%Y-%m-%d")
-
-    output_dict = {
-        "data": csv,
-        "isEnabled": True,
-        "type": "csv",
-        "name": "FC",
-        "tableStyle": style['table']
-    }
-
-    output_json = json.dumps(output_dict, cls=DatetimeEncoder)
-
-    output_str = output_json
-
-    outputs = {
-        'url': {'data': html_url},
-        'timeseries': {'data': output_str}
-    }
-
-    print('in processData: ', default_timer() - start_time)
-    return outputs
-
-
-class FCDrill(GeometryDrill):
-    def __init__(self, about, input, style):
-        super().__init__(handler=partial(_processData, style=style),
-                         products=[
-                             {"name": "ls8_fc_albers"},
-                             {"name": "ls7_fc_albers"},
-                             {"name": "ls5_fc_albers"},
-                             {"name": "wofs_albers", "additional_query": {"fuse_func": wofls_fuser}}
-                         ],
-                         custom_outputs=[
-                             LiteralOutput("url", "Fractional Cover Asset Drill"),
-                             ComplexOutput('timeseries',
-                                           'Timeseries Drill',
-                                           supported_formats=[FORMATS['output_json']])
-                         ],
-                         **about)
+    def render_outputs(self, df, chart):
+        return super().render_outputs(df, chart, is_enabled=True, name="FC",
+                                      header=self.LONG_NAMES)

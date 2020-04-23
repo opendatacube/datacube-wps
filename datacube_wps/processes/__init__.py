@@ -125,57 +125,38 @@ def wofls_fuser(dest, src):
     return dest
 
 
-# Default function for querying and loading data for WPS processes
-# Uses dc.load and groups by solar day
-@log_call
-def _getData(product, query):
-    with datacube.Datacube() as dc:
-        print("loading data!", query)
+def chart_dimensions(style):
+    if 'chart' in style and 'width' in style['chart']:
+        width = style['chart']['width']
+    else:
+        width = 1000
+    if 'height' in style and 'height' in style['chart']:
+        height = style['chart']['height']
+    else:
+        height = 300
 
-        datasets = dc.find_datasets(product=product, **{k: v
-                                                        for k, v in query.items()
-                                                        if k not in ['dask_chunks',
-                                                                     'fuse_func',
-                                                                     'resampling',
-                                                                     'skip_broken_datasets']})
-        if len(datasets) == 0:
-            return xarray.Dataset()
+    return (width, height)
 
-        datacube_product = datasets[0].type
 
-        geobox = output_geobox(grid_spec=datacube_product.grid_spec, **query)
-        grouped = dc.group_datasets(datasets, query_group_by(group_by='solar_day', **query))
+def _guard_rail(input, box):
+    measurement_dicts = input.output_measurements(box.product_definitions)
 
-        measurement_dicts = datacube_product.lookup_measurements(query.get('measurements'))
+    byte_count = 1
+    for x in box.shape:
+        byte_count *= x
+    byte_count *= sum(np.dtype(m.dtype).itemsize for m in measurement_dicts.values())
 
-        byte_count = 1
-        for x in geobox.shape:
-            byte_count *= x
-        for x in grouped.shape:
-            byte_count *= x
-        byte_count *= sum(np.dtype(m.dtype).itemsize for m in measurement_dicts.values())
+    print('byte count for query: ', byte_count)
+    if byte_count > MAX_BYTES_IN_GB * GB:
+        raise ProcessError(("requested area requires {}GB data to load - "
+                            "maximum is {}GB").format(int(byte_count / GB), MAX_BYTES_IN_GB))
 
-        print('byte count for query: ', byte_count)
-        if byte_count > MAX_BYTES_IN_GB * GB:
-            raise ProcessError(("requested area requires {}GB data to load - "
-                                "maximum is {}GB").format(int(byte_count / GB), MAX_BYTES_IN_GB))
-
-        print('grouped shape', grouped.shape)
-        assert len(grouped.shape) == 1
-        bytes_per_obs = byte_count / grouped.shape[0]
-        if bytes_per_obs > MAX_BYTES_PER_OBS_IN_GB * GB:
-            raise ProcessError(("requested time slices each requires {}GB data to load - "
-                                "maximum is {}GB").format(int(bytes_per_obs / GB), MAX_BYTES_PER_OBS_IN_GB))
-
-        result = dc.load_data(grouped, geobox, measurement_dicts,
-                              resampling=query.get('resampling'),
-                              fuse_func=query.get('fuse_func'),
-                              dask_chunks=query.get('dask_chunks', {'time': 1}),
-                              skip_broken_datasets=query.get('skip_broken_datasets', False))
-
-        data = apply_aliases(result, datacube_product, query.get('measurements'))
-        print("data load done", product, data)
-        return data
+    print('grouped shape', box.pile.shape)
+    assert len(box.pile.shape) == 1
+    bytes_per_obs = byte_count / box.pile.shape[0]
+    if bytes_per_obs > MAX_BYTES_PER_OBS_IN_GB * GB:
+        raise ProcessError(("requested time slices each requires {}GB data to load - "
+                            "maximum is {}GB").format(int(bytes_per_obs / GB), MAX_BYTES_PER_OBS_IN_GB))
 
 
 def _datetimeExtractor(data):
@@ -219,14 +200,52 @@ def _get_time(request):
             _datetimeExtractor(request.inputs['end'][0].data))
 
 
+def _render_outputs(uuid, style, df: pandas.DataFrame, chart: altair.Chart,
+                    is_enabled=True, name="Timeseries", header=True):
+    html_url = upload_chart_html_to_S3(chart, str(uuid))
+    img_url = upload_chart_svg_to_S3(chart, str(uuid))
+
+    try:
+        csv_df = df.drop(columns=['latitude', 'longitude'])
+    except KeyError:
+        csv_df = df
+
+    csv_df.set_index('time', inplace=True)
+    csv = csv_df.to_csv(header=header, date_format="%Y-%m-%d")
+
+    if 'table' in style:
+        table_style = {'tableStyle': style['table']}
+    else:
+        table_style = {}
+
+    output_dict = {
+        "data": csv,
+        "isEnabled": is_enabled,
+        "type": "csv",
+        "name": name,
+        **table_style
+    }
+
+    output_json = json.dumps(output_dict, cls=DatetimeEncoder)
+
+    outputs = {
+        'image': {'data': img_url},
+        'url': {'data': html_url},
+        'timeseries': {'data': output_json}
+    }
+
+    return outputs
+
+
 def _populate_response(response, outputs):
     for ident, output_value in outputs.items():
-        if "data" in output_value:
-            response.outputs[ident].data = output_value['data']
-        if "output_format" in output_value:
-            response.outputs[ident].output_format = output_value['output_format']
-        if "url" in output_value:
-            response.outputs[ident].url = output_value['url']
+        if ident in response.outputs:
+            if "data" in output_value:
+                response.outputs[ident].data = output_value['data']
+            if "output_format" in output_value:
+                response.outputs[ident].output_format = output_value['output_format']
+            if "url" in output_value:
+                response.outputs[ident].url = output_value['url']
 
 
 class PixelDrill(Process):
@@ -312,138 +331,82 @@ class PixelDrill(Process):
 
     def render_outputs(self, df: pandas.DataFrame, chart: altair.Chart,
                        is_enabled=True, name="Timeseries", header=True):
-
-        html_url = upload_chart_html_to_S3(chart, str(self.uuid))
-        img_url = upload_chart_svg_to_S3(chart, str(self.uuid))
-
-        try:
-            csv_df = df.drop(columns=['latitude', 'longitude'])
-        except KeyError:
-            csv_df = df
-
-        csv_df.set_index('time', inplace=True)
-        csv = csv_df.to_csv(header=header, date_format="%Y-%m-%d")
-
-        if 'table' in self.style:
-            table_style = {'tableStyle': self.style['table']}
-        else:
-            table_style = {}
-
-        output_dict = {
-            "data": csv,
-            "isEnabled": is_enabled,
-            "type": "csv",
-            "name": name,
-            **table_style
-        }
-
-        output_json = json.dumps(output_dict, cls=DatetimeEncoder)
-
-        outputs = {
-            'image': {'data': img_url},
-            'url': {'data': html_url},
-            'timeseries': {'data': output_json}
-        }
-
-        return outputs
+        return _render_outputs(self.uuid, self.style, df, chart,
+                               is_enabled=is_enabled, name=name, header=header)
 
 
-# GeometryDrill is the base class providing Datacube WPS functionality.
-# It is a pywps Process class that has been extended to provide additional
-# functionality specific to Datacube.
-# In order to create a custom drill, GeometryDrill can be subclassed or
-# passed arguments on construction to modify it's behavior.
-# :param handler: Function to process loaded data. The function should accept a list of xarrays as loaded by datacube
-# :param identifier: String that identifies this process (PyWPS)
-# :param title: Human readable String for the name of this process (PyWPS)
-# :param abstract: Human readable String for defining any information about this process (PyWPS)
-# :param version: String containing a version identifier for this process (PyWPS)
-# :param store_supported: Bool, If true PyWPS will allow storing local files as outputs (PyWPS)
-# :param status_supported:
-#      Bool, If true PyWPS will allow storing a status file for tracking the process execution (PyWPS)
-# :param products: List of Strings, Contains the datacube product names of products to be loaded by this process
-# :param geometry_type: currently "polygon" or "point"
-# :param custom_inputs: Optional List of PyWPS Input types, otherwise will default to, geometry, start and end dates
-# :param custom_outputs:
-#      Optional List of PyWPS Output types, otherwise will default to a JSON object containing a timeseries
-# :param custom_data_loader: Optional Function for loading data
-# :param mask: Bool, if True, data will be masked to the geometry input
-class GeometryDrill(Process):
+class PolygonDrill(Process):
+    def __init__(self, about, input, style):
+        if 'geometry_type' in about:
+            assert about['geometry_type'] == 'polygon'
 
-    def __init__(self, handler, identifier, title, abstract='',
-                 version='None', store_supported=False, status_supported=False,
-                 products=None, geometry_type="polygon", custom_inputs=None,
-                 custom_outputs=None, custom_data_loader=None,
-                 mask=True):
+        super().__init__(handler=self.request_handler,
+                         inputs=self.input_formats(),
+                         outputs=self.output_formats(),
+                         **{key: value for key, value in about.items() if key not in ['geometry_type']})
 
-        assert products is not None
-        assert geometry_type in ["polygon", "point"]
+        self.about = about
+        self.input = input
+        self.style = style
 
-        if custom_inputs is None:
-            inputs = [ComplexInput('geometry', 'Geometry', supported_formats=[FORMATS[geometry_type]]),
-                      ComplexInput('start', 'Start Date', supported_formats=[FORMATS['datetime']]),
-                      ComplexInput('end', 'End date', supported_formats=[FORMATS['datetime']])]
-        else:
-            inputs = custom_inputs
+    def input_formats(self):
+        return [ComplexInput('geometry', 'Geometry', supported_formats=[FORMATS['polygon']]),
+                ComplexInput('start', 'Start Date', supported_formats=[FORMATS['datetime']]),
+                ComplexInput('end', 'End date', supported_formats=[FORMATS['datetime']])]
 
-        if custom_outputs is None:
-            outputs = [ComplexOutput('timeseries', 'Timeseries Drill',
-                                     supported_formats=[FORMATS['output_json']], as_reference=False)]
-        else:
-            outputs = custom_outputs
+    def output_formats(self):
+        return [ComplexOutput('timeseries', 'Timeseries Drill',
+                              supported_formats=[FORMATS['output_json']], as_reference=False)]
 
-        self.products = products
-        self.custom_handler = handler
-        self.geometry_type = geometry_type
-        self.custom_outputs = custom_outputs
-        self.data_loader = _getData if custom_data_loader is None else custom_data_loader
-        self.do_mask = mask
-
-        super().__init__(handler=self._handler,
-                         identifier=identifier,
-                         version=version,
-                         title=title,
-                         abstract=abstract,
-                         inputs=inputs,
-                         outputs=outputs,
-                         store_supported=store_supported,
-                         status_supported=status_supported)
-
-    def _handler(self, request, response):
+    def request_handler(self, request, response):
         time = _get_time(request)
         feature = _get_feature(request)
 
-        start_time = default_timer()
-        data = dict()
-        for p in self.products:
-            product = p['name']
-            query = {'geopolygon': feature}
-            if time is not None:
-                query.update({'time': time})
-            if 'additional_query' in p:
-                query.update(p['additional_query'])
-            data[product] = self.data_loader(product, query)
-
-        masked = dict()
-        if self.geometry_type == 'point' or not self.do_mask:
-            masked = data
-        elif len(data) != 0:
-            masked = dict()
-            for k, d in data.items():
-                if len(d.variables) > 0:
-                    mask = geometry_mask(feature, d.geobox, invert=True)
-                    for band in d.data_vars:
-                        try:
-                            d[band] = d[band].where(mask, other=d[band].attrs['nodata'])
-                        except AttributeError:
-                            d[band] = d[band].where(mask)
-                masked[k] = d
-
-        print('time elasped in load: {}'.format(default_timer() - start_time))
-
-        outputs = self.custom_handler(masked, process_id=self.uuid)
-
-        print('time elasped in process: {}'.format(default_timer() - start_time))
+        outputs = self.query_handler(time, feature)
 
         _populate_response(response, outputs)
         return response
+
+    @log_call
+    def query_handler(self, time, feature):
+        with datacube.Datacube() as dc:
+            data = self.input_data(dc, time, feature)
+
+        df = self.process_data(data)
+        chart = self.render_chart(df)
+        outputs = self.render_outputs(df, chart)
+
+        return outputs
+
+    def input_data(self, dc, time, feature):
+        if time is None:
+            bag = self.input.query(dc, geopolygon=feature)
+        else:
+            bag = self.input.query(dc, time=time, geopolygon=feature)
+
+        box = self.input.group(bag)
+        _guard_rail(self.input, box)
+        mask = geometry_mask(feature, box.geobox, invert=True)
+
+        # TODO customize the number of processes
+        data = self.input.fetch(box, dask_chunks={'time': 1})
+
+        # mask out data outside requested polygon
+        for band_name, band_array in data.data_vars.items():
+            if 'nodata' in band_array.attrs:
+                data[band_name] = band_array.where(mask, other=band_array.attrs['nodata'])
+            else:
+                data[band_name] = band_array.where(mask)
+
+        return data
+
+    def process_data(self, data: xarray.Dataset) -> pandas.DataFrame:
+        raise NotImplementedError
+
+    def render_chart(self, df: pandas.DataFrame) -> altair.Chart:
+        raise NotImplementedError
+
+    def render_outputs(self, df: pandas.DataFrame, chart: altair.Chart,
+                       is_enabled=True, name="Timeseries", header=True):
+        return _render_outputs(self.uuid, self.style, df, chart,
+                               is_enabled=is_enabled, name=name, header=header)

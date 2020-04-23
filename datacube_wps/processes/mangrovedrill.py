@@ -1,47 +1,48 @@
-import json
-from functools import partial
-
 import xarray
-from . import GeometryDrill, FORMATS, DatetimeEncoder, log_call
+import altair
+from . import PolygonDrill, log_call, chart_dimensions
 
 
-# Data is a list of Datasets (returned from dc.load and masked if polygons)
-@log_call
-def _processData(datas, style, **kwargs):
-    data = datas[0]
-    woodland = data.where(data == 1).count(['x', 'y']).drop('extent')
-    woodland = woodland.rename(name_dict={'canopy_cover_class': 'woodland'})
-    open_forest = data.where(data == 2).count(['x', 'y']).drop('extent')
-    open_forest = open_forest.rename(name_dict={'canopy_cover_class': 'open_forest'})
-    closed_forest = data.where(data == 3).count(['x', 'y']).drop('extent')
-    closed_forest = closed_forest.rename(name_dict={"canopy_cover_class": 'closed_forest'})
+class MangroveDrill(PolygonDrill):
 
-    final = xarray.merge([woodland, open_forest, closed_forest])
-    final = final.to_dataframe().to_csv(header=['Woodland', 'Open Forest', 'Closed Forest'],
-                                        date_format="%Y-%m-%d")
+    @log_call
+    def process_data(self, data):
+        # TODO raise ProcessError('query returned no data') when appropriate
+        woodland = data.where(data == 1).count(['x', 'y']).drop('extent')
+        woodland = woodland.rename(name_dict={'canopy_cover_class': 'woodland'})
+        open_forest = data.where(data == 2).count(['x', 'y']).drop('extent')
+        open_forest = open_forest.rename(name_dict={'canopy_cover_class': 'open_forest'})
+        closed_forest = data.where(data == 3).count(['x', 'y']).drop('extent')
+        closed_forest = closed_forest.rename(name_dict={"canopy_cover_class": 'closed_forest'})
 
-    output_dict = {
-        "data": final,
-        "isEnabled": True,
-        "type": "csv",
-        "name": "Mangrove Cover",
-        "tableStyle": style['table']
-    }
+        final = xarray.merge([woodland, open_forest, closed_forest])
+        return final.to_dataframe()
 
-    output_json = json.dumps(output_dict, cls=DatetimeEncoder)
+    @log_call
+    def render_chart(self, df):
+        width, height = chart_dimensions(self.style)
 
-    output = {
-        "timeseries": {
-            "output_format": FORMATS['output_json'],
-            "data": output_json
-        }
-    }
+        style = self.style['table']['columns']
+        cover_types = ['Woodland', 'Open Forest', 'Closed Forest']
 
-    return output
+        chart = altair.Chart(df,
+                             width=width,
+                             height=height,
+                             title='Percentage of Area - Mangrove Canopy Cover')
+        chart = chart.mark_area()
+        chart = chart.encode(x='time:T',
+                             y=altair.Y('Area:Q', stack='normalize'),
+                             color=altair.Color('Cover Type:N',
+                                                scale=altair.Scale(domain=cover_types,
+                                                                   range=[style[ct]['chartLineColor']
+                                                                          for ct in cover_types])),
+                             tooltip=[altair.Tooltip(field='time', format='%d %B, %Y', title='Date', type='temporal'),
+                                      'Area:Q',
+                                      'Cover Type:N'])
 
+        return chart
 
-class MangroveDrill(GeometryDrill):
-    def __init__(self, about, input, style):
-        super().__init__(handler=partial(_processData, style=style),
-                         products=[{"name": "mangrove_cover"}],
-                         **about)
+    @log_call
+    def render_outputs(self, df, chart):
+        super().render_outputs(df, chart, is_enabled=True, name="Mangrove Cover",
+                               header=['Woodland', 'Open Forest', 'Closed Forest'])

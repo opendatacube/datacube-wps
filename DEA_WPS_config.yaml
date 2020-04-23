@@ -30,11 +30,6 @@ processes:
        fuse_func: datacube_wps.processes.wofls_fuser
 
    style:
-
-       chart:
-           width: 1000
-           height: 300
-
        table:
            columns:
                Wet:
@@ -55,7 +50,7 @@ processes:
 
    about:
        identifier: FractionalCoverDrill
-       version: '0.2'
+       version: '0.3'
        title: Fractional Cover
        abstract: Performs Fractional Cover Polygon Drill
        store_supported: True
@@ -96,7 +91,8 @@ processes:
                    active: True
                Unobservable:
                    units: "%"
-                   chartLineColor: "#6699CC"
+                   # this was nice too: chartLineColor: "#6699CC"
+                   chartLineColor: "grey"
                    active: False
 
 
@@ -104,7 +100,7 @@ processes:
 
    about:
        identifier: Mangrove Cover Drill
-       version: '0.1'
+       version: '0.2'
        title: Mangrove Cover
        abstract: Performs Mangrove Polygon Drill
        store_supported: True
