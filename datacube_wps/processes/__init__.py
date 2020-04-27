@@ -281,8 +281,9 @@ class PixelDrill(Process):
         time = _get_time(request)
         feature = _get_feature(request)
 
-        outputs = self.query_handler(time, feature)
+        result = self.query_handler(time, feature)
 
+        outputs = self.render_outputs(result['data'], result['chart'])
         _populate_response(response, outputs)
         return response
 
@@ -293,9 +294,8 @@ class PixelDrill(Process):
 
         df = self.process_data(data)
         chart = self.render_chart(df)
-        outputs = self.render_outputs(df, chart)
 
-        return outputs
+        return {'data': df, 'chart': chart}
 
     def input_data(self, dc, time, feature):
         if time is None:
@@ -321,7 +321,6 @@ class PixelDrill(Process):
         coords = {'longitude': np.array([lonlat[0]]),
                   'latitude': np.array([lonlat[1]]),
                   'time': [d.center_time for d in datasets]}
-        dims = ('longitude', 'latitude', 'time')
 
         def urls(measurement_name):
             return [new_datasource(BandInfo(dataset, measurement_name)).filename for dataset in datasets]
@@ -329,7 +328,8 @@ class PixelDrill(Process):
         result = xarray.Dataset()
         for measurement_name, measurement in measurements.items():
             result[measurement_name] = xarray.DataArray([[driller.read(urls=urls(measurement_name), lonlat=lonlat)]],
-                                                        dims=dims, coords=coords,
+                                                        dims=('longitude', 'latitude', 'time'),
+                                                        coords=coords,
                                                         attrs={key: value
                                                                for key, value in measurement.items()
                                                                if key in ['flags_definition']})
@@ -374,8 +374,9 @@ class PolygonDrill(Process):
         time = _get_time(request)
         feature = _get_feature(request)
 
-        outputs = self.query_handler(time, feature)
+        result = self.query_handler(time, feature)
 
+        outputs = self.render_outputs(result['data'], result['chart'])
         _populate_response(response, outputs)
         return response
 
@@ -386,9 +387,8 @@ class PolygonDrill(Process):
 
         df = self.process_data(data)
         chart = self.render_chart(df)
-        outputs = self.render_outputs(df, chart)
 
-        return outputs
+        return {'data': df, 'chart': chart}
 
     def input_data(self, dc, time, feature):
         if time is None:
