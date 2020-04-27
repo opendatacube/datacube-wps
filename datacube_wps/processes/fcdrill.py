@@ -45,7 +45,6 @@ class FCDrill(PolygonDrill):
 
         # turn FC array into integer only as nanargmax doesn't seem to handle floats the way we want it to
         FC_int = maxFC.astype('int16')
-        print('FC_int', FC_int)
 
         # use numpy.nanargmax to get the index of the maximum value along the variable dimension
         # BSPVNPV=np.nanargmax(FC_int, axis=0)
@@ -73,11 +72,11 @@ class FCDrill(PolygonDrill):
             'Unobservable': (not_pixels / total_valid)['BS'] * 100
         })
 
-        print('calling dask with', multiprocessing.cpu_count())
+        print('calling dask with', multiprocessing.cpu_count(), 'processes')
         dask_time = default_timer()
         new_ds = new_ds.compute(scheduler='processes')
         print(new_ds)
-        print('dask took exactly', default_timer() - dask_time)
+        print('dask took', default_timer() - dask_time, 'seconds')
 
         df = new_ds.to_dataframe()
         df.reset_index(inplace=True)
@@ -88,9 +87,6 @@ class FCDrill(PolygonDrill):
 
         melted = df.melt('time', var_name='Cover Type', value_name='Area')
         melted = melted.dropna()
-
-        print('melted')
-        print(melted)
 
         style = self.style['table']['columns']
 
