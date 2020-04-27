@@ -151,9 +151,15 @@ def _guard_rail(input, box):
         raise ProcessError(("requested area requires {}GB data to load - "
                             "maximum is {}GB").format(int(byte_count / GB), MAX_BYTES_IN_GB))
 
-    print('grouped shape', box.pile.shape)
-    assert len(box.pile.shape) == 1
-    bytes_per_obs = byte_count / box.pile.shape[0]
+    try:
+        grouped = box.box
+    except AttributeError:
+        # datacube 1.7 compatibility
+        grouped = box.pile
+
+    print('grouped shape', grouped.shape)
+    assert len(grouped.shape) == 1
+    bytes_per_obs = byte_count / grouped.shape[0]
     if bytes_per_obs > MAX_BYTES_PER_OBS_IN_GB * GB:
         raise ProcessError(("requested time slices each requires {}GB data to load - "
                             "maximum is {}GB").format(int(bytes_per_obs / GB), MAX_BYTES_PER_OBS_IN_GB))
@@ -304,8 +310,14 @@ class PixelDrill(Process):
 
         lonlat = feature.coords[0]
 
+        try:
+            dss = bag.bag
+        except AttributeError:
+            # datacube 1.7 compatibility
+            dss = bag.pile
+
         # for now pixel drill only supports an existing datacube product
-        datasets = sorted(list(bag.pile), key=lambda x: x.center_time)
+        datasets = sorted(list(dss), key=lambda x: x.center_time)
         coords = {'longitude': np.array([lonlat[0]]),
                   'latitude': np.array([lonlat[1]]),
                   'time': [d.center_time for d in datasets]}
