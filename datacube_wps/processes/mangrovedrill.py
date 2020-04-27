@@ -1,3 +1,5 @@
+import multiprocessing
+
 import xarray
 import altair
 from . import PolygonDrill, log_call, chart_dimensions
@@ -7,25 +9,35 @@ class MangroveDrill(PolygonDrill):
 
     @log_call
     def process_data(self, data):
+        print('calling dask with', multiprocessing.cpu_count(), 'processes')
+        data = data.compute(scheduler='processes')
+        print('data loaded')
+        print(data)
+
         # TODO raise ProcessError('query returned no data') when appropriate
-        woodland = data.where(data == 1).count(['x', 'y']).drop('extent')
+        woodland = data.where(data == 1).count(['x', 'y'])
         woodland = woodland.rename(name_dict={'canopy_cover_class': 'woodland'})
-        open_forest = data.where(data == 2).count(['x', 'y']).drop('extent')
+        open_forest = data.where(data == 2).count(['x', 'y'])
         open_forest = open_forest.rename(name_dict={'canopy_cover_class': 'open_forest'})
-        closed_forest = data.where(data == 3).count(['x', 'y']).drop('extent')
+        closed_forest = data.where(data == 3).count(['x', 'y'])
         closed_forest = closed_forest.rename(name_dict={"canopy_cover_class": 'closed_forest'})
 
         final = xarray.merge([woodland, open_forest, closed_forest])
-        return final.to_dataframe()
+        result = final.to_dataframe()
+        result.reset_index(inplace=True)
+        return result
 
     @log_call
     def render_chart(self, df):
         width, height = chart_dimensions(self.style)
 
+        melted = df.melt('time', var_name='Cover Type', value_name='Area')
+        melted = melted.dropna()
+
         style = self.style['table']['columns']
         cover_types = ['Woodland', 'Open Forest', 'Closed Forest']
 
-        chart = altair.Chart(df,
+        chart = altair.Chart(melted,
                              width=width,
                              height=height,
                              title='Percentage of Area - Mangrove Canopy Cover')
@@ -44,5 +56,5 @@ class MangroveDrill(PolygonDrill):
 
     @log_call
     def render_outputs(self, df, chart):
-        super().render_outputs(df, chart, is_enabled=True, name="Mangrove Cover",
-                               header=['Woodland', 'Open Forest', 'Closed Forest'])
+        return super().render_outputs(df, chart, is_enabled=True, name="Mangrove Cover",
+                                      header=['Woodland', 'Open Forest', 'Closed Forest'])
