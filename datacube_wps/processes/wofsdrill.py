@@ -43,7 +43,10 @@ class WOfSDrill(PixelDrill):
             }
         ]
 
+        # TODO: investigate why PixelDrill is changing datatype
         water = data.data_vars['water']
+        data['observation'] = water.astype('int16')
+        data = data.drop(['water'])
 
         def get_flags(val):
             flag_dict = datacube.storage.masking.mask_to_dict(water.attrs['flags_definition'], val)
@@ -57,7 +60,6 @@ class WOfSDrill(PixelDrill):
             return ret_val
         gf = np.vectorize(get_flags)
 
-        data = data.rename({'water': 'observation'})
         data['observation'].values = gf(data['observation'].values)
 
         df = data.to_dataframe()
