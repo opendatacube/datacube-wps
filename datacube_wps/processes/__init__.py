@@ -159,6 +159,10 @@ def _guard_rail(input, box):
 
     print('grouped shape', grouped.shape)
     assert len(grouped.shape) == 1
+
+    if grouped.shape[0] == 0:
+        raise ProcessError('no data returned for query')
+
     bytes_per_obs = byte_count / grouped.shape[0]
     if bytes_per_obs > MAX_BYTES_PER_OBS_IN_GB * GB:
         raise ProcessError(("requested time slices each requires {}GB data to load - "
