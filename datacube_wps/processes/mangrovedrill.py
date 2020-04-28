@@ -16,11 +16,11 @@ class MangroveDrill(PolygonDrill):
 
         # TODO raise ProcessError('query returned no data') when appropriate
         woodland = data.where(data == 1).count(['x', 'y'])
-        woodland = woodland.rename(name_dict={'canopy_cover_class': 'woodland'})
+        woodland = woodland.rename(name_dict={'canopy_cover_class': 'Woodland'})
         open_forest = data.where(data == 2).count(['x', 'y'])
-        open_forest = open_forest.rename(name_dict={'canopy_cover_class': 'open_forest'})
+        open_forest = open_forest.rename(name_dict={'canopy_cover_class': 'Open Forest'})
         closed_forest = data.where(data == 3).count(['x', 'y'])
-        closed_forest = closed_forest.rename(name_dict={"canopy_cover_class": 'closed_forest'})
+        closed_forest = closed_forest.rename(name_dict={"canopy_cover_class": 'Closed Forest'})
 
         final = xarray.merge([woodland, open_forest, closed_forest])
         result = final.to_dataframe()
