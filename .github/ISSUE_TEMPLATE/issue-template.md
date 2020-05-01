@@ -18,8 +18,3 @@ assignees: ''
 ### Steps to reproduce the behaviour
 
 ... Include code, command line parameters as appropriate ...
-
-### Environment information
-
-* Which ``datacube --version`` are you using?
-* What datacube deployment/enviornment are you running against?
