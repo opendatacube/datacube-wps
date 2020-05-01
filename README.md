@@ -41,3 +41,31 @@ outputurl=https://wps.services.dea.ga.gov.au/outputs/
 
 ## Changing Processes in WPS
 The processes which are available to users of the WPS are enumerated in the `DEA_WPS_config.yaml` file.
+
+# WPS development testing from Web
+## Workflow testing - from terria to wps service
+1. Generate a specific terria catalog for wps terria testing http://terria-catalog-tool.dev.dea.ga.gov.au/wps
+   - Enter the wps service url or leave default
+   - Click Create Catalog button
+   - verify the services listed in `json` format is correct
+   - change file name if required or leave default
+   - Click download catalog button to get a copy of the generated catalog
+2. Go to http://terria-cube.terria.io/#clean, Add data
+3. Select tab my data
+4. Add local data and select the downloaded file
+
+## Individual service debugging testing
+### Collect payload
+This part is flow-on from Workflow testing
+1. Open DevToolsUI and go to `network` tab
+2. Under `Data Catalogue` add the wps service needed for testing
+3. Complete the Terria form and click Run Analysis button
+4. The network will start to run
+5. Click on Name = `?service=WPS&request=Execute` and open `Headers` tab
+6. The following are used for testing with API tool
+   - `xml` under Request Payload
+   - `Request URL` under General
+### Testing with web API tool
+1. Go to http://www.apirequest.io/
+2. URL = `request URL` from Collect payload point 6
+3. Request body = `xml` from Collect payload point 6
