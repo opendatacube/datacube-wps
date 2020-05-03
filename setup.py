@@ -18,7 +18,7 @@ INSTALL_REQUIRES = [
 ]
 
 DEPENDENCY_LINKS = [
-    'git+https://github.com/geopython/pywps/tarball/4.2.4#egg=pywps-4.2.4'
+    'git+https://github.com/geopython/pywps.git@4.2.4#egg=pywps'
 ]
 
 DESCRIPTION = ("datacube-wps is an implementation of the Web Processing Service standard "
