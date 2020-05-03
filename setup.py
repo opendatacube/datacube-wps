@@ -3,8 +3,23 @@ from setuptools import setup, find_packages
 with open('VERSION.txt') as ff:
     VERSION = ff.read().strip()
 
-with open('requirements.txt') as f:
-    INSTALL_REQUIRES = f.read().splitlines()
+INSTALL_REQUIRES = [
+    'automat >= 0.3.0',
+    'flask',
+    'scikit-image',
+    'gunicorn',
+    'rasterio >= 1.0.9',
+    'rasterio[s3]',
+    'altair',
+    'selenium',
+    'python-dateutil',
+    'sentry_sdk',
+    'blinker'
+]
+
+DEPENDENCY_LINKS = [
+    'git+https://github.com/geopython/pywps.git@4.2.4#egg=pywps-4.2.4'
+]
 
 DESCRIPTION = ("datacube-wps is an implementation of the Web Processing Service standard "
                "from the Open Geospatial Consortium.")
@@ -34,6 +49,7 @@ config = {
     ],
     'version': VERSION,
     'install_requires': INSTALL_REQUIRES,
+    'dependency_links': DEPENDENCY_LINKS,
     'packages': find_packages(),
     'name': 'datacube-wps'
 }
