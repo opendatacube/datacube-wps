@@ -8,8 +8,9 @@ import numpy as np
 from datacube.storage.masking import make_mask
 
 from pywps.app.exceptions import ProcessError
+from pywps import LiteralOutput, ComplexInput, ComplexOutput
 
-from . import PolygonDrill, log_call, chart_dimensions
+from . import PolygonDrill, log_call, chart_dimensions, FORMATS
 
 
 class FCDrill(PolygonDrill):
@@ -18,6 +19,11 @@ class FCDrill(PolygonDrill):
                   'Photosynthetic Vegetation',
                   'Non-Photosynthetic Vegetation',
                   'Unobservable']
+
+    def output_formats(self):
+        return [LiteralOutput("image", "Fractional Cover Drill Preview"),
+                LiteralOutput("url", "Fractional Cover Drill Chart"),
+                ComplexOutput('timeseries', 'Fractional Cover Polygon Drill Timeseries', supported_formats=[FORMATS['output_json']])]
 
     @log_call
     def process_data(self, data):
