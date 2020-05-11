@@ -1,10 +1,25 @@
-FROM opendatacube/datacube-core:1.7
+ARG V_BASE=3.0.4
+ARG py_env_path=/env
+
+FROM opendatacube/geobase:wheels-${V_BASE} as env_builder
+ARG py_env_path
+
+RUN mkdir -p /conf
+
+COPY requirements.txt /conf
+
+RUN env-build-tool new /conf/requirements.txt
+
+ENV PATH=${py_env_path}/bin:$PATH
+
+FROM opendatacube/geobase:runner-${V_BASE}
+
+RUN mkdir -p /code/logs
+WORKDIR /code
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /code
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update -y && apt-get install -y --fix-missing --no-install-recommends \
     chromium-browser \
     chromium-chromedriver \
     curl \
@@ -12,32 +27,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # include webdriver installed by apt in path
 ENV PATH="/usr/lib/chromium-browser/:${PATH}"
+COPY --from=env_builder /bin/tini /bin/tini
+ARG py_env_path
+COPY --from=env_builder $py_env_path $py_env_path
 
-ADD requirements.txt .
+ENV LC_ALL=C.UTF-8
+ENV SHELL=bash
+# Put `/usr/local/bin` before env to allow overrides in there
+ENV PATH=/usr/local/bin:${py_env_path}/bin:$PATH
 
-RUN pip3 install --upgrade pip \
-    && rm -rf $HOME/.cache/pip
-
-RUN pip3 install -r requirements.txt \
-    && rm -rf $HOME/.cache/pip
-
-RUN pip install -U 'aiobotocore[awscli,boto3]' \
-    && rm -rf $HOME/.cache/pip
-
-
-RUN pip install --extra-index-url="https://packages.dea.gadevs.ga" \
-   odc-apps-cloud \
-   odc-apps-dc-tools \
-   && rm -rf $HOME/.cache/pip
-
-ADD . .
-
-WORKDIR /code/logs
+ADD . /code
 WORKDIR /code
-
-# COPY docker/credentials /root/.aws/credentials
-
-# COPY docker/config /root/.aws/config
+RUN python3 setup.py install
 
 COPY docker/wps-entrypoint.sh /usr/local/bin/wps-entrypoint.sh
 
