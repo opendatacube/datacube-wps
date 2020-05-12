@@ -10,7 +10,7 @@ class MangroveDrill(PolygonDrill):
     @log_call
     def process_data(self, data):
         print('calling dask with', multiprocessing.cpu_count(), 'processes')
-        data = data.compute(scheduler='processes')
+        data = data.compute()
         print('data loaded')
         print(data)
 

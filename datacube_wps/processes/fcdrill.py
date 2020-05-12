@@ -80,9 +80,9 @@ class FCDrill(PolygonDrill):
 
         print('calling dask with', multiprocessing.cpu_count(), 'processes')
         dask_time = default_timer()
-        new_ds = new_ds.compute(scheduler='processes')
-        print(new_ds)
+        new_ds = new_ds.compute()
         print('dask took', default_timer() - dask_time, 'seconds')
+        print(new_ds)
 
         df = new_ds.to_dataframe()
         df.reset_index(inplace=True)
