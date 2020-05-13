@@ -1,5 +1,6 @@
 import multiprocessing
 
+from dask.distributed import Client
 import xarray
 import altair
 from . import PolygonDrill, log_call, chart_dimensions
@@ -10,7 +11,8 @@ class MangroveDrill(PolygonDrill):
     @log_call
     def process_data(self, data):
         print('calling dask with', multiprocessing.cpu_count(), 'processes')
-        data = data.compute()
+        with Client(threads_per_worker=1) as client:
+            data = data.compute()
         print('data loaded')
         print(data)
 
