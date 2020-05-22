@@ -1,5 +1,5 @@
+--extra-index-url="https://packages.dea.gadevs.ga"
 automat >= 0.3.0
-#gevent wps is not compatabile with gevent
 flask
 git+https://github.com/geopython/pywps.git@4.2.4
 scikit-image
@@ -12,3 +12,6 @@ selenium
 python-dateutil
 sentry_sdk
 blinker
+aiobotocore[awscli,boto3]
+odc-apps-cloud
+odc-apps-dc-tools

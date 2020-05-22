@@ -47,7 +47,7 @@ def create_process(process, input, **settings):
 
 def read_process_catalog(catalog_filename):
     with open(catalog_filename) as fl:
-        config = yaml.load(fl)
+        config = yaml.load(fl, Loader=yaml.CLoader)
 
     return [create_process(**settings) for settings in config['processes']]
 
@@ -65,7 +65,7 @@ def apply_cors(response):
 @app.route('/', methods=['GET', 'POST'])
 def wps():
     if not service:
-        service.append(Service(read_process_catalog('DEA_WPS_config.yaml'), ['pywps.cfg']))
+        service.append(Service(read_process_catalog('datacube-wps-config.yaml'), ['pywps.cfg']))
     return service[0]
 
 
