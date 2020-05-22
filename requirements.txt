@@ -7,6 +7,7 @@ gunicorn
 rasterio >= 1.0.9
 rasterio[s3]
 altair
+altair_saver
 selenium
 python-dateutil
 sentry_sdk
