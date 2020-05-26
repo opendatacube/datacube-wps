@@ -9,7 +9,7 @@ import pywps.configuration as config
 
 import datacube
 from datacube.utils.geometry import Geometry, CRS
-from datacube.api.core import output_geobox, query_group_by, apply_aliases
+from datacube.api.core import output_geobox, query_group_by
 
 from datacube.drivers import new_datasource
 from datacube.storage import BandInfo

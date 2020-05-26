@@ -88,6 +88,7 @@ class FCDrill(PolygonDrill):
         print(new_ds)
 
         df = new_ds.to_dataframe()
+        df = df.drop('spatial_ref', axis=1)
         df.reset_index(inplace=True)
         return df
 
