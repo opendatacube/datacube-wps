@@ -26,6 +26,7 @@ class MangroveDrill(PolygonDrill):
 
         final = xarray.merge([woodland, open_forest, closed_forest])
         result = final.to_dataframe()
+        result = result.drop('spatial_ref', axis=1)
         result.reset_index(inplace=True)
         return result
 

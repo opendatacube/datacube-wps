@@ -1,9 +1,10 @@
---extra-index-url="https://packages.dea.gadevs.ga"
+--extra-index-url="https://packages.dea.ga.gov.au"
 automat >= 0.3.0
 flask
 git+https://github.com/geopython/pywps.git@4.2.4
 scikit-image
 gunicorn
+datacube
 rasterio >= 1.0.9
 rasterio[s3]
 altair
@@ -13,5 +14,5 @@ python-dateutil
 sentry_sdk
 blinker
 aiobotocore[awscli,boto3]
-odc-apps-cloud
-odc-apps-dc-tools
+odc-aws
+odc-ppt
