@@ -1,4 +1,5 @@
 # datacube-wps
+[![Scan](https://github.com/opendatacube/datacube-wps/workflows/Scan/badge.svg)](https://github.com/opendatacube/datacube-wps/actions?query=workflow%3AScan)
 
 Datacube Web Processing Service
 
