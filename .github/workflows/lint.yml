@@ -29,6 +29,4 @@ jobs:
           docker build --tag ${ORG}/${IMAGE}:latest .
       - name: Lint WPS image
         run: |
-          docker run ${ORG}/${IMAGE}:latest /bin/sh -c "pwd"
-          docker run ${ORG}/${IMAGE}:latest /bin/sh -c "ls"
           docker run ${ORG}/${IMAGE}:latest /bin/sh -c "./lint-code.sh"
