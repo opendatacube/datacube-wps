@@ -1,0 +1,35 @@
+---
+name: Linting
+
+on:
+  pull_request:
+    paths:
+      - '**'
+
+  push:
+    paths:
+      - '**'
+
+env:
+  ORG: opendatacube
+  IMAGE: wps
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Build Dev WPS image
+        run: |
+          docker build \
+            --target env_builder \
+            --tag    ${ORG}/${IMAGE}:_builder \
+            .
+      - name: Lint dev WPS image
+        run: |
+          docker run ${ORG}/${IMAGE}:_builder /bin/sh -c "./lint-code.sh"
