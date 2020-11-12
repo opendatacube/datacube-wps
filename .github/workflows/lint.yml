@@ -24,14 +24,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build Dev WPS image
+      - name: Build WPS image
         run: |
-          docker build \
-            --target env_builder \
-            --tag    ${ORG}/${IMAGE}:_builder \
-            .
-      - name: Lint dev WPS image
+          docker build --tag ${ORG}/${IMAGE}:latest .
+      - name: Lint WPS image
         run: |
-          docker run ${ORG}/${IMAGE}:_builder /bin/sh -c "pwd"
-          docker run ${ORG}/${IMAGE}:_builder /bin/sh -c "ls"
-          docker run ${ORG}/${IMAGE}:_builder /bin/sh -c "./lint-code.sh"
+          docker run ${ORG}/${IMAGE}:latest /bin/sh -c "pwd"
+          docker run ${ORG}/${IMAGE}:latest /bin/sh -c "ls"
+          docker run ${ORG}/${IMAGE}:latest /bin/sh -c "./lint-code.sh"
