@@ -32,4 +32,6 @@ jobs:
             .
       - name: Lint dev WPS image
         run: |
+          docker run ${ORG}/${IMAGE}:_builder /bin/sh -c "pwd"
+          docker run ${ORG}/${IMAGE}:_builder /bin/sh -c "ls"
           docker run ${ORG}/${IMAGE}:_builder /bin/sh -c "./lint-code.sh"
