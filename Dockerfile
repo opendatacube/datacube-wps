@@ -38,7 +38,7 @@ ENV PATH=/usr/local/bin:${py_env_path}/bin:$PATH
 
 ADD . /code
 WORKDIR /code
-RUN python3 setup.py install
+RUN pip install --no-deps .
 
 COPY docker/wps-entrypoint.sh /usr/local/bin/wps-entrypoint.sh
 
