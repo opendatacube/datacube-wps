@@ -1,7 +1,7 @@
 # datacube-wps
 [![Scan](https://github.com/opendatacube/datacube-wps/workflows/Scan/badge.svg)](https://github.com/opendatacube/datacube-wps/actions?query=workflow%3AScan)
 
-[![Lint](https://github.com/opendatacube/datacube-wps/workflows/Lint/badge.svg)](https://github.com/opendatacube/datacube-wps/actions?query=workflow%3ALinting)
+[![Linting](https://github.com/opendatacube/datacube-wps/workflows/Linting/badge.svg)](https://github.com/opendatacube/datacube-wps/actions?query=workflow%3ALinting)
 
 Datacube Web Processing Service
 
