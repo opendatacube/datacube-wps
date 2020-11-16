@@ -23,6 +23,7 @@ RUN apt-get update -y && apt-get install -y --fix-missing --no-install-recommend
     chromium-browser \
     chromium-chromedriver \
     curl \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 # include webdriver installed by apt in path

@@ -1,0 +1,27 @@
+version: '3.7'
+
+services:
+  # Start docker container for PostgreSQL to mock RDS
+  postgres:
+    image: postgres:11.5-alpine
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_PASSWORD: opendatacubepassword
+    restart: always
+
+  # Start docker container for datacube-wps
+  wps:
+    build: .
+    environment:
+      - DB_HOSTNAME=postgres
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=opendatacubepassword
+      - DB_DATABASE=postgres
+      - DB_PORT=5432
+      - PRODUCT_CATALOG=https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/a4f39b485b33608a016032d9987251881fec4b6f/workspaces/sandbox-products.csv
+      - METADATA_CATALOG=https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/a4f39b485b33608a016032d9987251881fec4b6f/workspaces/sandbox-metadata.yaml
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
