@@ -9,7 +9,6 @@ from dask.distributed import Client
 
 from datacube.storage.masking import make_mask
 
-from pywps.app.exceptions import ProcessError
 from pywps import LiteralOutput, ComplexOutput
 
 from . import PolygonDrill, log_call, chart_dimensions, FORMATS
