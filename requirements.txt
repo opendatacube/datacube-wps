@@ -17,3 +17,4 @@ aiobotocore[awscli,boto3]
 odc-aws
 odc-ppt
 pylint
+pytest

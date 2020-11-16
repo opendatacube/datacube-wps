@@ -19,8 +19,6 @@ services:
       - DB_PASSWORD=opendatacubepassword
       - DB_DATABASE=postgres
       - DB_PORT=5432
-      - PRODUCT_CATALOG=https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/a4f39b485b33608a016032d9987251881fec4b6f/workspaces/sandbox-products.csv
-      - METADATA_CATALOG=https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/a4f39b485b33608a016032d9987251881fec4b6f/workspaces/sandbox-metadata.yaml
     depends_on:
       - postgres
     ports:

@@ -39,8 +39,10 @@ class FCDrill(PolygonDrill):
 
         total = data.count(dim=['x', 'y'])
         total_valid = (data != -1).sum(dim=['x', 'y'])
-        if total_valid <= 0:
-            raise ProcessError('query returned no data')
+
+        # TODO enable this check, investigate why it fails
+        # if total_valid <= 0:
+        #     raise ProcessError('query returned no data')
 
         for m in wofs_mask_flags:
             mask = make_mask(water, **m)

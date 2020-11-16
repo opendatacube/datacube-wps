@@ -1,0 +1,34 @@
+---
+name: Tests
+
+on:
+  pull_request:
+    paths:
+      - '**'
+
+  push:
+    paths:
+      - '**'
+
+env:
+  ORG: opendatacube
+  IMAGE: wps
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Build WPS image
+        run: |
+          docker-compose build
+      - name: Test WPS image
+        run: |
+          docker-compose up -d
+          docker-compose exec wps "./check-code.sh"
+          docker-compose down
