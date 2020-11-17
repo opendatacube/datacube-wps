@@ -109,12 +109,12 @@ if __name__ == "__main__":
         try:
             pid = os.fork()
         except OSError as e:
-            raise Exception("%s [%d]" % (e.strerror, e.errno))
+            raise Exception("%s [%d]" % (e.strerror, e.errno)) from e
 
         if pid == 0:
             os.setsid()
             app.run(threaded=True, host=bind_host)
         else:
-            os._exit(0)
+            os._exit(0)  # pylint: disable=protected-access
     else:
         app.run(threaded=True, host=bind_host)

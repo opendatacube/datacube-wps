@@ -9,8 +9,7 @@ from dask.distributed import Client
 
 from datacube.storage.masking import make_mask
 
-from pywps.app.exceptions import ProcessError
-from pywps import LiteralOutput, ComplexInput, ComplexOutput
+from pywps import LiteralOutput, ComplexOutput
 
 from . import PolygonDrill, log_call, chart_dimensions, FORMATS
 
@@ -29,7 +28,6 @@ class FCDrill(PolygonDrill):
 
     @log_call
     def process_data(self, data):
-        # TODO raise ProcessError('query returned no data') when appropriate
         wofs_mask_flags = [
             dict(dry=True),
             dict(terrain_or_low_angle=False, high_slope=False, cloud_shadow=False, cloud=False, sea=False)
@@ -40,6 +38,10 @@ class FCDrill(PolygonDrill):
 
         total = data.count(dim=['x', 'y'])
         total_valid = (data != -1).sum(dim=['x', 'y'])
+
+        # TODO enable this check, investigate why it fails
+        # if total_valid <= 0:
+        #     raise ProcessError('query returned no data')
 
         for m in wofs_mask_flags:
             mask = make_mask(water, **m)
@@ -58,7 +60,7 @@ class FCDrill(PolygonDrill):
         # BSPVNPV=np.nanargmax(FC_int, axis=0)
         BSPVNPV = FC_int.argmax(dim='variable')
 
-        FC_mask = xarray.ufuncs.isfinite(maxFC).all(dim='variable')
+        FC_mask = xarray.ufuncs.isfinite(maxFC).all(dim='variable')   # pylint: disable=no-member
 
         # #re-mask with nans to remove no-data
         BSPVNPV = BSPVNPV.where(FC_mask)
@@ -82,7 +84,7 @@ class FCDrill(PolygonDrill):
 
         print('calling dask with', multiprocessing.cpu_count(), 'processes')
         dask_time = default_timer()
-        with Client(threads_per_worker=1) as client:
+        with Client(threads_per_worker=1):
             new_ds = new_ds.compute()
         print('dask took', default_timer() - dask_time, 'seconds')
         print(new_ds)

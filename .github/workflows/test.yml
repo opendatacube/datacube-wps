@@ -1,0 +1,40 @@
+---
+name: Tests
+
+on:
+  pull_request:
+    paths:
+      - '**'
+
+  push:
+    paths:
+      - '**'
+
+env:
+  ORG: opendatacube
+  IMAGE: wps
+  METADATA_CATALOG: https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/a4f39b485b33608a016032d9987251881fec4b6f/workspaces/sandbox-metadata.yaml
+  PRODUCT_CATALOG: https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/a4f39b485b33608a016032d9987251881fec4b6f/workspaces/sandbox-products.csv
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Build WPS image
+        run: |
+          docker-compose build
+      - name: Test WPS image
+        run: |
+          docker-compose up -d
+          docker-compose exec -T index datacube system init --no-default-types --no-init-users
+          docker-compose exec -T index datacube metadata add "$METADATA_CATALOG"
+          docker-compose exec -T index wget "$PRODUCT_CATALOG" -O product_list.csv
+          docker-compose exec -T index bash -c "tail -n+2 product_list.csv | grep 'wofs_albers\|ls._fc_albers\|mangrove_cover' | awk -F , '{print \$2}' | xargs datacube -v product add"
+          # docker-compose exec -T index s3-to-dc --skip-lineage 's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2002/*.yaml' mangrove_cover
+          docker-compose down
