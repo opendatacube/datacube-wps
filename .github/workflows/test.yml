@@ -36,6 +36,5 @@ jobs:
           docker-compose exec -T index datacube metadata add "$METADATA_CATALOG"
           docker-compose exec -T index wget "$PRODUCT_CATALOG" -O product_list.csv
           docker-compose exec -T index bash -c "tail -n+2 product_list.csv | grep 'wofs_albers\|ls._fc_albers\|mangrove_cover' | awk -F , '{print \$2}' | xargs datacube -v product add"
-          # docker-compose exec -T index s3-to-dc --skip-lineage s3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2002/MANGROVE_COVER_3577_13_-17_20020101.yaml mangrove_cover
-          docker-compose exec -T index datacube product list
+          docker-compose exec -T index s3-to-dc --skip-lineage s3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2002/MANGROVE_COVER_3577_13_-17_20020101.yaml mangrove_cover
           docker-compose down
