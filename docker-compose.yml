@@ -33,6 +33,7 @@ services:
         - DB_PASSWORD=opendatacubepassword
         - DB_DATABASE=postgres
         - DB_PORT=5432
+        - AWS_DEFAULT_REGION=ap-southeast-2
      depends_on:
         - postgres
      entrypoint: bash -c 'sleep infinity'
