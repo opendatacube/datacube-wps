@@ -15,6 +15,8 @@ env:
   IMAGE: wps
   METADATA_CATALOG: https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/a4f39b485b33608a016032d9987251881fec4b6f/workspaces/sandbox-metadata.yaml
   PRODUCT_CATALOG: https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/a4f39b485b33608a016032d9987251881fec4b6f/workspaces/sandbox-products.csv
+  AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+  AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
 
 jobs:
   quality-check:
@@ -31,6 +33,7 @@ jobs:
           docker-compose build
       - name: Test WPS image
         run: |
+          aws sts get-caller-identity
           docker-compose up -d
           docker-compose exec -T index datacube system init --no-default-types --no-init-users
           docker-compose exec -T index datacube metadata add "$METADATA_CATALOG"
