@@ -19,6 +19,12 @@ services:
       - DB_PASSWORD=opendatacubepassword
       - DB_DATABASE=postgres
       - DB_PORT=5432
+      - AWS_DEFAULT_REGION=ap-southeast-2
+      - AWS_NO_SIGN_REQUEST=YES
+      - GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR
+      - CPL_VSIL_CURL_ALLOWED_EXTENSIONS=".tif, .tiff"
+      - GDAL_HTTP_MAX_RETRY=10
+      - GDAL_HTTP_RETRY_DELAY=1
     depends_on:
       - postgres
     ports:
@@ -34,11 +40,6 @@ services:
         - DB_DATABASE=postgres
         - DB_PORT=5432
         - AWS_DEFAULT_REGION=ap-southeast-2
-        - AWS_NO_SIGN_REQUEST=YES
-        - GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR
-        - CPL_VSIL_CURL_ALLOWED_EXTENSIONS=".tif, .tiff"
-        - GDAL_HTTP_MAX_RETRY=10
-        - GDAL_HTTP_RETRY_DELAY=1
      depends_on:
         - postgres
      entrypoint: bash -c 'sleep infinity'
