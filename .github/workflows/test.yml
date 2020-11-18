@@ -31,7 +31,7 @@ jobs:
           docker-compose build
       - name: Test WPS image
         run: |
-          gdalinfo /vsis3/dea-public-data/WOfS/WOFLs/v2.1.5/combined/x_13/y_-40/2019/04/02/LS_WATER_3577_13_-40_20190402000235000000_water.tif
+          rio info /vsis3/dea-public-data/WOfS/WOFLs/v2.1.5/combined/x_13/y_-40/2019/04/02/LS_WATER_3577_13_-40_20190402000235000000_water.tif
           docker-compose up -d
           docker-compose exec -T index datacube system init --no-default-types --no-init-users
           docker-compose exec -T index datacube metadata add "$METADATA_CATALOG"
