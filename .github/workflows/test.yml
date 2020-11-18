@@ -15,12 +15,6 @@ env:
   IMAGE: wps
   METADATA_CATALOG: https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/a4f39b485b33608a016032d9987251881fec4b6f/workspaces/sandbox-metadata.yaml
   PRODUCT_CATALOG: https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/a4f39b485b33608a016032d9987251881fec4b6f/workspaces/sandbox-products.csv
-  GDAL_DISABLE_READDIR_ON_OPEN: "EMPTY_DIR"
-  CPL_VSIL_CURL_ALLOWED_EXTENSIONS: ".tif, .tiff"
-  GDAL_HTTP_MAX_RETRY: "10"
-  GDAL_HTTP_RETRY_DELAY: "1"
-  AWS_DEFAULT_REGION: ap-southeast-2
-  AWS_NO_SIGN_REQUEST: "YES"
 
 jobs:
   quality-check:
