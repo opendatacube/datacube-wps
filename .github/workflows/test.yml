@@ -15,8 +15,6 @@ env:
   IMAGE: wps
   METADATA_CATALOG: https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/a4f39b485b33608a016032d9987251881fec4b6f/workspaces/sandbox-metadata.yaml
   PRODUCT_CATALOG: https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/a4f39b485b33608a016032d9987251881fec4b6f/workspaces/sandbox-products.csv
-  AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
-  AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
 
 jobs:
   quality-check:
@@ -39,6 +37,5 @@ jobs:
           docker-compose exec -T index wget "$PRODUCT_CATALOG" -O product_list.csv
           docker-compose exec -T index bash -c "tail -n+2 product_list.csv | grep 'wofs_albers\|ls._fc_albers\|mangrove_cover' | awk -F , '{print \$2}' | xargs datacube -v product add"
           docker-compose exec -T index datacube product list
-          echo "this is here it's going to get stuck"
           docker-compose exec -T index s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2002/*.yaml' mangrove_cover
           docker-compose down
