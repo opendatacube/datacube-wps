@@ -17,7 +17,7 @@ env:
   PRODUCT_CATALOG: https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/a4f39b485b33608a016032d9987251881fec4b6f/workspaces/sandbox-products.csv
 
 jobs:
-  quality-check:
+  test:
     runs-on: ubuntu-latest
 
     steps:
