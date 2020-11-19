@@ -61,19 +61,21 @@ class AWSRioEnv(object):
         return env
 
     def __init__(self, credentials, region_name=None, **gdal_opts):
-        no_sign = os.getenv('AWS_NO_SIGN_REQUEST')
-        assert (credentials is not None) or (no_sign is not None)
+        self._no_sign = os.getenv('AWS_NO_SIGN_REQUEST')
+        assert (credentials is not None) or (self._no_sign is not None)
 
         self._region_name = region_name
-        self._creds = credentials
-        self._frozen_creds = self._creds.get_frozen_credentials()
 
-        self._creds_session = SimpleSession(aws_session_env(self._frozen_creds, region_name))
+        if credentials is not None:
+            self._creds = credentials
+            self._frozen_creds = self._creds.get_frozen_credentials()
+            self._creds_session = SimpleSession(aws_session_env(self._frozen_creds, region_name))
+            # This environment will be redone every time credentials need changing
+            self._env_creds = AWSRioEnv._mk_env(session=self._creds_session)
 
         # We activate main environment for the duration of the thread
         self._env_main = AWSRioEnv._mk_env(**gdal_opts)
-        # This environment will be redone every time credentials need changing
-        self._env_creds = AWSRioEnv._mk_env(session=self._creds_session)
+        
 
     def clone(self):
         return AWSRioEnv(self._creds, region_name=self._region_name, **self._env_main.options)
