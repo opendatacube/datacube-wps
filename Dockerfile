@@ -20,8 +20,6 @@ WORKDIR /code
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y && apt-get install -y --fix-missing --no-install-recommends \
-    chromium-browser \
-    chromium-chromedriver \
     curl \
     wget \
     && rm -rf /var/lib/apt/lists/*
