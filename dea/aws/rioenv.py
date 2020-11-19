@@ -61,7 +61,8 @@ class AWSRioEnv(object):
         return env
 
     def __init__(self, credentials, region_name=None, **gdal_opts):
-        assert credentials is not None
+        no_sign = os.getenv('AWS_NO_SIGN_REQUEST')
+        assert (credentials is not None) or (no_sign is not None)
 
         self._region_name = region_name
         self._creds = credentials
