@@ -120,7 +120,8 @@ def s3_gdal_opts(max_header_sz_kb=None, verbose_curl=None, **extra):
     **extra -- Any other GDAL options or overrides
     """
     opts = dict(VSI_CACHE=True,
-                CPL_VSIL_CURL_ALLOWED_EXTENSIONS='tif',
+                CPL_VSIL_CURL_ALLOWED_EXTENSIONS='.tif,.tiff',
+                AWS_NO_SIGN_REQUEST='YES',
                 GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR')
 
     if max_header_sz_kb is not None:
