@@ -25,6 +25,9 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
+      - name: Pre-pull layers
+        run: docker-compose pull
       
       # In this step, this action saves a list of existing images,
       # the cache is created without them in the post run.
