@@ -1,3 +1,5 @@
+import pytest
+
 from datacube.utils.geometry import CRS, Geometry
 
 from datacube_wps import read_process_catalog
