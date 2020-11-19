@@ -1,6 +1,7 @@
 """Helper module for dealing with AWS AIM credentials and rasterio S3 access.
 
 """
+import os
 import logging
 import threading
 import rasterio
@@ -183,7 +184,8 @@ def setup_local_env(credentials=None, region_name=None, src_env=None, **kwargs):
     if region_name is None:
         region_name = auto_find_region()
 
-    if credentials is None:
+    no_sign = os.getenv('AWS_NO_SIGN_REQUEST')
+    if (credentials is None) and (no_sign is None):
         credentials = get_credentials()
         if credentials is None:
             raise IOError("Failed to obtain AWS credentials after multiple attempts")
