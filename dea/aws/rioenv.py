@@ -81,6 +81,9 @@ class AWSRioEnv(object):
         return AWSRioEnv(self._creds, region_name=self._region_name, **self._env_main.options)
 
     def _needs_refresh(self):
+        if self._no_sign:
+            return False
+
         if isinstance(self._frozen_creds, ReadOnlyCredentials):
             return False
 
