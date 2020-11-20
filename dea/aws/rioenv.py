@@ -65,9 +65,9 @@ class AWSRioEnv(object):
         assert (credentials is not None) or (self._no_sign is not None)
 
         self._region_name = region_name
+        self._creds = credentials
 
         if credentials is not None:
-            self._creds = credentials
             self._frozen_creds = self._creds.get_frozen_credentials()
             self._creds_session = SimpleSession(aws_session_env(self._frozen_creds, region_name))
             # This environment will be redone every time credentials need changing
