@@ -1,6 +1,7 @@
 """Helper module for dealing with AWS AIM credentials and rasterio S3 access.
 
 """
+import os
 import logging
 import threading
 import rasterio
@@ -60,23 +61,29 @@ class AWSRioEnv(object):
         return env
 
     def __init__(self, credentials, region_name=None, **gdal_opts):
-        assert credentials is not None
+        self._no_sign = os.getenv('AWS_NO_SIGN_REQUEST')
+        assert (credentials is not None) or (self._no_sign is not None)
 
         self._region_name = region_name
         self._creds = credentials
-        self._frozen_creds = self._creds.get_frozen_credentials()
 
-        self._creds_session = SimpleSession(aws_session_env(self._frozen_creds, region_name))
+        if credentials is not None:
+            self._frozen_creds = self._creds.get_frozen_credentials()
+            self._creds_session = SimpleSession(aws_session_env(self._frozen_creds, region_name))
+            # This environment will be redone every time credentials need changing
+            self._env_creds = AWSRioEnv._mk_env(session=self._creds_session)
 
         # We activate main environment for the duration of the thread
         self._env_main = AWSRioEnv._mk_env(**gdal_opts)
-        # This environment will be redone every time credentials need changing
-        self._env_creds = AWSRioEnv._mk_env(session=self._creds_session)
+        
 
     def clone(self):
         return AWSRioEnv(self._creds, region_name=self._region_name, **self._env_main.options)
 
     def _needs_refresh(self):
+        if self._no_sign:
+            return False
+
         if isinstance(self._frozen_creds, ReadOnlyCredentials):
             return False
 
@@ -120,7 +127,8 @@ def s3_gdal_opts(max_header_sz_kb=None, verbose_curl=None, **extra):
     **extra -- Any other GDAL options or overrides
     """
     opts = dict(VSI_CACHE=True,
-                CPL_VSIL_CURL_ALLOWED_EXTENSIONS='tif',
+                CPL_VSIL_CURL_ALLOWED_EXTENSIONS='.tif,.tiff',
+                AWS_NO_SIGN_REQUEST='YES',
                 GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR')
 
     if max_header_sz_kb is not None:
@@ -182,7 +190,8 @@ def setup_local_env(credentials=None, region_name=None, src_env=None, **kwargs):
     if region_name is None:
         region_name = auto_find_region()
 
-    if credentials is None:
+    no_sign = os.getenv('AWS_NO_SIGN_REQUEST')
+    if (credentials is None) and (no_sign is None):
         credentials = get_credentials()
         if credentials is None:
             raise IOError("Failed to obtain AWS credentials after multiple attempts")
