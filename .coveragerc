@@ -1,0 +1,6 @@
+[run]
+source = /code/datacube_wps
+data_file = /mnt/artifacts/.coverage
+
+[xml]
+output = /mnt/artifacts/coverage.xml

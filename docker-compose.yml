@@ -29,6 +29,8 @@ services:
       - postgres
     ports:
       - "8000:8000"
+    volumes:
+      - ./artifacts:/mnt/artifacts
 
   # start indexer container
   index:
