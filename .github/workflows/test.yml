@@ -42,6 +42,9 @@ jobs:
           docker-compose build
       - name: Test WPS image
         run: |
+          mkdir -p ./artifacts
+          chmod a+rw ./artifacts
+
           docker-compose up -d
           docker-compose exec -T index datacube system init --no-default-types --no-init-users
           docker-compose exec -T index datacube metadata add "$METADATA_CATALOG"
@@ -50,5 +53,13 @@ jobs:
 
           cat populate-db.sh | docker-compose exec -T index bash
 
-          docker-compose exec -T wps pytest tests/
+          docker-compose exec -T wps pytest --cov=./datacube_wps --cov-report=xml tests/
+
           docker-compose down
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CodeCovToken }}
+          file: ./artifacts/*.xml
+          fail_ci_if_error: false
