@@ -3,6 +3,7 @@
 [![Linting](https://github.com/opendatacube/datacube-wps/workflows/Linting/badge.svg)](https://github.com/opendatacube/datacube-wps/actions?query=workflow%3ALinting)
 [![Tests](https://github.com/opendatacube/datacube-wps/workflows/Tests/badge.svg)](https://github.com/opendatacube/datacube-wps/actions?query=workflow%3ATests)
 [![Docker](https://github.com/opendatacube/datacube-wps/workflows/Docker/badge.svg)](https://github.com/opendatacube/datacube-wps/actions?query=workflow%3ADocker)
+[![CoveCov](https://codecov.io/gh/opendatacube/datacube-wps/branch/master/graph/badge.svg)](https://codecov.io/gh/opendatacube/datacube-wps)
 
 Datacube Web Processing Service
 
