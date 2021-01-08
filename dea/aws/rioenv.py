@@ -94,7 +94,8 @@ class AWSRioEnv(object):
         return True
 
     def destroy(self):
-        self._env_creds.__exit__(None, None, None)
+        if not self._no_sign:
+            self._env_creds.__exit__(None, None, None)
         self._env_main.__exit__(None, None, None)
 
     def __enter__(self):
