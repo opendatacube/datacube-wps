@@ -2,6 +2,7 @@ from functools import wraps
 from timeit import default_timer
 import json
 import io
+import os
 
 from pywps import Process, ComplexInput, ComplexOutput, Format
 from pywps.app.exceptions import ProcessError
@@ -13,6 +14,7 @@ from datacube.api.core import output_geobox, query_group_by
 
 from datacube.drivers import new_datasource
 from datacube.storage import BandInfo
+from datacube.utils.rio import configure_s3_access
 
 import rasterio.features
 
@@ -20,13 +22,13 @@ import xarray
 import numpy as np
 import pandas
 import altair
+from dask.distributed import Client
 
 import boto3
 import botocore
 from botocore.client import Config
 
 from dateutil.parser import parse
-from dea.io.pdrill import PixelDrill as PD
 
 
 FORMATS = {
@@ -301,38 +303,35 @@ class PixelDrill(Process):
 
         return {'data': df, 'chart': chart}
 
+    @log_call
     def input_data(self, dc, time, feature):
         if time is None:
             bag = self.input.query(dc, geopolygon=feature)
         else:
             bag = self.input.query(dc, time=time, geopolygon=feature)
-        measurements = self.input.output_measurements(bag.product_definitions)
-
-        # TODO group
-        # TODO customize the number of processes
-        driller = PD(16)
 
         lonlat = feature.coords[0]
+        NUM_WORKERS = int(os.getenv('DATACUBE_WPS_NUM_WORKERS', '4'))
 
-        try:
-            dss = bag.bag
-        except AttributeError:
-            # datacube 1.7 compatibility
-            dss = bag.pile
+        measurements = self.input.output_measurements(bag.product_definitions)
+        box = self.input.group(bag)
 
-        # for now pixel drill only supports an existing datacube product
-        datasets = sorted(list(dss), key=lambda x: x.center_time)
+        data = self.input.fetch(box, dask_chunks={'time': 1})
+
+        with Client(n_workers=1, processes=False, threads_per_worker=NUM_WORKERS) as client:
+            configure_s3_access(aws_unsigned=True,
+                                region_name=os.getenv('AWS_DEFAULT_REGION', 'auto'),
+                                client=client)
+            data = data.compute()
+
         coords = {'longitude': np.array([lonlat[0]]),
                   'latitude': np.array([lonlat[1]]),
-                  'time': [d.center_time for d in datasets]}
-
-        def urls(measurement_name):
-            return [new_datasource(BandInfo(dataset, measurement_name)).filename for dataset in datasets]
+                  'time': data.time.data}
 
         result = xarray.Dataset()
         for measurement_name, measurement in measurements.items():
-            result[measurement_name] = xarray.DataArray([[driller.read(urls=urls(measurement_name), lonlat=lonlat)]],
-                                                        dims=('longitude', 'latitude', 'time'),
+            result[measurement_name] = xarray.DataArray(data[measurement_name],
+                                                        dims=('time', 'longitude', 'latitude'),
                                                         coords=coords,
                                                         attrs={key: value
                                                                for key, value in measurement.items()
