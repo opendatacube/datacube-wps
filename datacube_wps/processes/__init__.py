@@ -29,7 +29,6 @@ import botocore
 from botocore.client import Config
 
 from dateutil.parser import parse
-from dea.io.pdrill import PixelDrill as PD
 
 
 FORMATS = {
