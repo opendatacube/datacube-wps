@@ -47,6 +47,9 @@ outputurl=https://wps.services.dea.ga.gov.au/outputs/
 ## Changing Processes in WPS
 The processes which are available to users of the WPS are enumerated in the `DEA_WPS_config.yaml` file.
 
+### Resource allocation
+The environment variable `DATACUBE_WPS_NUM_WORKERS` sets the number of workers (defaults to 4).
+
 # WPS development testing from Web
 ## Workflow testing - from terria to wps service
 1. Generate a specific terria catalog for wps terria testing http://terria-catalog-tool.dev.dea.ga.gov.au/wps

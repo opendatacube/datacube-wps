@@ -260,6 +260,10 @@ def _populate_response(response, outputs):
                 response.outputs[ident].url = output_value['url']
 
 
+def num_workers():
+    return int(os.getenv('DATACUBE_WPS_NUM_WORKERS', '4'))
+
+
 class PixelDrill(Process):
     def __init__(self, about, input, style):
         if 'geometry_type' in about:
@@ -295,8 +299,13 @@ class PixelDrill(Process):
 
     @log_call
     def query_handler(self, time, feature):
-        with datacube.Datacube() as dc:
-            data = self.input_data(dc, time, feature)
+        with Client(n_workers=1, processes=False, threads_per_worker=num_workers()) as client:
+            configure_s3_access(aws_unsigned=True,
+                                region_name=os.getenv('AWS_DEFAULT_REGION', 'auto'),
+                                client=client)
+
+            with datacube.Datacube() as dc:
+                data = self.input_data(dc, time, feature)
 
         df = self.process_data(data)
         chart = self.render_chart(df)
@@ -311,18 +320,12 @@ class PixelDrill(Process):
             bag = self.input.query(dc, time=time, geopolygon=feature)
 
         lonlat = feature.coords[0]
-        NUM_WORKERS = int(os.getenv('DATACUBE_WPS_NUM_WORKERS', '4'))
 
         measurements = self.input.output_measurements(bag.product_definitions)
         box = self.input.group(bag)
 
         data = self.input.fetch(box, dask_chunks={'time': 1})
-
-        with Client(n_workers=1, processes=False, threads_per_worker=NUM_WORKERS) as client:
-            configure_s3_access(aws_unsigned=True,
-                                region_name=os.getenv('AWS_DEFAULT_REGION', 'auto'),
-                                client=client)
-            data = data.compute()
+        data = data.compute()
 
         coords = {'longitude': np.array([lonlat[0]]),
                   'latitude': np.array([lonlat[1]]),
@@ -385,8 +388,13 @@ class PolygonDrill(Process):
 
     @log_call
     def query_handler(self, time, feature):
-        with datacube.Datacube() as dc:
-            data = self.input_data(dc, time, feature)
+        with Client(n_workers=num_workers(), processes=True, threads_per_worker=1) as client:
+            configure_s3_access(aws_unsigned=True,
+                                region_name=os.getenv('AWS_DEFAULT_REGION', 'auto'),
+                                client=client)
+
+            with datacube.Datacube() as dc:
+                data = self.input_data(dc, time, feature)
 
         df = self.process_data(data)
         chart = self.render_chart(df)
