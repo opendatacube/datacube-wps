@@ -318,7 +318,7 @@ class PixelDrill(Process):
 
         data = self.input.fetch(box, dask_chunks={'time': 1})
 
-        with Client(n_workers=NUM_WORKERS, processes=False, threads_per_worker=1) as client:
+        with Client(n_workers=1, processes=False, threads_per_worker=NUM_WORKERS) as client:
             configure_s3_access(aws_unsigned=True,
                                 region_name=os.getenv('AWS_DEFAULT_REGION', 'auto'),
                                 client=client)
