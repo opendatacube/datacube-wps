@@ -1,11 +1,8 @@
 from timeit import default_timer
-import multiprocessing
 
 import altair
 import xarray
 import numpy as np
-
-from dask.distributed import Client
 
 from datacube.storage.masking import make_mask
 
@@ -82,10 +79,9 @@ class FCDrill(PolygonDrill):
             'Unobservable': (not_pixels / total_valid)['BS'] * 100
         })
 
-        print('calling dask with', multiprocessing.cpu_count(), 'processes')
+        print('dask compute')
         dask_time = default_timer()
-        with Client(threads_per_worker=1):
-            new_ds = new_ds.compute()
+        new_ds = new_ds.compute()
         print('dask took', default_timer() - dask_time, 'seconds')
         print(new_ds)
 
