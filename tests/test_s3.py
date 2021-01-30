@@ -18,14 +18,18 @@ TEST_CFG = "pywps.cfg"
 def test_s3_svg_chart_upload():
     config.load_configuration(TEST_CFG)
     bucket = config.get_config_value("s3", "bucket")
-    client = boto3.client("s3")
-    client.create_bucket(Bucket=bucket)
+    region = config.get_config_value("s3", "region")
+    location = {'LocationConstraint': region}
+    client = boto3.client("s3",region_name=region)
+    client.create_bucket(Bucket=bucket,CreateBucketConfiguration=location)
     upload_chart_svg_to_S3(TEST_CHART, "abcd")
 
 @mock_s3
 def test_s3_html_chart_upload():
     config.load_configuration(TEST_CFG)
     bucket = config.get_config_value("s3", "bucket")
-    client = boto3.client("s3")
-    client.create_bucket(Bucket=bucket)
+    region = config.get_config_value("s3", "region")
+    location = {'LocationConstraint': region}
+    client = boto3.client("s3",region_name=region)
+    client.create_bucket(Bucket=bucket,CreateBucketConfiguration=location)
     upload_chart_html_to_S3(TEST_CHART, "abcd")
