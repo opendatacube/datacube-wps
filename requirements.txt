@@ -19,3 +19,5 @@ odc-ppt
 pylint
 pytest
 pytest-cov
+moto==1.3.16
+vega-datasets==0.9.0

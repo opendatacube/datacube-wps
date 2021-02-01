@@ -90,14 +90,14 @@ def _uploadToS3(filename, data, mimetype):
                                      Params={'Bucket': bucket, 'Key': filename})
 
 
-def upload_chart_html_to_S3(chart, process_id):
+def upload_chart_html_to_S3(chart : altair.Chart, process_id : str):
     html_io = io.StringIO()
     chart.save(html_io, format='html')
     html_bytes = io.BytesIO(html_io.getvalue().encode())
     return _uploadToS3(process_id + '/chart.html', html_bytes, 'text/html')
 
 
-def upload_chart_svg_to_S3(chart, process_id):
+def upload_chart_svg_to_S3(chart : altair.Chart, process_id : str):
     img_io = io.StringIO()
     chart.save(img_io, format='svg')
     img_bytes = io.BytesIO(img_io.getvalue().encode())
