@@ -174,11 +174,7 @@ def _guard_rail(input, box):
 def _datetimeExtractor(data):
     return parse(json.loads(data)["properties"]["timestamp"]["date-time"])
 
-
-def _get_feature(request):
-    stream = request.inputs['geometry'][0].stream
-    request_json = json.loads(stream.readline())
-
+def _parse_geom(request_json):
     features = request_json['features']
     if len(features) < 1:
         # can't drill if there is no geometry
@@ -199,6 +195,12 @@ def _get_feature(request):
         crs = CRS('urn:ogc:def:crs:OGC:1.3:CRS84')
 
     return Geometry(feature['geometry'], crs)
+
+def _get_feature(request):
+    stream = request.inputs['geometry'][0].stream
+    request_json = json.loads(stream.readline())
+
+    return _parse_geom(request_json)
 
 
 def _get_time(request):
