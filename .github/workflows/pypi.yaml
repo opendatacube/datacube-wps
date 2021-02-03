@@ -1,0 +1,40 @@
+---
+name: PyPI
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "**"
+
+  release:
+    types: [created, edited, published]
+
+env:
+  ORG: opendatacube
+  IMAGE: wps
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+
+    steps:
+      - name: Push to PyPI (tagged release only)
+        run: |
+          if [ -n "${PYPI_TOKEN}" ]; then
+            docker build -t ${ORG}/${IMAGE}:latest .
+            docker run --rm ${ORG}/${IMAGE}:latest twine upload \
+              --verbose \
+              --non-interactive \
+              --disable-progress-bar \
+              --username=__token__ \
+              --password=${PYPI_TOKEN} \
+              --skip-existing dist/*
+          else
+             echo "Skipping upload as 'PyPI_Token' is not set"
+          fi
+
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
