@@ -17,6 +17,8 @@ from pywps import Service
 from datacube.utils import import_function
 from datacube.virtual import construct
 
+from flask import Flask, request
+
 
 LOG_FORMAT = ('%(asctime)s] [%(levelname)s] file=%(pathname)s line=%(lineno)s '
               'module=%(module)s function=%(funcName)s %(message)s')
@@ -41,9 +43,13 @@ app = flask.Flask(__name__)
 app.url_map.strict_slashes = False
 
 
-def initialise_prometheus():
+def initialise_prometheus(app, log=None):
+    # Prometheus
     if os.environ.get("prometheus_multiproc_dir", False):
-        return GunicornInternalPrometheusMetrics(app)
+        metrics = GunicornInternalPrometheusMetrics(app)
+        if log:
+            log.info("Prometheus metrics enabled")
+        return metrics
     return None
 
 metrics = initialise_prometheus(app)
