@@ -12,6 +12,7 @@ altair_saver
 selenium
 python-dateutil
 sentry_sdk
+prometheus-flask-exporter
 blinker
 aiobotocore[awscli,boto3]
 odc-aws
