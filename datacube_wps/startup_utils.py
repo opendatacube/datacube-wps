@@ -4,6 +4,7 @@ import logging
 from prometheus_flask_exporter.multiprocess import GunicornInternalPrometheusMetrics
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
+from flask import request
 
 LOG_FORMAT = ('%(asctime)s] [%(levelname)s] file=%(pathname)s line=%(lineno)s '
               'module=%(module)s function=%(funcName)s %(message)s')
