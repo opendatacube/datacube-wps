@@ -7,6 +7,7 @@ import argparse
 import flask
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
+from prometheus_flask_exporter.multiprocess import GunicornInternalPrometheusMetrics
 
 import yaml
 
@@ -38,6 +39,28 @@ if os.environ.get("SENTRY_KEY") and os.environ.get("SENTRY_PROJECT"):
 app = flask.Flask(__name__)
 
 app.url_map.strict_slashes = False
+
+
+def initialize_prometheus():
+    if os.environ.get("prometheus_multiproc_dir", False):
+        return GunicornInternalPrometheusMetrics(app)
+    return None
+
+metrics = initialise_prometheus(app)
+
+
+def initialise_prometheus_register(metrics):
+    # Register routes with Prometheus - call after all routes set up.
+    if os.environ.get("prometheus_multiproc_dir", False):
+        metrics.register_default(
+            metrics.summary(
+                'flask_wps_request_full_url', 'Request summary by request url',
+                labels={
+                    'query_request': lambda: request.args.get('request'),
+                    'query_url': lambda: request.full_path
+                }
+            )
+        )
 
 
 def create_process(process, input, **settings):
@@ -118,3 +141,8 @@ if __name__ == "__main__":
             os._exit(0)  # pylint: disable=protected-access
     else:
         app.run(threaded=True, host=bind_host)
+
+
+# Note: register your default metrics after all routes have been set up.
+# Also note, that Gauge metrics registered as default will track the /metrics endpoint, and this can't be disabled at the moment.
+initialise_prometheus_register(metrics)
