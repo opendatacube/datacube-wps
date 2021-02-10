@@ -34,25 +34,13 @@ def setup_logger():
 setup_logger()
 
 
-if os.environ.get("SENTRY_KEY") and os.environ.get("SENTRY_PROJECT"):
-    sentry_sdk.init(dsn="https://%s@sentry.io/%s" % (os.environ["SENTRY_KEY"], os.environ["SENTRY_PROJECT"]),
-                    integrations=[FlaskIntegration()])
-
-app = flask.Flask(__name__)
-
-app.url_map.strict_slashes = False
-
-
 def initialise_prometheus(app, log=None):
-    # Prometheus
     if os.environ.get("prometheus_multiproc_dir", False):
         metrics = GunicornInternalPrometheusMetrics(app)
         if log:
             log.info("Prometheus metrics enabled")
         return metrics
     return None
-
-metrics = initialise_prometheus(app)
 
 
 def initialise_prometheus_register(metrics):
@@ -67,6 +55,19 @@ def initialise_prometheus_register(metrics):
                 }
             )
         )
+
+
+if os.environ.get("SENTRY_KEY") and os.environ.get("SENTRY_PROJECT"):
+    sentry_sdk.init(dsn="https://%s@sentry.io/%s" % (os.environ["SENTRY_KEY"], os.environ["SENTRY_PROJECT"]),
+                    integrations=[FlaskIntegration()])
+
+app = flask.Flask(__name__)
+
+app.url_map.strict_slashes = False
+
+
+metrics = initialise_prometheus(app)
+
 
 
 def create_process(process, input, **settings):
