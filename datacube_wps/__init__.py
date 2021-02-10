@@ -13,7 +13,7 @@ from pywps import Service
 from datacube.utils import import_function
 from datacube.virtual import construct
 
-from flask import Flask, request
+from flask import Flask
 
 from .startup_utils import setup_logger, initialise_prometheus, initialise_prometheus_register, setup_sentry
 
