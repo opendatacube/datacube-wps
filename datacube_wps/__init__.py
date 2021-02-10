@@ -41,7 +41,7 @@ app = flask.Flask(__name__)
 app.url_map.strict_slashes = False
 
 
-def initialize_prometheus():
+def initialise_prometheus():
     if os.environ.get("prometheus_multiproc_dir", False):
         return GunicornInternalPrometheusMetrics(app)
     return None
