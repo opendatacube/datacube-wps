@@ -29,16 +29,9 @@ jobs:
        run: |
          if [ -n "${TEST_PYPI_TOKEN}" ]; then
            docker build -t ${ORG}/${IMAGE}:latest .
-           echo docker image built
-           docker run --rm ${ORG}/${IMAGE}:latest twine upload \
-               --verbose \
-               --non-interactive \
-               --disable-progress-bar \
-               --username=__token__ \
-               --password=${TEST_PYPI_TOKEN} \
-               --repository-url=${TWINE_REPOSITORY_URL} \
-               # --skip-existing dist/*
-           echo twine uploaded
+
+           docker run --rm -i ${ORG}/${IMAGE}:latest bash -c "python setup.py bdist_wheel sdist; twine check ./dist/*; twine upload --verbose  --non-interactive --disable-progress-bar --username=__token__ --password=${TEST_PYPI_TOKEN} --repository-url=${TWINE_REPOSITORY_URL} --skip-existing dist/*"
+
          else
             echo "Skipping upload as 'Test_PyPI_Token' is not set"
          fi
