@@ -21,6 +21,25 @@ jobs:
     if: github.event_name == 'release'
 
     steps:
+      - name: Publish to Test PyPi
+        run: |
+          if [ -n "${TEST_PYPI_TOKEN}" ]; then
+            docker build -t ${ORG}/${IMAGE}:latest .
+            docker run --rm ${ORG}/${IMAGE}:latest twine upload \
+                --verbose \
+                --non-interactive \
+                --disable-progress-bar \
+                --username=__token__ \
+                --password=${TEST_PYPI_TOKEN} \
+                --repository-url=${TWINE_REPOSITORY_URL} \
+                --skip-existing dist/*
+          else
+             echo "Skipping upload as 'Test_PyPI_Token' is not set"
+          fi
+        env:
+          TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
+          TWINE_REPOSITORY_URL: 'https://test.pypi.org/legacy/'
+
       - name: Push to PyPI (tagged release only)
         run: |
           if [ -n "${PYPI_TOKEN}" ]; then
