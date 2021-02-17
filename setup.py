@@ -15,7 +15,7 @@ INSTALL_REQUIRES = [
     'python-dateutil',
     'sentry_sdk',
     'blinker',
-    'pywps@git+https://github.com/geopython/pywps.git@4.2.4#egg=pywps-4.2.4'
+    'pywps == 4.2.4'
 ]
 
 DESCRIPTION = ("datacube-wps is an implementation of the Web Processing Service standard "
