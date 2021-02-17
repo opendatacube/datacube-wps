@@ -46,10 +46,10 @@ class WOfSDrill(PixelDrill):
         # TODO: investigate why PixelDrill is changing datatype
         water = data.data_vars['water']
         data['observation'] = water.astype('int16')
-        data = data.drop(['water'])
+        data = data.drop_vars(['water'])
 
         def get_flags(val):
-            flag_dict = datacube.storage.masking.mask_to_dict(water.attrs['flags_definition'], val)
+            flag_dict = datacube.utils.masking.mask_to_dict(water.attrs['flags_definition'], val)
             flags = list(filter(flag_dict.get, flag_dict))
             # apply rules in sequence
             ret_val = 'not observable'

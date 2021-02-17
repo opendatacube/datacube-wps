@@ -4,7 +4,7 @@ import altair
 import xarray
 import numpy as np
 
-from datacube.storage.masking import make_mask
+from datacube.utils.masking import make_mask
 
 from pywps import LiteralOutput, ComplexOutput
 
@@ -31,7 +31,7 @@ class FCDrill(PolygonDrill):
         ]
 
         water = data.data_vars['water']
-        data = data.drop(['water'])
+        data = data.drop_vars(['water'])
 
         total = data.count(dim=['x', 'y'])
         total_valid = (data != -1).sum(dim=['x', 'y'])
@@ -57,7 +57,7 @@ class FCDrill(PolygonDrill):
         # BSPVNPV=np.nanargmax(FC_int, axis=0)
         BSPVNPV = FC_int.argmax(dim='variable')
 
-        FC_mask = xarray.ufuncs.isfinite(maxFC).all(dim='variable')   # pylint: disable=no-member
+        FC_mask = np.isfinite(maxFC).all(dim='variable')   # pylint: disable=no-member
 
         # #re-mask with nans to remove no-data
         BSPVNPV = BSPVNPV.where(FC_mask)
