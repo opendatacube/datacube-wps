@@ -8,8 +8,8 @@ on:
     paths:
       - "**"
 
-        # release:
-        #   types: [created, edited, published]
+    release:
+      types: [created, edited, published]
 
 env:
   ORG: opendatacube
@@ -21,38 +21,38 @@ jobs:
       #   if: github.event_name == 'release'
 
     steps:
-     - uses: actions/checkout@v1
-       with:
-         fetch-depth: 0
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 0
 
-     - name: Publish to Test PyPi
-       run: |
-         if [ -n "${TEST_PYPI_TOKEN}" ]; then
-           docker build -t ${ORG}/${IMAGE}:latest .
+      - name: Publish to Test PyPi
+        run: |
+          if [ -n "${TEST_PYPI_TOKEN}" ]; then
+            docker build -t ${ORG}/${IMAGE}:latest .
 
-           docker run --rm -i ${ORG}/${IMAGE}:latest bash -c "python setup.py bdist_wheel sdist; twine check ./dist/*; twine upload --verbose  --non-interactive --disable-progress-bar --username=__token__ --password=${TEST_PYPI_TOKEN} --repository-url=${TWINE_REPOSITORY_URL} --skip-existing dist/*"
+            docker run --rm -i ${ORG}/${IMAGE}:latest bash -c "python setup.py bdist_wheel sdist; twine check ./dist/*; twine upload --verbose  --non-interactive --disable-progress-bar --username=__token__ --password=${TEST_PYPI_TOKEN} --repository-url=${TWINE_REPOSITORY_URL} --skip-existing dist/*"
 
-         else
-            echo "Skipping upload as 'Test_PyPI_Token' is not set"
-         fi
-       env:
-         TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
-         TWINE_REPOSITORY_URL: 'https://test.pypi.org/legacy/'
-      #
-      #      - name: Push to PyPI (tagged release only)
-      #        run: |
-      #          if [ -n "${PYPI_TOKEN}" ]; then
-      #            docker build -t ${ORG}/${IMAGE}:latest .
-      #            docker run --rm ${ORG}/${IMAGE}:latest twine upload \
-      #              --verbose \
-      #              --non-interactive \
-      #              --disable-progress-bar \
-      #              --username=__token__ \
-      #              --password=${PYPI_TOKEN} \
-      #              --skip-existing dist/*
-      #          else
-      #             echo "Skipping upload as 'PyPI_Token' is not set"
-      #          fi
-      #
-      #        env:
-      #          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+          else
+             echo "Skipping upload as 'Test_PyPI_Token' is not set"
+          fi
+        env:
+          TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
+          TWINE_REPOSITORY_URL: 'https://test.pypi.org/legacy/'
+
+      - name: Push to PyPI (tagged release only)
+        run: |
+          if [ -n "${PYPI_TOKEN}" ]; then
+            docker build -t ${ORG}/${IMAGE}:latest .
+            docker run --rm ${ORG}/${IMAGE}:latest twine upload \
+              --verbose \
+              --non-interactive \
+              --disable-progress-bar \
+              --username=__token__ \
+              --password=${PYPI_TOKEN} \
+              --skip-existing dist/*
+          else
+             echo "Skipping upload as 'PyPI_Token' is not set"
+          fi
+
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
