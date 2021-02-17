@@ -18,7 +18,6 @@ env:
 jobs:
   pypi:
     runs-on: ubuntu-latest
-      #   if: github.event_name == 'release'
 
     steps:
       - uses: actions/checkout@v1
@@ -40,6 +39,7 @@ jobs:
           TWINE_REPOSITORY_URL: 'https://test.pypi.org/legacy/'
 
       - name: Push to PyPI (tagged release only)
+        if: github.event_name == 'release'
         run: |
           if [ -n "${PYPI_TOKEN}" ]; then
             docker build -t ${ORG}/${IMAGE}:latest .
