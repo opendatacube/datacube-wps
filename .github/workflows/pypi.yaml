@@ -8,8 +8,8 @@ on:
     paths:
       - "**"
 
-    release:
-      types: [created, edited, published]
+  release:
+    types: [created, edited, published]
 
 env:
   ORG: opendatacube
