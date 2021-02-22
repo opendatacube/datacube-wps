@@ -47,7 +47,7 @@ jobs:
 
           docker-compose up -d
           ./setup-db.sh
-          docker-compose exec -T wps pytest --cov=./datacube_wps --cov-report=xml tests/
+          docker-compose exec -e WPS_BASEURL=/ -T wps pytest --cov=./datacube_wps --cov-report=xml tests/
           docker-compose down
 
       - name: Upload coverage
