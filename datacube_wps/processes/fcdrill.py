@@ -57,7 +57,7 @@ class FCDrill(PolygonDrill):
         # BSPVNPV=np.nanargmax(FC_int, axis=0)
         BSPVNPV = FC_int.argmax(dim='variable')
 
-        FC_mask = np.isfinite(maxFC).all(dim='variable')   # pylint: disable=no-member
+        FC_mask = np.isfinite(maxFC).all(dim='variable')   # pylint: disable=no-member,unexpected-keyword-arg
 
         # #re-mask with nans to remove no-data
         BSPVNPV = BSPVNPV.where(FC_mask)
