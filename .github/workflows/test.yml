@@ -48,6 +48,7 @@ jobs:
           docker-compose up -d
           ./setup-db.sh
           docker-compose exec -e WPS_BASEURL=/ -T wps pytest --cov=./datacube_wps --cov-report=xml tests/
+          docker-compose exec -T wps /bin/bash -c "cp /tmp/coverage.xml /mnt/artifacts"
           echo pulling down things
           docker-compose down
           echo things pulled down
