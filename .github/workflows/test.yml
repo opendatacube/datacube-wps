@@ -48,7 +48,9 @@ jobs:
           docker-compose up -d
           ./setup-db.sh
           docker-compose exec -e WPS_BASEURL=/ -T wps pytest --cov=./datacube_wps --cov-report=xml tests/
+          echo pulling down things
           docker-compose down
+          echo things pulled down
 
       - name: Upload coverage
         uses: codecov/codecov-action@v1
