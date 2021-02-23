@@ -9,7 +9,7 @@ def test_ping(client):
 
 
 @mock_s3
-def test_mangrove(client):
+def xtest_mangrove(client):
     conn = boto3.resource('s3', region_name='ap-southeast-2')
     conn.create_bucket(Bucket='dea-wps-results', CreateBucketConfiguration={'LocationConstraint': 'ap-southeast-2'})
 
