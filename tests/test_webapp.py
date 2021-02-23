@@ -1,16 +1,15 @@
 import boto3
 from moto import mock_s3
 
-from datacube_wps import app
+from datacube_wps.impl import create_app
 
-def test_ping():
-    with app.test_client() as c:
-        r = c.get('/ping')
-        assert r.status_code == 200
+def test_ping(client):
+    r = client.get('/ping')
+    assert r.status_code == 200
 
 
 @mock_s3
-def test_mangrove():
+def test_mangrove(client):
     conn = boto3.resource('s3', region_name='ap-southeast-2')
     conn.create_bucket(Bucket='dea-wps-results', CreateBucketConfiguration={'LocationConstraint': 'ap-southeast-2'})
 
@@ -33,6 +32,5 @@ def test_mangrove():
     </wps:Execute>
     """
 
-    with app.test_client() as c:
-        r = c.post('/?service=WPS&request=Execute', headers=headers, data=data)
-        assert r.status_code == 200
+    r = client.post('/?service=WPS&request=Execute', headers=headers, data=data)
+    assert r.status_code == 200
