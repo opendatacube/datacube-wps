@@ -1,11 +1,7 @@
 import os
 
 import flask
-from flask import Flask
-
 import yaml
-
-import pywps
 from pywps import Service
 
 from datacube.utils import import_function
