@@ -9,7 +9,7 @@ def test_ping(client):
 
 
 def test_head(client):
-    r = client.head('/')
+    r = client.head('/testing')
     assert r.status_code == 200
 
 
