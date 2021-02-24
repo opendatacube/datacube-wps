@@ -2,7 +2,7 @@ import pytest
 
 from datacube.utils.geometry import CRS, Geometry
 
-from datacube_wps import read_process_catalog
+from datacube_wps.impl import read_process_catalog
 from datacube_wps.processes.fcdrill import FCDrill
 from datacube_wps.processes.mangrovedrill import MangroveDrill
 from datacube_wps.processes.wofsdrill import WOfSDrill
