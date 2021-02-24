@@ -41,12 +41,11 @@ def create_app():
         response.headers['Cache-Control'] = 'max-age=0'
         return response
 
-    @app.route('/testing', methods=['GET', 'POST'])
-    def testing():
-        return "hello world"
-
     @app.route('/', methods=['GET', 'POST', 'HEAD'])
     def wps():
+        if flask.request.method == 'HEAD':
+            return ""
+
         if not service:
             service.append(Service(read_process_catalog('datacube-wps-config.yaml'), ['pywps.cfg']))
         return service[0]
