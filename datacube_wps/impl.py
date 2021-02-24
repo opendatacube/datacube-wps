@@ -41,7 +41,7 @@ def create_app():
         response.headers['Cache-Control'] = 'max-age=0'
         return response
 
-    @app.route('/', methods=['GET', 'POST'])
+    @app.route('/', methods=['GET', 'POST', 'HEAD'])
     def wps():
         if not service:
             service.append(Service(read_process_catalog('datacube-wps-config.yaml'), ['pywps.cfg']))

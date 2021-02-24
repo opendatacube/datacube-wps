@@ -8,6 +8,11 @@ def test_ping(client):
     assert r.status_code == 200
 
 
+def test_head(client):
+    r = client.get('/')
+    assert r.status_code == 200
+
+
 @mock_s3
 def xtest_mangrove(client):
     conn = boto3.resource('s3', region_name='ap-southeast-2')
