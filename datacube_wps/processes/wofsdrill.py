@@ -17,7 +17,7 @@ class WOfSDrill(PixelDrill):
                 ComplexOutput('timeseries', 'Timeseries Drill', supported_formats=[FORMATS['output_json']])]
 
     @log_call
-    def process_data(self, data):
+    def process_data(self, data, parameters):
         # TODO raise ProcessError('query returned no data') when appropriate
 
         rules = [

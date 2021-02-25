@@ -6,7 +6,7 @@ from . import PolygonDrill, log_call, chart_dimensions
 class MangroveDrill(PolygonDrill):
 
     @log_call
-    def process_data(self, data):
+    def process_data(self, data, parameters):
         data = data.compute()
 
         # TODO raise ProcessError('query returned no data') when appropriate

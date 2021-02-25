@@ -214,6 +214,16 @@ def _get_time(request):
             _datetimeExtractor(request.inputs['end'][0].data))
 
 
+def _get_parameters(request):
+    if 'parameters' not in request.inputs:
+        return {}
+
+    stream = request.inputs['parameters'][0].stream
+    params = json.loads(stream.readline())
+
+    return params
+
+
 def _render_outputs(uuid, style, df: pandas.DataFrame, chart: altair.Chart,
                     is_enabled=True, name="Timeseries", header=True):
     html_url = upload_chart_html_to_S3(chart, str(uuid))
@@ -292,15 +302,19 @@ class PixelDrill(Process):
     def request_handler(self, request, response):
         time = _get_time(request)
         feature = _get_feature(request)
+        parameters = _get_parameters(request)
 
-        result = self.query_handler(time, feature)
+        result = self.query_handler(time, feature, parameters=parameters)
 
         outputs = self.render_outputs(result['data'], result['chart'])
         _populate_response(response, outputs)
         return response
 
     @log_call
-    def query_handler(self, time, feature):
+    def query_handler(self, time, feature, parameters=None):
+        if parameters is None:
+            parameters = {}
+
         with Client(n_workers=1, processes=False, threads_per_worker=num_workers()) as client:
             configure_s3_access(aws_unsigned=True,
                                 region_name=os.getenv('AWS_DEFAULT_REGION', 'auto'),
@@ -309,7 +323,7 @@ class PixelDrill(Process):
             with datacube.Datacube() as dc:
                 data = self.input_data(dc, time, feature)
 
-        df = self.process_data(data)
+        df = self.process_data(data, parameters)
         chart = self.render_chart(df)
 
         return {'data': df, 'chart': chart}
@@ -343,7 +357,7 @@ class PixelDrill(Process):
                                                                if key in ['flags_definition']})
         return result
 
-    def process_data(self, data: xarray.Dataset) -> pandas.DataFrame:
+    def process_data(self, data: xarray.Dataset, parameters: dict) -> pandas.DataFrame:
         raise NotImplementedError
 
     def render_chart(self, df: pandas.DataFrame) -> altair.Chart:
@@ -381,15 +395,19 @@ class PolygonDrill(Process):
     def request_handler(self, request, response):
         time = _get_time(request)
         feature = _get_feature(request)
+        parameters = _get_parameters(request)
 
-        result = self.query_handler(time, feature)
+        result = self.query_handler(time, feature, parameters=parameters)
 
         outputs = self.render_outputs(result['data'], result['chart'])
         _populate_response(response, outputs)
         return response
 
     @log_call
-    def query_handler(self, time, feature):
+    def query_handler(self, time, feature, parameters=None):
+        if parameters is None:
+            parameters = {}
+
         with Client(n_workers=num_workers(), processes=True, threads_per_worker=1) as client:
             configure_s3_access(aws_unsigned=True,
                                 region_name=os.getenv('AWS_DEFAULT_REGION', 'auto'),
@@ -398,7 +416,7 @@ class PolygonDrill(Process):
             with datacube.Datacube() as dc:
                 data = self.input_data(dc, time, feature)
 
-        df = self.process_data(data)
+        df = self.process_data(data, parameters)
         chart = self.render_chart(df)
 
         return {'data': df, 'chart': chart}
@@ -425,7 +443,7 @@ class PolygonDrill(Process):
 
         return data
 
-    def process_data(self, data: xarray.Dataset) -> pandas.DataFrame:
+    def process_data(self, data: xarray.Dataset, parameters: dict) -> pandas.DataFrame:
         raise NotImplementedError
 
     def render_chart(self, df: pandas.DataFrame) -> altair.Chart:

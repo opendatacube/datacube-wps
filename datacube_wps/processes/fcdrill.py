@@ -24,7 +24,7 @@ class FCDrill(PolygonDrill):
                 ComplexOutput('timeseries', 'Fractional Cover Polygon Drill Timeseries', supported_formats=[FORMATS['output_json']])]
 
     @log_call
-    def process_data(self, data):
+    def process_data(self, data, parameters):
         wofs_mask_flags = [
             dict(dry=True),
             dict(terrain_or_low_angle=False, high_slope=False, cloud_shadow=False, cloud=False, sea=False)
