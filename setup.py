@@ -8,12 +8,15 @@ INSTALL_REQUIRES = [
     'flask',
     'scikit-image',
     'gunicorn',
+    'datacube',
     'rasterio >= 1.0.9',
     'rasterio[s3]',
     'altair',
+    'altair_saver',
     'selenium',
     'python-dateutil',
     'sentry_sdk',
+    'prometheus-flask-exporter',
     'blinker',
     'pywps == 4.2.4'
 ]
