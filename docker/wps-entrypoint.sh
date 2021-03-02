@@ -13,10 +13,10 @@ fi
 
 if [ -e "$DATACUBE_WPS_CONFIG_PATH" ]
 then
-    cp "$DATACUBE_WPS_CONFIG_PATH" /code/datcube-wps-config.yaml
+    cp "$DATACUBE_WPS_CONFIG_PATH" /code/datacube-wps-config.yaml
 elif [ "$DATACUBE_WPS_CONFIG_URL" ]
 then
-    A=$$; wget -q "$DATACUBE_WPS_CONFIG_URL" -O $A.d && mv $A.d /code/datcube-wps-config.yaml
+    A=$$; wget -q "$DATACUBE_WPS_CONFIG_URL" -O $A.d && mv $A.d /code/datacube-wps-config.yaml
 fi
 
 # pywps -c pywps.cfg migrate
