@@ -323,7 +323,7 @@ class PixelDrill(Process):
             with datacube.Datacube() as dc:
                 data = self.input_data(dc, time, feature)
 
-        df = self.process_data(data, parameters)
+        df = self.process_data(data, {'time': time, 'feature': feature, **parameters})
         chart = self.render_chart(df)
 
         return {'data': df, 'chart': chart}
@@ -416,7 +416,7 @@ class PolygonDrill(Process):
             with datacube.Datacube() as dc:
                 data = self.input_data(dc, time, feature)
 
-        df = self.process_data(data, parameters)
+        df = self.process_data(data, {'time': time, 'feature': feature, **parameters})
         chart = self.render_chart(df)
 
         return {'data': df, 'chart': chart}
