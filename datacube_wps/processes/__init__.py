@@ -435,7 +435,8 @@ class PolygonDrill(Process):
 
         # TODO customize the number of processes
         data = self.input.fetch(box, dask_chunks={'time': 1})
-
+        mask = geometry_mask(feature, data.geobox, invert=True)
+        
         # mask out data outside requested polygon
         for band_name, band_array in data.data_vars.items():
             if 'nodata' in band_array.attrs:
