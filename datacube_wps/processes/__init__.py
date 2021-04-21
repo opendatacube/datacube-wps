@@ -382,6 +382,7 @@ class PolygonDrill(Process):
         self.about = about
         self.input = input
         self.style = style
+        self.mask_all_touched = False
 
     def input_formats(self):
         return [ComplexInput('geometry', 'Geometry', supported_formats=[FORMATS['polygon']]),
@@ -429,7 +430,8 @@ class PolygonDrill(Process):
 
         box = self.input.group(bag)
         _guard_rail(self.input, box)
-        mask = geometry_mask(feature, box.geobox, invert=True)
+        mask = geometry_mask(feature, box.geobox,
+                             all_touched=self.mask_all_touched, invert=True)
 
         # TODO customize the number of processes
         data = self.input.fetch(box, dask_chunks={'time': 1})
