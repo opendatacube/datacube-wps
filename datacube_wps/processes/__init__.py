@@ -432,7 +432,7 @@ class PolygonDrill(Process):
         # _guard_rail(self.input, box)
         # TODO customize the number of processes
         data = self.input.fetch(box, dask_chunks={'time': 1})
-        mask = geometry_mask(feature, box.geobox,
+        mask = geometry_mask(feature, data.geobox,
                              all_touched=self.mask_all_touched, invert=True)
         
         # mask out data outside requested polygon
