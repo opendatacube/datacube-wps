@@ -429,13 +429,12 @@ class PolygonDrill(Process):
             bag = self.input.query(dc, time=time, geopolygon=feature)
 
         box = self.input.group(bag)
-        _guard_rail(self.input, box)
-        mask = geometry_mask(feature, box.geobox,
-                             all_touched=self.mask_all_touched, invert=True)
-
+        # _guard_rail(self.input, box)
         # TODO customize the number of processes
         data = self.input.fetch(box, dask_chunks={'time': 1})
-
+        mask = geometry_mask(feature, data.geobox,
+                             all_touched=self.mask_all_touched, invert=True)
+        
         # mask out data outside requested polygon
         for band_name, band_array in data.data_vars.items():
             if 'nodata' in band_array.attrs:
