@@ -35,7 +35,7 @@ class WIT(PolygonDrill):
     def process_data(self, data, parameters):
         feature = parameters.get('feature')
         adays = parameters.get('aggregate', 0)
-        geomask = geometry_mask(feature, data.geobox, invert=True)
+        geomask = geometry_mask(feature, data.geobox, invert=True, all_touched=self.mask_all_touched)
         #masked = mask_data(data)
         if adays > 0:
             aggregated = aggregate_over_time(data, adays)
