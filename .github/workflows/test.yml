@@ -53,6 +53,5 @@ jobs:
       - name: Upload coverage
         uses: codecov/codecov-action@v1
         with:
-          token: ${{ secrets.CodeCovToken }}
           file: ./artifacts/*.xml
           fail_ci_if_error: false
