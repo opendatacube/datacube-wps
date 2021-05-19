@@ -46,6 +46,7 @@ class WIT(PolygonDrill):
         re_wit = cal_area(aggregated) 
         re_wit = re_wit[(re_wit['valid']/total_area) > 0.9].dropna()
         re_wit = re_wit.drop(columns=['valid']).div(re_wit['valid'], axis=0)
+        re_wit['geometry'] = feature.geom.convex_hull.to_wkt()
         return re_wit
     
     def render_chart(self, df):

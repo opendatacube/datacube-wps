@@ -30,6 +30,9 @@ from botocore.client import Config
 
 from dateutil.parser import parse
 
+import pyarrow as pa
+import pyarrow.parquet as pq
+
 
 FORMATS = {
     # Defines the format for the returned object
@@ -103,6 +106,21 @@ def upload_chart_svg_to_S3(chart : altair.Chart, process_id : str):
     img_bytes = io.BytesIO(img_io.getvalue().encode())
     return _uploadToS3(process_id + '/chart.svg', img_bytes, 'image/svg+xml')
 
+# Not sure where or how to patch in this function yet 
+def write_df_to_parquet(df: pandas.DataFrame, process_id: str):
+    table = pa.Table.from_pandas(df)
+    writer = pa.BufferOutputStream()
+    pq.write_table(table, writer,  compression='snappy')
+    body = bytes(writer.getvalue())
+    
+    # the bucket is non-public
+    # needs credential to write, profile for now, better way later
+    profile_name = config.get_config_value('wit', 'profile')
+    bucket = config.get_config_value('wit', 'bucket')
+    key = '/'.join([config.get_config_value('wit', 'project'), process_id]) + '.snappy.parquet'
+    session = boto3.Session(profile_name=profile_name)
+    dev_s3_client = session.client('s3')
+    return dev_s3_client.put_object(Body=body, Bucket=bucket, Key=key)
 
 # From https://stackoverflow.com/a/16353080
 class DatetimeEncoder(json.JSONEncoder):
