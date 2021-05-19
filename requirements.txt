@@ -27,3 +27,4 @@ wheel
 setuptools>=42
 twine
 Werkzeug == 0.16.0
+pyarrow
