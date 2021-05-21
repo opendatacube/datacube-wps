@@ -30,6 +30,9 @@ from botocore.client import Config
 
 from dateutil.parser import parse
 
+import pyarrow as pa
+import pyarrow.parquet as pq
+
 
 FORMATS = {
     # Defines the format for the returned object
@@ -103,6 +106,17 @@ def upload_chart_svg_to_S3(chart : altair.Chart, process_id : str):
     img_bytes = io.BytesIO(img_io.getvalue().encode())
     return _uploadToS3(process_id + '/chart.svg', img_bytes, 'image/svg+xml')
 
+def write_df_to_parquet(df: pandas.DataFrame, process_id: str, identifier: str):
+    table = pa.Table.from_pandas(df)
+    writer = pa.BufferOutputStream()
+    pq.write_table(table, writer,  compression='snappy')
+    body = bytes(writer.getvalue())
+    
+    bucket = config.get_config_value('s3', 'bucket')
+    key = '/'.join([identifier, process_id, process_id]) + '.snappy.parquet'
+    session = boto3.Session()
+    dev_s3_client = session.client('s3')
+    return dev_s3_client.put_object(Body=body, Bucket=bucket, Key=key)
 
 # From https://stackoverflow.com/a/16353080
 class DatetimeEncoder(json.JSONEncoder):
@@ -228,7 +242,7 @@ def _render_outputs(uuid, style, df: pandas.DataFrame, chart: altair.Chart,
                     is_enabled=True, name="Timeseries", header=True):
     html_url = upload_chart_html_to_S3(chart, str(uuid))
     img_url = upload_chart_svg_to_S3(chart, str(uuid))
-
+    
     try:
         csv_df = df.drop(columns=['latitude', 'longitude'])
     except KeyError:
@@ -452,5 +466,9 @@ class PolygonDrill(Process):
 
     def render_outputs(self, df: pandas.DataFrame, chart: altair.Chart,
                        is_enabled=True, name="Timeseries", header=True):
+        # patch in here for the time being
+        # might be better
+        if 'wit' == self.about.get('identifier', '').lower():
+            write_df_to_parquet(df, str(self.uuid), self.about.get('identifier').lower())
         return _render_outputs(self.uuid, self.style, df, chart,
                                is_enabled=is_enabled, name=name, header=header)

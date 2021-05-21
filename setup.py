@@ -20,6 +20,7 @@ INSTALL_REQUIRES = [
     'blinker',
     'Werkzeug == 0.16.0',
     'pywps == 4.2.4'
+    'pyarrow'
 ]
 
 DESCRIPTION = ("datacube-wps is an implementation of the Web Processing Service standard "
