@@ -5,7 +5,7 @@ with open('VERSION.txt') as ff:
 
 INSTALL_REQUIRES = [
     'automat >= 0.3.0',
-    'flask',
+    'flask == 1.1.2',
     'scikit-image',
     'gunicorn',
     'datacube',
@@ -18,6 +18,7 @@ INSTALL_REQUIRES = [
     'sentry_sdk',
     'prometheus-flask-exporter',
     'blinker',
+    'Werkzeug == 0.16.0',
     'pywps == 4.2.4'
 ]
 

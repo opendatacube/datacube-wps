@@ -1,6 +1,6 @@
 --extra-index-url="https://packages.dea.ga.gov.au"
 automat >= 0.3.0
-flask
+flask == 1.1.2
 pywps == 4.2.4
 scikit-image
 gunicorn
@@ -26,3 +26,4 @@ vega-datasets==0.9.0
 wheel
 setuptools>=42
 twine
+Werkzeug == 0.16.0
