@@ -1,5 +1,5 @@
 
-FROM locust/wps
+FROM locustio/locust
 
 COPY requirements.txt /
 RUN set -ex \
