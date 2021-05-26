@@ -1,0 +1,47 @@
+---
+name: docker-latest
+on: [workflow_dispatch]
+
+env:
+  ORG: opendatacube
+  IMAGE: wps
+
+jobs:
+  docker_latest:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Login to DockerHub
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Export Secrets to enviroment
+        run: |
+          echo "${{ secrets.DockerPassword }}" | docker login -u "${{ secrets.DockerUser }}" --password-stdin
+
+      # Tag image if this is a tagged build
+      # if not use a pseudo tag based on current tag,
+      # number of commits since last tag and git hash
+      - name: Push to DockerHub (master branch or tagged release only)
+        if: github.ref == 'refs/heads/master'
+        run: |
+          # figure out extra tag
+          git fetch --prune --unshallow 2> /dev/null || true
+          TAG=$(git describe --tags)
+          # build local docker image
+          docker build -t ${ORG}/${IMAGE}:latest .
+          # tag and push images
+          docker tag ${ORG}/${IMAGE}:latest ${ORG}/${IMAGE}:${TAG}
+          docker push ${ORG}/${IMAGE}:latest
+          docker push ${ORG}/${IMAGE}:${TAG}
+
+      - name: Run vulnerability scanner
+        if: github.ref == 'refs/heads/master'
+        uses: aquasecurity/trivy-action@0.0.6
+        with:
+          image-ref: "${ORG}/${IMAGE}:latest"
+          format: "table"
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
