@@ -3,8 +3,7 @@ name: docker-latest
 on: [workflow_dispatch]
 
 env:
-  ORG: opendatacube
-  IMAGE: wps
+  IMAGE_NAME: opendatacube/wps
 
 jobs:
   docker_latest:
@@ -17,31 +16,31 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Get unstable git tag
+        run: >
+          echo "UNSTABLE_TAG=$(git describe --tags)" >> $GITHUB_ENV
+
+      - name: Log the unstable tag
+        run: echo $UNSTABLE_TAG
+
       - name: Export Secrets to enviroment
         run: |
           echo "${{ secrets.DockerPassword }}" | docker login -u "${{ secrets.DockerUser }}" --password-stdin
 
-      # Tag image if this is a tagged build
-      # if not use a pseudo tag based on current tag,
-      # number of commits since last tag and git hash
-      - name: Push to DockerHub (master branch or tagged release only)
-        if: github.ref == 'refs/heads/master'
-        run: |
-          # figure out extra tag
-          git fetch --prune --unshallow 2> /dev/null || true
-          TAG=$(git describe --tags)
-          # build local docker image
-          docker build -t ${ORG}/${IMAGE}:latest .
-          # tag and push images
-          docker tag ${ORG}/${IMAGE}:latest ${ORG}/${IMAGE}:${TAG}
-          docker push ${ORG}/${IMAGE}:latest
-          docker push ${ORG}/${IMAGE}:${TAG}
+      - name: Build unstable + latest Docker image tag
+        if: github.event_name != 'release'
+        uses: whoan/docker-build-with-cache-action@v4
+        with:
+          image_name: ${{ env.IMAGE_NAME }}
+          image_tag: ${{ env.UNSTABLE_TAG }},latest
+          build_extra_args: "--build-arg=ENVIRONMENT=deployment"
+          push_image_and_stages: false
 
       - name: Run vulnerability scanner
         if: github.ref == 'refs/heads/master'
         uses: aquasecurity/trivy-action@0.0.6
         with:
-          image-ref: "${ORG}/${IMAGE}:latest"
+          image-ref: "${{ env.IMAGE_NAME }}:${{ env.UNSTABLE_TAG }}"
           format: "table"
           exit-code: "1"
           severity: "CRITICAL,HIGH"
