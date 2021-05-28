@@ -1,7 +1,7 @@
-ARG V_BASE=3.0.4
 ARG py_env_path=/env
 
-FROM opendatacube/geobase:wheels-${V_BASE} as env_builder
+FROM opendatacube/geobase-builder as env_builder
+
 ARG py_env_path
 
 RUN mkdir -p /conf
@@ -12,7 +12,7 @@ RUN env-build-tool new /conf/requirements.txt
 
 ENV PATH=${py_env_path}/bin:$PATH
 
-FROM opendatacube/geobase:runner-${V_BASE}
+FROM opendatacube/geobase-runner
 
 RUN mkdir -p /code/logs
 WORKDIR /code
