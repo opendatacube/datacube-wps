@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  master:
+    build: .
+    ports:
+     - "8089:8089"
+    volumes:
+      - ./:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --config=/mnt/locust/locust.conf --master
+
+  worker:
+    build: .
+    volumes:
+      - ./:/mnt/locust
+    command: -f /mnt/locust/locustfile.py  --worker --master-host master
