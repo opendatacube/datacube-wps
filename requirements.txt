@@ -5,7 +5,7 @@ pywps == 4.2.4
 scikit-image
 gunicorn
 datacube
-rasterio >= 1.0.9
+rasterio #>= 1.0.9
 rasterio[s3]
 altair
 altair_saver
@@ -14,17 +14,17 @@ python-dateutil
 sentry_sdk
 prometheus-flask-exporter
 blinker
-aiobotocore[awscli,boto3]
+aiobotocore[awscli,boto3]==1.3.0
 odc-aws
 odc-ppt
 pylint
 pytest
 pytest-cov
 pytest-flask
-moto==1.3.16
+moto #==1.3.16
 vega-datasets==0.9.0
 wheel
 setuptools>=42
 twine
-Werkzeug == 0.16.0
+Werkzeug #==0.16.0
 pyarrow

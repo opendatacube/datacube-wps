@@ -7,6 +7,7 @@ ARG py_env_path
 RUN mkdir -p /conf
 
 COPY requirements.txt /conf
+COPY constraints.txt /conf
 
 RUN env-build-tool new /conf/requirements.txt
 
