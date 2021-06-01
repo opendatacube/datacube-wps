@@ -21,14 +21,13 @@ WORKDIR /code
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y && apt-get install -y --fix-missing --no-install-recommends \
-    chromium-browser \
-    chromium-chromedriver \
     curl \
     wget \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
-# include webdriver installed by apt in path
-ENV PATH="/usr/lib/chromium-browser/:${PATH}"
+RUN npm install vega-lite vega-cli canvas
+
 COPY --from=env_builder /bin/tini /bin/tini
 ARG py_env_path
 COPY --from=env_builder $py_env_path $py_env_path
