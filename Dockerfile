@@ -9,7 +9,7 @@ RUN mkdir -p /conf
 COPY requirements.txt /conf
 COPY constraints.txt /conf
 
-RUN env-build-tool new /conf/requirements.txt
+RUN env-build-tool new /conf/requirements.txt /conf/constraints.txt ${py_env_path}
 
 ENV PATH=${py_env_path}/bin:$PATH
 

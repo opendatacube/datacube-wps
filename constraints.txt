@@ -1,6 +1,10 @@
 affine==2.3.0
+aiohttp==3.7.4.post0
+aioitertools==0.7.1
 appdirs==1.4.4
+async-timeout==3.0.1
 attrs==20.2.0
+Automat==20.2.0
 beautifulsoup4==4.9.3
 black==21.5b0
 bleach==3.3.0
@@ -14,7 +18,7 @@ bs4==0.0.1
 build==0.3.1.post1
 cachetools==4.1.1
 cattrs==1.1.1
-certifi==2020.4.5.1
+certifi==2020.12.5
 cffi==1.14.0
 cftime==1.2.1
 chardet==3.0.4
@@ -57,6 +61,7 @@ geventhttpclient==1.4.4
 gitdb==4.0.7
 GitPython==0.3.2rc1
 greenlet==0.4.17
+gunicorn==20.1.0
 HeapDict==1.0.1
 idna==2.9
 imageio==2.9.0
@@ -75,18 +80,19 @@ lark-parser==0.11.0rc1
 locust==1.5.3
 lxml==4.6.1
 MarkupSafe==1.1.1
-matplotlib==3.3.2
+matplotlib==3.3.4
 mock==4.0.3
 more-itertools==8.7.0
 moto==2.0.2
 msgpack==1.0.0
+multidict==5.1.0
 munch==2.5.1.dev12
 mypy==0.812
 mypy-boto3-ecr==1.17.41.0
 mypy-extensions==0.4.3
 netCDF4==1.5.4
 networkx==2.5
-numpy==1.19.4
+numpy==1.19.5
 packaging==20.9
 pandas==1.1.4
 pathspec==0.8.1
@@ -100,6 +106,7 @@ prometheus-flask-exporter==0.18.1
 psutil==5.7.3
 psycopg2==2.8.6
 py==1.10.0
+pyasn1==0.4.8
 pycosat==0.6.3
 pycparser==2.20
 PyGithub==1.54.1
@@ -109,7 +116,7 @@ pyOpenSSL==19.1.0
 pyorbital==1.6.0
 pyows==0.2.0
 pyparsing==3.0.0b1
-pyproj==3.0.dev3
+pyproj==2.6.1
 pyrsistent==0.17.3
 PySocks==1.7.1
 pytest==6.2.4
@@ -122,7 +129,7 @@ PyWavelets==1.1.1
 pyxdg==0.27
 PyYAML==5.3.1
 pyzmq==22.0.3
-rasterio==1.1.8
+rasterio==1.1.6
 readme-renderer==29.0
 regex==2020.10.28
 requests==2.25.1
@@ -130,6 +137,7 @@ requests-cache==0.5.2
 requests-toolbelt==0.9.1
 responses==0.13.1
 rfc3986==1.4.0
+rsa==4.7.2
 ruamel.yaml==0.16.12
 ruamel.yaml.clib==0.2.2
 s3transfer==0.3.4
@@ -164,6 +172,7 @@ Werkzeug==1.0.1
 wrapt==1.12.1
 xarray==0.16.1
 xmltodict==0.12.0
+yarl==1.6.3
 zict==2.0.0
 zipp==3.4.1
 zope.event==4.5.0
