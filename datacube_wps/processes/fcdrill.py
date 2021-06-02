@@ -1,14 +1,12 @@
 from timeit import default_timer
 
 import altair
-import xarray
 import numpy as np
-
+import xarray
 from datacube.utils.masking import make_mask
+from pywps import ComplexOutput, LiteralOutput
 
-from pywps import LiteralOutput, ComplexOutput
-
-from . import PolygonDrill, log_call, chart_dimensions, FORMATS
+from . import FORMATS, PolygonDrill, chart_dimensions, log_call
 
 
 class FCDrill(PolygonDrill):
@@ -21,7 +19,8 @@ class FCDrill(PolygonDrill):
     def output_formats(self):
         return [LiteralOutput("image", "Fractional Cover Drill Preview"),
                 LiteralOutput("url", "Fractional Cover Drill Chart"),
-                ComplexOutput('timeseries', 'Fractional Cover Polygon Drill Timeseries', supported_formats=[FORMATS['output_json']])]
+                ComplexOutput('timeseries', 'Fractional Cover Polygon Drill Timeseries',
+                              supported_formats=[FORMATS['output_json']])]
 
     @log_call
     def process_data(self, data, parameters):

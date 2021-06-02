@@ -9,7 +9,10 @@ python-dateutil
 sentry_sdk
 blinker
 prometheus-flask-exporter
+bandit
+pycodestyle
 pylint
+isort
 pytest
 pytest-cov
 pytest-flask

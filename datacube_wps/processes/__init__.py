@@ -1,38 +1,30 @@
+import io
+import json
+import os
 from functools import wraps
 from timeit import default_timer
-import json
-import io
-import os
 
-from pywps import Process, ComplexInput, ComplexOutput, Format
-from pywps.app.exceptions import ProcessError
-import pywps.configuration as config
-
-import datacube
-from datacube.utils.geometry import Geometry, CRS
-from datacube.api.core import output_geobox, query_group_by
-
-from datacube.drivers import new_datasource
-from datacube.storage import BandInfo
-from datacube.utils.rio import configure_s3_access
-
-import rasterio.features
-
-import xarray
-import numpy as np
-import pandas
 import altair
-from dask.distributed import Client
-
 import boto3
 import botocore
-from botocore.client import Config
-
-from dateutil.parser import parse
-
+import datacube
+import numpy as np
+import pandas
 import pyarrow as pa
 import pyarrow.parquet as pq
-
+import pywps.configuration as config
+import rasterio.features
+import xarray
+from botocore.client import Config
+from dask.distributed import Client
+from datacube.api.core import output_geobox, query_group_by
+from datacube.drivers import new_datasource
+from datacube.storage import BandInfo
+from datacube.utils.geometry import CRS, Geometry
+from datacube.utils.rio import configure_s3_access
+from dateutil.parser import parse
+from pywps import ComplexInput, ComplexOutput, Format, Process
+from pywps.app.exceptions import ProcessError
 
 FORMATS = {
     # Defines the format for the returned object
@@ -93,32 +85,34 @@ def _uploadToS3(filename, data, mimetype):
                                      Params={'Bucket': bucket, 'Key': filename})
 
 
-def upload_chart_html_to_S3(chart : altair.Chart, process_id : str):
+def upload_chart_html_to_S3(chart: altair.Chart, process_id: str):
     html_io = io.StringIO()
     chart.save(html_io, format='html')
     html_bytes = io.BytesIO(html_io.getvalue().encode())
     return _uploadToS3(process_id + '/chart.html', html_bytes, 'text/html')
 
 
-def upload_chart_svg_to_S3(chart : altair.Chart, process_id : str):
+def upload_chart_svg_to_S3(chart: altair.Chart, process_id: str):
     img_io = io.StringIO()
     chart.save(img_io, format='svg')
     img_bytes = io.BytesIO(img_io.getvalue().encode())
     return _uploadToS3(process_id + '/chart.svg', img_bytes, 'image/svg+xml')
+
 
 def write_df_to_parquet(df: pandas.DataFrame, process_id: str, identifier: str):
     table = pa.Table.from_pandas(df)
     writer = pa.BufferOutputStream()
     pq.write_table(table, writer,  compression='snappy')
     body = bytes(writer.getvalue())
-    
+
     bucket = config.get_config_value('s3', 'bucket')
     key = '/'.join([identifier, process_id, process_id]) + '.snappy.parquet'
     session = boto3.Session()
     dev_s3_client = session.client('s3')
     return dev_s3_client.put_object(Body=body, Bucket=bucket, Key=key)
 
-# From https://stackoverflow.com/a/16353080
+
+# from https://stackoverflow.com/a/16353080
 class DatetimeEncoder(json.JSONEncoder):
     def default(self, obj):
         try:
@@ -167,11 +161,7 @@ def _guard_rail(input, box):
         raise ProcessError(("requested area requires {}GB data to load - "
                             "maximum is {}GB").format(int(byte_count / GB), MAX_BYTES_IN_GB))
 
-    try:
-        grouped = box.box
-    except AttributeError:
-        # datacube 1.7 compatibility
-        grouped = box.pile
+    grouped = box.box
 
     print('grouped shape', grouped.shape)
     assert len(grouped.shape) == 1
@@ -187,6 +177,7 @@ def _guard_rail(input, box):
 
 def _datetimeExtractor(data):
     return parse(json.loads(data)["properties"]["timestamp"]["date-time"])
+
 
 def _parse_geom(request_json):
     features = request_json['features']
@@ -209,6 +200,7 @@ def _parse_geom(request_json):
         crs = CRS('urn:ogc:def:crs:OGC:1.3:CRS84')
 
     return Geometry(feature['geometry'], crs)
+
 
 def _get_feature(request):
     stream = request.inputs['geometry'][0].stream
@@ -242,7 +234,7 @@ def _render_outputs(uuid, style, df: pandas.DataFrame, chart: altair.Chart,
                     is_enabled=True, name="Timeseries", header=True):
     html_url = upload_chart_html_to_S3(chart, str(uuid))
     img_url = upload_chart_svg_to_S3(chart, str(uuid))
-    
+
     try:
         csv_df = df.drop(columns=['latitude', 'longitude'])
     except KeyError:
@@ -448,7 +440,7 @@ class PolygonDrill(Process):
         data = self.input.fetch(box, dask_chunks={'time': 1})
         mask = geometry_mask(feature, data.geobox,
                              all_touched=self.mask_all_touched, invert=True)
-        
+
         # mask out data outside requested polygon
         for band_name, band_array in data.data_vars.items():
             if 'nodata' in band_array.attrs:

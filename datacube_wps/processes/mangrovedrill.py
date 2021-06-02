@@ -1,6 +1,7 @@
-import xarray
 import altair
-from . import PolygonDrill, log_call, chart_dimensions
+import xarray
+
+from . import PolygonDrill, chart_dimensions, log_call
 
 
 class MangroveDrill(PolygonDrill):

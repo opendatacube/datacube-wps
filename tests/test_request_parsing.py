@@ -4,7 +4,7 @@ import flask
 import pytest
 from datacube.utils.geometry import Geometry
 
-from datacube_wps.processes import _parse_geom, _get_time
+from datacube_wps.processes import _get_time, _parse_geom
 
 TEST_FEATURE = {
     "features": [{
@@ -15,9 +15,11 @@ TEST_FEATURE = {
     }]
 }
 
+
 class requests_mock_time:
     def __init__(self):
         self.inputs = {"start": [mock_date_data()], "end": [mock_date_data()]}
+
 
 class mock_date_data:
     def __init__(self):
@@ -30,8 +32,10 @@ class mock_date_data:
             }
         }"""
 
+
 def test_geom_parse():
     assert isinstance(_parse_geom(TEST_FEATURE), Geometry)
+
 
 def test_time_parse():
     assert _get_time(requests_mock_time())

@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-import os
 import argparse
+import os
 
 from .impl import create_app
-
 
 app = create_app()
 
