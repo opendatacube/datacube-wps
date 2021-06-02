@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 with open('VERSION.txt') as ff:
     VERSION = ff.read().strip()
@@ -26,7 +26,7 @@ config = {
     'description': DESCRIPTION,
     'keywords': KEYWORDS,
     'author': 'Digital Earth Australia',
-    'license': 'MIT',
+    'license': 'Apache License 2.0',
     'platforms': 'all',
     'url': 'http://www.ga.gov.au/dea',
     'download_url': 'https://github.com/opendatacube/datacube-wps',

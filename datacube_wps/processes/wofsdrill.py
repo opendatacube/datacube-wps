@@ -1,10 +1,9 @@
-import numpy as np
-import datacube
 import altair
+import datacube
+import numpy as np
+from pywps import ComplexInput, ComplexOutput, LiteralOutput
 
-from pywps import LiteralOutput, ComplexInput, ComplexOutput
-
-from . import PixelDrill, FORMATS, log_call, chart_dimensions
+from . import FORMATS, PixelDrill, chart_dimensions, log_call
 
 
 class WOfSDrill(PixelDrill):

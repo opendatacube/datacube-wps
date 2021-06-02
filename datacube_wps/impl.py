@@ -2,12 +2,13 @@ import os
 
 import flask
 import yaml
-from pywps import Service
-
 from datacube.utils import import_function
 from datacube.virtual import construct
+from pywps import Service
 
-from .startup_utils import setup_logger, initialise_prometheus, initialise_prometheus_register, setup_sentry
+from .startup_utils import (initialise_prometheus,
+                            initialise_prometheus_register, setup_logger,
+                            setup_sentry)
 
 
 def create_process(process, input, **settings):
@@ -17,7 +18,7 @@ def create_process(process, input, **settings):
 
 def read_process_catalog(catalog_filename):
     with open(catalog_filename) as fl:
-        config = yaml.load(fl, Loader=yaml.CLoader)
+        config = yaml.safe_load(fl)
 
     return [create_process(**settings) for settings in config['processes']]
 

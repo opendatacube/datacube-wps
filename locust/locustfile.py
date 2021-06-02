@@ -1,8 +1,10 @@
 import time
-from locust import HttpUser, task, between
-from gevent.pool import Pool
+
 import requests
 import xmltodict
+from gevent.pool import Pool
+
+from locust import HttpUser, between, task
 
 
 class WPS(HttpUser):

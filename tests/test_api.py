@@ -1,5 +1,4 @@
 import pytest
-
 from datacube.utils.geometry import CRS, Geometry
 
 from datacube_wps.impl import read_process_catalog
@@ -53,7 +52,8 @@ def test_mangrove():
     assert "data" in results
     assert "chart" in results
 
-#@pytest.mark.xfail(reason="Pixel drills need special config")
+
+@pytest.mark.xfail(reason="Pixel drills need special config")
 def test_wofs():
     catalog = read_process_catalog("datacube-wps-config.yaml")
     wofs = [entry for entry in catalog if isinstance(entry, WOfSDrill)][0]

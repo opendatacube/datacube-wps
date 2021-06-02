@@ -1,10 +1,11 @@
-import os
 import logging
+import os
 
-from prometheus_flask_exporter.multiprocess import GunicornInternalPrometheusMetrics
 import sentry_sdk
-from sentry_sdk.integrations.flask import FlaskIntegration
 from flask import request
+from prometheus_flask_exporter.multiprocess import \
+    GunicornInternalPrometheusMetrics
+from sentry_sdk.integrations.flask import FlaskIntegration
 
 LOG_FORMAT = ('%(asctime)s] [%(levelname)s] file=%(pathname)s line=%(lineno)s '
               'module=%(module)s function=%(funcName)s %(message)s')
@@ -46,5 +47,5 @@ def setup_sentry():
         sentry_sdk.init(
             dsn="https://%s@sentry.io/%s" % (os.environ["SENTRY_KEY"], os.environ["SENTRY_PROJECT"]),
             environment=SENTRY_ENV_TAG,
-            integrations = [FlaskIntegration()]
+            integrations=[FlaskIntegration()]
         )
