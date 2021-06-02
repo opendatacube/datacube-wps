@@ -4,21 +4,15 @@ with open('VERSION.txt') as ff:
     VERSION = ff.read().strip()
 
 INSTALL_REQUIRES = [
-    'automat >= 0.3.0',
     'flask == 1.1.2',
-    'scikit-image',
     'gunicorn',
     'datacube',
-    'rasterio >= 1.0.9',
-    'rasterio[s3]',
     'altair',
     'altair_saver',
-    'selenium',
     'python-dateutil',
     'sentry_sdk',
-    'prometheus-flask-exporter',
     'blinker',
-    'Werkzeug == 0.16.0',
+    'prometheus-flask-exporter',
     'pywps == 4.2.4'
     'pyarrow'
 ]

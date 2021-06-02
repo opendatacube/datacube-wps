@@ -1,18 +1,19 @@
-ARG V_BASE=3.0.4
 ARG py_env_path=/env
 
-FROM opendatacube/geobase:wheels-${V_BASE} as env_builder
+FROM opendatacube/geobase-builder as env_builder
+
 ARG py_env_path
 
 RUN mkdir -p /conf
 
 COPY requirements.txt /conf
+COPY constraints.txt /conf
 
-RUN env-build-tool new /conf/requirements.txt
+RUN env-build-tool new /conf/requirements.txt /conf/constraints.txt ${py_env_path}
 
 ENV PATH=${py_env_path}/bin:$PATH
 
-FROM opendatacube/geobase:runner-${V_BASE}
+FROM opendatacube/geobase-runner
 
 RUN mkdir -p /code/logs
 WORKDIR /code
@@ -20,14 +21,13 @@ WORKDIR /code
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y && apt-get install -y --fix-missing --no-install-recommends \
-    chromium-browser \
-    chromium-chromedriver \
     curl \
     wget \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
-# include webdriver installed by apt in path
-ENV PATH="/usr/lib/chromium-browser/:${PATH}"
+RUN npm install vega-lite vega-cli canvas
+
 COPY --from=env_builder /bin/tini /bin/tini
 ARG py_env_path
 COPY --from=env_builder $py_env_path $py_env_path
