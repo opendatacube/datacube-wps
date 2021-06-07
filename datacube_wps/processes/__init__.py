@@ -290,7 +290,8 @@ class PixelDrill(Process):
         super().__init__(handler=self.request_handler,
                          inputs=self.input_formats(),
                          outputs=self.output_formats(),
-                         **{key: value for key, value in about.items() if key not in ['geometry_type']})
+                         **{key: value for key, value in about.items()
+                            if key not in ['geometry_type', 'guard_rail']})
 
         self.about = about
         self.input = input
@@ -383,7 +384,8 @@ class PolygonDrill(Process):
         super().__init__(handler=self.request_handler,
                          inputs=self.input_formats(),
                          outputs=self.output_formats(),
-                         **{key: value for key, value in about.items() if key not in ['geometry_type']})
+                         **{key: value for key, value in about.items()
+                            if key not in ['geometry_type', 'guard_rail']})
 
         self.about = about
         self.input = input
@@ -435,7 +437,10 @@ class PolygonDrill(Process):
             bag = self.input.query(dc, time=time, geopolygon=feature)
 
         box = self.input.group(bag)
-        # _guard_rail(self.input, box)
+
+        if self.about.get('guard_rail', True):
+            _guard_rail(self.input, box)
+
         # TODO customize the number of processes
         data = self.input.fetch(box, dask_chunks={'time': 1})
         mask = geometry_mask(feature, data.geobox,
