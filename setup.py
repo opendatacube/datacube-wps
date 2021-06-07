@@ -13,7 +13,7 @@ INSTALL_REQUIRES = [
     'sentry_sdk',
     'blinker',
     'prometheus-flask-exporter',
-    'pywps == 4.2.4'
+    'pywps == 4.4.4'
     'pyarrow'
 ]
 

@@ -1,6 +1,6 @@
 --extra-index-url="https://packages.dea.ga.gov.au"
 flask == 1.1.2
-pywps == 4.2.4
+pywps == 4.4.4
 gunicorn
 datacube
 altair
