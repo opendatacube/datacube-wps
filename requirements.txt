@@ -1,12 +1,12 @@
 --extra-index-url="https://packages.dea.ga.gov.au"
-flask == 1.1.2
-pywps == 4.2.4
+flask
+pywps
 gunicorn
 datacube
 altair
 altair_saver
 python-dateutil
-sentry_sdk
+sentry_sdk[flask]
 blinker
 prometheus-flask-exporter
 bandit
@@ -17,6 +17,6 @@ pytest
 pytest-cov
 pytest-flask
 moto
-vega-datasets==0.9.0
+vega-datasets
 twine
 pyarrow

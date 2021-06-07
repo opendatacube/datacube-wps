@@ -4,16 +4,16 @@ with open('VERSION.txt') as ff:
     VERSION = ff.read().strip()
 
 INSTALL_REQUIRES = [
-    'flask == 1.1.2',
+    'flask',
     'gunicorn',
     'datacube',
     'altair',
     'altair_saver',
     'python-dateutil',
-    'sentry_sdk',
+    'sentry_sdk[flask]',
     'blinker',
     'prometheus-flask-exporter',
-    'pywps == 4.2.4'
+    'pywps'
     'pyarrow'
 ]
 
