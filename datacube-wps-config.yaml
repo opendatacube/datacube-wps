@@ -138,6 +138,7 @@ processes:
        store_supported: True
        status_supported: True
        geometry_type: polygon
+       guard_rail: False
    input:
        reproject:
          output_crs: EPSG:3577
