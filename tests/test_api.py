@@ -53,7 +53,6 @@ def test_mangrove():
     assert "chart" in results
 
 
-@pytest.mark.xfail(reason="Pixel drills need special config")
 def test_wofs():
     catalog = read_process_catalog("datacube-wps-config.yaml")
     wofs = [entry for entry in catalog if isinstance(entry, WOfSDrill)][0]
