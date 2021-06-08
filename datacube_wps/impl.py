@@ -69,6 +69,10 @@ def create_app():
 
         flask.abort(404)
 
+    @app.route('/debug-sentry')
+    def trigger_error():
+        division_by_zero = 1 / 0
+
     # Note: register your default metrics after all routes have been set up.
     # Also note, that Gauge metrics registered as default will track the /metrics endpoint,
     # and this can't be disabled at the moment.

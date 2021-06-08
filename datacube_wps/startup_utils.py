@@ -42,10 +42,13 @@ def initialise_prometheus_register(metrics):
 
 
 def setup_sentry():
-    if os.environ.get("SENTRY_KEY") and os.environ.get("SENTRY_PROJECT"):
-        SENTRY_ENV_TAG = os.environ.get("SENTRY_ENV_TAG") if os.environ.get("SENTRY_ENV_TAG") else "dev"
+    env = os.environ
+
+    if "SENTRY_KEY" in env and "SENTRY_PROJECT" in env and "SENTRY_ORG" in env:
         sentry_sdk.init(
-            dsn="https://%s@sentry.io/%s" % (os.environ["SENTRY_KEY"], os.environ["SENTRY_PROJECT"]),
-            environment=SENTRY_ENV_TAG,
+            dsn="https://%s@o%s.ingest.sentry.io/%s" % (env["SENTRY_KEY"],
+                                                        env["SENTRY_ORG"],
+                                                        env["SENTRY_PROJECT"]),
+            environment=env.get("SENTRY_ENV_TAG", "dev"),
             integrations=[FlaskIntegration()]
         )
