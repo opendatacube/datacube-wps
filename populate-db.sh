@@ -1,4 +1,5 @@
 # mangrove cover test datasets
+echo "Index Mangrove Cover"
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2002/*.yaml' mangrove_cover
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2002/*.yaml' mangrove_cover
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2001/*.yaml' mangrove_cover
@@ -12,6 +13,7 @@ s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/mangrove_cover/v
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2000/*.yaml' mangrove_cover
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2000/*.yaml' mangrove_cover
 # fractional cover test datasets
+echo "Index Fractional Cover"
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/fractional-cover/fc/v2.2.1/ls8/x_13/y_-41/2019/04/02/*.yaml' ls8_fc_albers
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/fractional-cover/fc/v2.2.1/ls8/x_13/y_-40/2019/04/02/*.yaml' ls8_fc_albers
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/fractional-cover/fc/v2.2.1/ls8/x_13/y_-41/2019/03/17/*.yaml' ls8_fc_albers
@@ -59,6 +61,7 @@ s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/WOfS/WOFLs/v2.1.
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/WOfS/WOFLs/v2.1.5/combined/x_13/y_-40/2019/05/28/*.yaml' wofs_albers
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/WOfS/WOFLs/v2.1.5/combined/x_13/y_-41/2019/05/28/*.yaml' wofs_albers
 # wofs pixel drill test datasets
+echo "Index WOFS Datasets"
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/WOfS/WOFLs/v2.1.5/combined/x_4/y_-32/2000/02/18/*.yaml' wofs_albers
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/WOfS/WOFLs/v2.1.5/combined/x_4/y_-32/2000/01/01/*.yaml' wofs_albers
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/WOfS/WOFLs/v2.1.5/combined/x_4/y_-32/2000/04/22/*.yaml' wofs_albers
@@ -80,6 +83,7 @@ s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/WOfS/WOFLs/v2.1.
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/WOfS/WOFLs/v2.1.5/combined/x_4/y_-32/2000/12/02/*.yaml' wofs_albers
 s3-to-dc --skip-lineage --no-sign-request 's3://dea-public-data/WOfS/WOFLs/v2.1.5/combined/x_4/y_-32/2000/09/13/*.yaml' wofs_albers
 # WIT test datasets
+echo "Index WIT Datasets"
 s3-to-dc --skip-lineage --no-sign-request --stac s3://dea-public-data/derivative/ga_ls_fc_3/2-5-0/091/085/2019/03/09/ga_ls_fc_3_091085_2019-03-09_final.stac-item.json ga_ls_fc_3
 s3-to-dc --skip-lineage --no-sign-request --stac s3://dea-public-data/derivative/ga_ls_fc_3/2-5-0/091/085/2019/03/25/ga_ls_fc_3_091085_2019-03-25_final.stac-item.json ga_ls_fc_3
 s3-to-dc --skip-lineage --no-sign-request --stac s3://dea-public-data/derivative/ga_ls_fc_3/2-5-0/091/085/2019/04/02/ga_ls_fc_3_091085_2019-04-02_final.stac-item.json ga_ls_fc_3
