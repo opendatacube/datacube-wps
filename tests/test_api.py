@@ -64,6 +64,7 @@ def test_wofs():
     results = wofs.query_handler(time="2000", feature=point)
     assert "data" in results
     assert "chart" in results
+    
 
 def test_wit():
     catalog = read_process_catalog("datacube-wps-config.yaml")
