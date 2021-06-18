@@ -4,8 +4,8 @@ from datacube.utils.geometry import CRS, Geometry
 from datacube_wps.impl import read_process_catalog
 from datacube_wps.processes.fcdrill import FCDrill
 from datacube_wps.processes.mangrovedrill import MangroveDrill
-from datacube_wps.processes.wofsdrill import WOfSDrill
 from datacube_wps.processes.witprocess import WIT
+from datacube_wps.processes.wofsdrill import WOfSDrill
 
 
 def test_fc():
