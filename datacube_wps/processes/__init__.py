@@ -318,14 +318,17 @@ class PixelDrill(Process):
         return response
 
     @log_call
-    def query_handler(self, time, feature, parameters=None):
+    def query_handler(self, time, feature, dask_client=None, parameters=None):
         if parameters is None:
             parameters = {}
 
-        with Client(n_workers=1, processes=False, threads_per_worker=num_workers()) as client:
+        if dask_client is None:
+            dask_client = Client(n_workers=1, processes=False, threads_per_worker=num_workers())
+
+        with dask_client:
             configure_s3_access(aws_unsigned=True,
                                 region_name=os.getenv('AWS_DEFAULT_REGION', 'auto'),
-                                client=client)
+                                client=dask_client)
 
             with datacube.Datacube() as dc:
                 data = self.input_data(dc, time, feature)
@@ -413,14 +416,17 @@ class PolygonDrill(Process):
         return response
 
     @log_call
-    def query_handler(self, time, feature, parameters=None):
+    def query_handler(self, time, feature, dask_client=None, parameters=None):
         if parameters is None:
             parameters = {}
 
-        with Client(n_workers=num_workers(), processes=True, threads_per_worker=1) as client:
+        if dask_client is None:
+            dask_client = Client(n_workers=num_workers(), processes=True, threads_per_worker=1)
+
+        with dask_client:
             configure_s3_access(aws_unsigned=True,
                                 region_name=os.getenv('AWS_DEFAULT_REGION', 'auto'),
-                                client=client)
+                                client=dask_client)
 
             with datacube.Datacube() as dc:
                 data = self.input_data(dc, time, feature)
