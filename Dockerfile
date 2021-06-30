@@ -24,6 +24,7 @@ RUN apt-get update -y && apt-get install -y --fix-missing --no-install-recommend
     curl \
     wget \
     npm \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 RUN npm install vega-lite vega-cli canvas
