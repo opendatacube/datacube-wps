@@ -42,7 +42,7 @@ config = {
     ],
     'install_requires': INSTALL_REQUIRES,
     'setup_requires': ['setuptools_scm'],
-    'use_scm_version': True,
+    'use_scm_version': {"local_scheme": lambda version: ""},
     'packages': find_packages(),
     'name': 'datacube-wps'
 }
