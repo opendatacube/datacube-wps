@@ -1,8 +1,5 @@
 from setuptools import find_packages, setup
 
-with open('VERSION.txt') as ff:
-    VERSION = ff.read().strip()
-
 INSTALL_REQUIRES = [
     'flask',
     'gunicorn',
@@ -43,8 +40,9 @@ config = {
         'Programming Language :: Python',
         'Topic :: Scientific/Engineering :: GIS'
     ],
-    'version': VERSION,
     'install_requires': INSTALL_REQUIRES,
+    'setup_requires': ['setuptools_scm'],
+    'use_scm_version': True,
     'packages': find_packages(),
     'name': 'datacube-wps'
 }

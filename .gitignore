@@ -11,3 +11,4 @@ tmp/
 geckodriver.log
 venv/
 artifacts/
+datacube_wps/_version.py
