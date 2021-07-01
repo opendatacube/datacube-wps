@@ -16,6 +16,7 @@ def test_head(client):
 
 @mock_s3
 def xtest_mangrove(client):
+    """This does _not_ work, for many reasons."""
     conn = boto3.resource('s3', region_name='ap-southeast-2')
     conn.create_bucket(Bucket='dea-wps-results', CreateBucketConfiguration={'LocationConstraint': 'ap-southeast-2'})
 
@@ -39,11 +40,7 @@ def xtest_mangrove(client):
         <wps:Input>
           <ows:Identifier>geometry</ows:Identifier>
           <wps:Data>
-            <wps:ComplexData>
-              {"type":"FeatureCollection",
-               "features":[{"type":"Feature",
-                            "geometry":{"type":"Point","coordinates":[146.85029736971987,-32.94459759906837,-1822.7196235501208]}}]}
-            </wps:ComplexData>
+            <wps:ComplexData>{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[146.85029736971987,-32.94459759906837,-1822.7196235501208]}}]}</wps:ComplexData>
           </wps:Data>
         </wps:Input>
       </wps:DataInputs>
