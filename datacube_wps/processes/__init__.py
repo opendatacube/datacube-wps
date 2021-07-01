@@ -116,7 +116,13 @@ def write_df_to_parquet(df: pandas.DataFrame, process_id: str, identifier: str):
     key = "/".join([identifier, process_id, process_id]) + ".snappy.parquet"
     session = boto3.Session()
     dev_s3_client = session.client("s3")
-    return dev_s3_client.put_object(Body=body, Bucket=bucket, Key=key)
+    dev_s3_client.put_object(Body=body, Bucket=bucket, Key=key)
+    return key
+    # return dev_s3_client.generate_presigned_url(
+    #     ClientMethod="get_object",
+    #     ExpiresIn=0,
+    #     Params={"Bucket": bucket, "Key": key},
+    # )
 
 
 # from https://stackoverflow.com/a/16353080
@@ -566,9 +572,10 @@ class PolygonDrill(Process):
         # patch in here for the time being
         # might be better
         if "wit" == self.about.get("identifier", "").lower():
-            write_df_to_parquet(
+            url = write_df_to_parquet(
                 df, str(self.uuid), self.about.get("identifier").lower()
             )
+            return {'url': {'data': url}}
         return _render_outputs(
             self.uuid,
             self.style,
