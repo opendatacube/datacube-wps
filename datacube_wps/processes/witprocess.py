@@ -6,6 +6,7 @@ import xarray as xr
 from datacube.model import Measurement
 from datacube.virtual.impl import Transformation
 from datacube.virtual.transformations import ApplyMask
+from pywps import LiteralOutput
 
 from . import PolygonDrill, geometry_mask
 
@@ -38,6 +39,9 @@ class WIT(PolygonDrill):
         super().__init__(about, input, style)
         self.mask_all_touched = True
         print("mask all touch", self.mask_all_touched)
+
+    def output_formats(self):
+        return [LiteralOutput("url", "WIT timeseries data")]
 
     def process_data(self, data, parameters):
         feature = parameters.get('feature')
