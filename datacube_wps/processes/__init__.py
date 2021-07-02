@@ -117,12 +117,11 @@ def write_df_to_parquet(df: pandas.DataFrame, process_id: str, identifier: str):
     session = boto3.Session()
     dev_s3_client = session.client("s3")
     dev_s3_client.put_object(Body=body, Bucket=bucket, Key=key)
-    return key
-    # return dev_s3_client.generate_presigned_url(
-    #     ClientMethod="get_object",
-    #     ExpiresIn=0,
-    #     Params={"Bucket": bucket, "Key": key},
-    # )
+    return dev_s3_client.generate_presigned_url(
+        ClientMethod="get_object",
+        ExpiresIn=0,
+        Params={"Bucket": bucket, "Key": key},
+    )
 
 
 # from https://stackoverflow.com/a/16353080
