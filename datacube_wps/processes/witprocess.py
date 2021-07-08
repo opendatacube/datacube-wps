@@ -8,7 +8,7 @@ from datacube.virtual.impl import Transformation
 from datacube.virtual.transformations import ApplyMask
 from pywps import LiteralOutput
 
-from . import PolygonDrill, geometry_mask
+from . import PolygonDrill, geometry_mask, log_call
 
 ls_timezone = timezone.utc
 
@@ -42,7 +42,8 @@ class WIT(PolygonDrill):
 
     def output_formats(self):
         return [LiteralOutput("url", "WIT timeseries data")]
-    
+
+    @log_call
     def process_data(self, data, parameters):
         feature = parameters.get('feature')
         adays = parameters.get('aggregate', 0)
