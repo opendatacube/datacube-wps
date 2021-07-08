@@ -42,10 +42,12 @@ class WIT(PolygonDrill):
 
     def output_formats(self):
         return [LiteralOutput("url", "WIT timeseries data")]
-
+    
     def process_data(self, data, parameters):
         feature = parameters.get('feature')
         adays = parameters.get('aggregate', 0)
+        print("feature in wit", feature)
+        print("geobox of data", data.geobox)
         geomask = geometry_mask(feature, data.geobox, invert=True, all_touched=self.mask_all_touched)
 
         if adays > 0:
