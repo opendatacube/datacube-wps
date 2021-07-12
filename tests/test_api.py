@@ -8,6 +8,7 @@ from datacube_wps.processes.witprocess import WIT
 from datacube_wps.processes.wofsdrill import WOfSDrill
 
 
+@pytest.mark.xfail(reason="known virt-products issue in datacube version")
 def test_fc():
     catalog = read_process_catalog("datacube-wps-config.yaml")
     fc = [entry for entry in catalog if isinstance(entry, FCDrill)][0]
