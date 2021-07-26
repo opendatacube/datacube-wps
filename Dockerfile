@@ -48,7 +48,8 @@ RUN useradd -m -s /bin/bash -N -g 100 -u 1001 wps
 
 RUN chmod 777 /code/pywps.cfg \
     && chmod 777 /code/datacube-wps-config.yaml \
-    && chown wps:users /code/logs
+    && chown wps:users /code/logs \
+    && chown wps:users /code
 
 ENTRYPOINT ["wps-entrypoint.sh"]
 
