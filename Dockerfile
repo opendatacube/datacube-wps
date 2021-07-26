@@ -44,6 +44,14 @@ RUN pip install --no-deps .
 
 COPY docker/wps-entrypoint.sh /usr/local/bin/wps-entrypoint.sh
 
+RUN useradd -m -s /bin/bash -N -g 100 -u 1001 wps
+
+RUN chmod 777 /code/pywps.cfg \
+    && chmod 777 /code/datacube-wps-config.yaml \
+    && chown wps:users /code/logs \
+    && chown wps:users /code
+
 ENTRYPOINT ["wps-entrypoint.sh"]
 
+USER wps
 CMD gunicorn -b 0.0.0.0:8000 datacube_wps:app
