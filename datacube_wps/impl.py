@@ -17,7 +17,7 @@ def create_process(process, input, **settings):
 
 
 def read_process_catalog(catalog_filename):
-    with open(catalog_filename) as fl:
+    with open(catalog_filename, encoding='utf-8') as fl:
         config = yaml.safe_load(fl)
 
     return [create_process(**settings) for settings in config['processes']]
