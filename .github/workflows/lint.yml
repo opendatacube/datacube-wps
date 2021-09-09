@@ -15,18 +15,60 @@ env:
   IMAGE: wps
 
 jobs:
-  quality-check:
-    runs-on: ubuntu-latest
+  # quality-check:
+  #   runs-on: ubuntu-latest
 
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0
+
+  #     - name: Build WPS image
+  #       run: |
+  #         docker build --tag ${ORG}/${IMAGE}:latest .
+  #     - name: Lint WPS image
+  #       run: |
+  #         docker run ${ORG}/${IMAGE}:latest /bin/sh -c "./lint-code.sh"
+
+  isort:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - run: python -m pip install isort
+      - name: isort
+        uses: liskin/gh-problem-matcher-wrap@v1
+        with:
+          linters: isort
+          run: |
+            isort --check --diff .
+
+  bandit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run bandit
+        uses: tj-actions/bandit@v5
+        with:
+          targets: |  # or a single string "."
+            test_package
+          options: "-r -s B101,B104"
+
+  pylint:
+    runs-on: ubuntu-latest
+    name: Pylint
+    steps:
+      - name: checkout git
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-
-      - name: Build WPS image
+      - name: Install airflow and run pylint
         run: |
-          docker build --tag ${ORG}/${IMAGE}:latest .
-      - name: Lint WPS image
-        run: |
-          docker run ${ORG}/${IMAGE}:latest /bin/sh -c "./lint-code.sh"
+          pip install -r requirements.txt
+          pip install pylint
+          pylint -j 2 --reports no datacube_wps --disable=C,R,redefined-builtin,fixme,arguments-differ
