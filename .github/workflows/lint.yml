@@ -30,3 +30,30 @@ jobs:
       - name: Lint WPS image
         run: |
           docker run ${ORG}/${IMAGE}:latest /bin/sh -c "./lint-code.sh"
+
+  isort:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - run: python -m pip install isort
+      - name: isort
+        uses: liskin/gh-problem-matcher-wrap@v1
+        with:
+          linters: isort
+          run: |
+            isort --check --diff .
+
+  bandit:
+    runs-on: ubuntu-latest
+    - uses: actions/checkout@v2
+    - name: Run bandit
+      uses: tj-actions/bandit@v5
+      with:
+        targets: |  # or a single string "."
+          test_package
+        options: "-r -s B101,B104"
