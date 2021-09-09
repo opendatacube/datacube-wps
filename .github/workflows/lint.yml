@@ -58,3 +58,29 @@ jobs:
           targets: |  # or a single string "."
             test_package
           options: "-r -s B101,B104"
+
+  pylint:
+    runs-on: ubuntu-latest
+    # strategy:
+    #   matrix:
+    #     python-version: [3.8]
+    name: Pylint
+    steps:
+      - name: checkout git
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      # - name: Install Airflow and Lint
+      #   uses: s-weigand/setup-conda@v1
+      #   with:
+      #     update-conda: true
+      #     python-version: ${{ matrix.python-version }}
+      #     conda-channels: anaconda, conda-forge
+      # - name: Check conda version
+      #   run: conda --version
+      # - name: Check python
+      #   run: which python
+      - name: Install airflow and run pylint
+        run: |
+          pip install pylint
+          pylint -j 2 --reports no datacube_wps --disable=C,R,redefined-builtin,fixme,arguments-differ
