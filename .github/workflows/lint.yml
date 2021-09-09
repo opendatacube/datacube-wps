@@ -82,5 +82,6 @@ jobs:
       #   run: which python
       - name: Install airflow and run pylint
         run: |
+          pip install -r requirement.txt
           pip install pylint
           pylint -j 2 --reports no datacube_wps --disable=C,R,redefined-builtin,fixme,arguments-differ
