@@ -50,10 +50,11 @@ jobs:
 
   bandit:
     runs-on: ubuntu-latest
-    - uses: actions/checkout@v2
-    - name: Run bandit
-      uses: tj-actions/bandit@v5
-      with:
-        targets: |  # or a single string "."
-          test_package
-        options: "-r -s B101,B104"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run bandit
+        uses: tj-actions/bandit@v5
+        with:
+          targets: |  # or a single string "."
+            test_package
+          options: "-r -s B101,B104"
