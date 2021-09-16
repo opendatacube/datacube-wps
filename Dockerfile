@@ -23,11 +23,15 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y && apt-get install -y --fix-missing --no-install-recommends \
     curl \
     wget \
-    npm \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-RUN npm install vega-lite vega-cli canvas
+# install nodejs & vega-lite (for saving altair charts to svg)
+RUN curl -LsS https://raw.githubusercontent.com/tj/n/master/bin/n -o n \
+    && bash n lts \
+    && rm n \
+    && node --version
+RUN npm install --engine-strict vega-lite vega-cli canvas
 
 COPY --from=env_builder /bin/tini /bin/tini
 ARG py_env_path
