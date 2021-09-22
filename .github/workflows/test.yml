@@ -32,13 +32,17 @@ jobs:
       - name: Build WPS image
         run: |
           docker-compose build
-      - name: Test WPS image
+
+      - name: Bring up test environment
         run: |
           mkdir -p ./artifacts
           chmod a+rw ./artifacts
 
           docker-compose up -d
           ./setup-db.sh
+
+      - name: Run test suite
+        run: |
           docker-compose exec -e WPS_BASEURL=/ -T wps pytest -v --cov=./datacube_wps --cov-report=xml tests/
           docker-compose down
 
