@@ -28,23 +28,36 @@ jobs:
         run: docker-compose pull
 
       - name: Build WPS image
-        run: |
-          docker-compose build
+        run: docker-compose build
 
-      - name: Bring up test environment
+      - name: Bring up containers
         run: |
           mkdir -p ./artifacts
           chmod a+rw ./artifacts
 
           docker-compose up -d
+
+      - uses: actions/cache@v2
+        with:
+          path: dump.sql
+          key: sample-db
+
+      - name: Populate sample database (from cache)
+        if: hashFiles('dump.sql') != ''
+        run: docker-compose exec -T -u postgres postgres psql < dump.sql
+
+      - name: Populate sample database
+        if: hashFiles('dump.sql') == ''
+        run: |
           ./setup-db.sh
+          docker-compose exec -T -u postgres postgres pg_dump > dump.sql
 
       - name: Run test suite
         run: |
           docker-compose exec -e WPS_BASEURL=/ -T wps pytest -v --cov=./datacube_wps --cov-report=xml tests/
           docker-compose down
 
-      - name: Upload coverage
+      - name: Upload coverage report
         uses: codecov/codecov-action@v1
         with:
           file: ./artifacts/*.xml
