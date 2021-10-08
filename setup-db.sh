@@ -1,7 +1,39 @@
 #!/bin/bash
-docker-compose exec -T index datacube system init --no-default-types --no-init-users
-docker-compose exec -T index datacube metadata add "$METADATA_CATALOG"
-docker-compose exec -T index wget "$PRODUCT_CATALOG" -O product_list.csv
-docker-compose exec -T index bash -c "tail -n+2 product_list.csv | grep 'wofs_albers\|ls._fc_albers\|mangrove_cover\|ga_ls_fc_3\|ga_ls_wo_3\|ga_ls8c_ard_3\|ga_ls7e_ard_3\|ga_ls5t_ard_3' | awk -F , '{print \$2}' | xargs datacube -v product add"
 
-cat populate-db.sh | docker-compose exec -T index bash
+if [ dump.sql -ot $0 ]; then
+
+   echo Rebuilding sample database..
+
+   index="https://explorer-aws.dea.ga.gov.au"
+
+   cmd='docker-compose exec -T index datacube'
+
+   $cmd system init --no-default-types --no-init-users
+
+   for x in eo3 eo3_landsat_ard; do $cmd metadata add $index/metadata-types/$x.odc-type.yaml; done
+
+   for x in ga_ls_wo_3 ga_ls8c_ard_3 ga_ls7e_ard_3 ga_ls5t_ard_3 ga_ls_fc_3; do $cmd product add $index/products/$x.odc-product.yaml; done
+
+   stac () { curl -s "$index/stac/search?collections=$1&datetime=$2T00:00:00Z/$3T00:00:00Z&bbox=$4&limit=500" |
+	     jq '.features[].links[] | select(.rel == "odc_yaml") | .href'; }
+   
+   {
+       stac ga_ls_wo_3 2000-01-01 2001-01-01 "137.01,-28.76,137.02,-28.75" 
+       
+       stac "ga_ls8c_ard_3,ga_ls7e_ard_3,ga_ls_fc_3,ga_ls_wo_3" 2019-03-01 2019-08-01 "146.65,-36.16,147.29,-35.66"
+       
+       #stac "ls8_fc_albers,wofs_albers" 2019-03-01 2019-08-01 "146.65,-36.16,147.29,-35.66"
+       
+       #stac mangrove_cover 2000-01-01 2006-01-01 "143.98,-14.69,144.27,-14.39"
+
+   } | xargs -L1 -P8 $cmd -v dataset add --confirm-ignore-lineage
+
+   docker-compose exec -T -u postgres postgres pg_dump > dump.sql
+
+else
+
+   echo Reusing cache..	
+
+   docker-compose exec -T -u postgres postgres psql < dump.sql
+
+fi

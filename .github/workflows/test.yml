@@ -37,20 +37,15 @@ jobs:
 
           docker-compose up -d
 
-      - uses: actions/cache@v2
+      - name: Setup database caching
+        uses: actions/cache@v2
         with:
           path: dump.sql
-          key: sample-db
-
-      - name: Populate sample database (from cache)
-        if: hashFiles('dump.sql') != ''
-        run: docker-compose exec -T -u postgres postgres psql < dump.sql
+          key: sample-db-${{ github.sha }}
+          restore-keys: sample-db
 
       - name: Populate sample database
-        if: hashFiles('dump.sql') == ''
-        run: |
-          ./setup-db.sh
-          docker-compose exec -T -u postgres postgres pg_dump > dump.sql
+        run: ./setup-db.sh
 
       - name: Run test suite
         run: |

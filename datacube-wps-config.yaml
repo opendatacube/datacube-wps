@@ -24,7 +24,7 @@ processes:
        geometry_type: "point"
 
    input:
-       product: wofs_albers
+       product: ga_ls_wo_3
        measurements: [water]
        group_by: solar_day
        fuse_func: datacube_wps.processes.wofls_fuser
