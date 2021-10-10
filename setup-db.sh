@@ -6,7 +6,7 @@ if [ dump.sql -ot $0 ]; then
 
    index="https://explorer-aws.dea.ga.gov.au"
 
-   cmd='docker-compose exec -T index datacube'
+   cmd='docker-compose exec -T wps datacube'
 
    $cmd system init --no-default-types --no-init-users
 
@@ -21,8 +21,6 @@ if [ dump.sql -ot $0 ]; then
        stac ga_ls_wo_3 2000-01-01 2001-01-01 "137.01,-28.76,137.02,-28.75" 
        
        stac "ga_ls8c_ard_3,ga_ls7e_ard_3,ga_ls_fc_3,ga_ls_wo_3" 2019-03-01 2019-08-01 "146.65,-36.16,147.29,-35.66"
-       
-       #stac "ls8_fc_albers,wofs_albers" 2019-03-01 2019-08-01 "146.65,-36.16,147.29,-35.66"
        
        #stac mangrove_cover 2000-01-01 2006-01-01 "143.98,-14.69,144.27,-14.39"
 

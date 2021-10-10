@@ -59,17 +59,10 @@ processes:
 
    input:
        juxtapose:
-           - collate:
-                  - product: ls5_fc_albers
-                    group_by: solar_day
-                    measurements: [BS, PV, NPV]
-                  - product: ls7_fc_albers
-                    group_by: solar_day
-                    measurements: [BS, PV, NPV]
-                  - product: ls8_fc_albers
-                    group_by: solar_day
-                    measurements: [BS, PV, NPV]
-           - product: wofs_albers
+           - product: ga_ls_fc_3
+             group_by: solar_day
+             measurements: [bs, pv, npv]
+           - product: ga_ls_wo_3
              measurements: [water]
              group_by: solar_day
              fuse_func: datacube_wps.processes.wofls_fuser
