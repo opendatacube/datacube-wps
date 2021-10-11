@@ -10,9 +10,9 @@ if [ dump.sql -ot $0 ]; then
 
    $cmd system init --no-default-types --no-init-users
 
-   for x in eo3 eo3_landsat_ard; do $cmd metadata add $index/metadata-types/$x.odc-type.yaml; done
+   for x in eo eo3 eo3_landsat_ard; do $cmd metadata add $index/metadata-types/$x.odc-type.yaml; done
 
-   for x in ga_ls_wo_3 ga_ls8c_ard_3 ga_ls7e_ard_3 ga_ls5t_ard_3 ga_ls_fc_3; do $cmd product add $index/products/$x.odc-product.yaml; done
+   for x in ga_ls_wo_3 ga_ls8c_ard_3 ga_ls7e_ard_3 ga_ls5t_ard_3 ga_ls_fc_3 mangrove_cover; do $cmd product add $index/products/$x.odc-product.yaml; done
 
    stac () { curl -s "$index/stac/search?collections=$1&datetime=$2T00:00:00Z/$3T00:00:00Z&bbox=$4&limit=500" |
 	     jq '.features[].links[] | select(.rel == "odc_yaml") | .href'; }
@@ -24,7 +24,22 @@ if [ dump.sql -ot $0 ]; then
        
        #stac mangrove_cover 2000-01-01 2006-01-01 "143.98,-14.69,144.27,-14.39"
 
-   } | xargs -L1 -P8 $cmd -v dataset add --confirm-ignore-lineage
+   } | xargs -L1 $cmd -v dataset add --confirm-ignore-lineage
+
+   xargs -L1 -I{} docker-compose exec -T index s3-to-dc --skip-lineage --no-sign-request {} mangrove_cover << EOF
+   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2002/*.yaml'
+   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2002/*.yaml'
+   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2001/*.yaml'
+   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2001/*.yaml'
+   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2003/*.yaml'
+   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2003/*.yaml'
+   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2004/*.yaml'
+   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2004/*.yaml'
+   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2005/*.yaml'
+   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2005/*.yaml'
+   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2000/*.yaml'
+   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2000/*.yaml'
+EOF
 
    docker-compose exec -T -u postgres postgres pg_dump > dump.sql
 
