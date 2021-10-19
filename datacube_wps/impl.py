@@ -53,7 +53,7 @@ def create_app():
 
     @app.route('/ping')
     def ping():
-        return 'system is healthy'
+        return "WPS is alive\n"
 
     @app.route('/outputs/' + '<path:filename>')
     def outputfile(filename):
