@@ -76,6 +76,7 @@ def create_app():
     # Note: register your default metrics after all routes have been set up.
     # Also note, that Gauge metrics registered as default will track the /metrics endpoint,
     # and this can't be disabled at the moment.
-    initialise_prometheus_register(metrics)
+
+    #initialise_prometheus_register(metrics)
 
     return app
