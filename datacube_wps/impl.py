@@ -6,9 +6,8 @@ from datacube.utils import import_function
 from datacube.virtual import construct
 from pywps import Service
 
-from .startup_utils import (initialise_prometheus,
-                            initialise_prometheus_register, setup_logger,
-                            setup_sentry)
+from .startup_utils import (  # initialise_prometheus_register,
+    initialise_prometheus, setup_logger, setup_sentry)
 
 
 def create_process(process, input, **settings):
