@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 from datacube.model import Measurement
 from datacube.virtual.impl import Transformation
@@ -60,7 +59,7 @@ class WIT(PolygonDrill):
         re_wit = cal_area(aggregated)
         re_wit = re_wit[(re_wit['valid']/total_area) > 0.9].dropna()
         re_wit = re_wit.drop(columns=['valid']).div(re_wit['valid'], axis=0)
-        re_wit['geometry'] = feature.geom.convex_hull.to_wkt()
+        re_wit['geometry'] = feature.geom.convex_hull.wkt
         return re_wit
 
     def render_chart(self, df):
@@ -205,15 +204,10 @@ def aggregate_over_time(masked, days):
 
 def cal_area(aggregated, wet_threshold=-350):
     non_columns = ['spatial_ref']
-    re = aggregated.water.sum(dim=['x', 'y']).load().to_dataframe(name='water').drop(columns=non_columns)
+    water = aggregated.water.sum(dim=['x', 'y']).to_dataset(name='water')
     valid = np.abs(aggregated.TCW - aggregated.TCW.attrs['nodata']) > 1e-5
-    tcw = valid.astype('int').sum(dim=['x', 'y']).load().to_dataframe(name='tcw').drop(columns=non_columns)
-    re.insert(0, 'valid', re['water'] + tcw['tcw'])
-    re = pd.merge(re, ((aggregated.TCW > wet_threshold).astype('int')
-                       .sum(dim=['x', 'y']).load().to_dataframe(name='wet').drop(columns=non_columns)),
-                  on=['time'], how='inner')
-    fc_com = ((aggregated[['bs', 'pv', 'npv']].where(((aggregated.TCW < wet_threshold) & valid), 0) / 100)
-              .sum(dim=['x', 'y']).load())
-    for var in fc_com.data_vars:
-        re = pd.merge(re, fc_com[var].to_dataframe(name=var).drop(columns=non_columns), on=['time'], how='inner')
-    return re
+    valid_area = (water.water + valid.sum(dim=['x', 'y'])).to_dataset(name='valid')
+    wet = (aggregated.TCW > wet_threshold).astype('int').sum(dim=['x', 'y']).to_dataset(name='wet')
+    fc_com = (aggregated[['bs', 'pv', 'npv']].where(((aggregated.TCW < wet_threshold) & valid), 0)
+              / 100).sum(dim=['x', 'y'])
+    return xr.merge([valid_area, water, wet, fc_com]).load().to_dataframe().drop(columns=non_columns)
