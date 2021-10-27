@@ -1,6 +1,9 @@
 #!/bin/bash
 
-if [ dump.sql -ot $0 ]; then
+# Run this script to initialise postgres database container with sample data.
+# To regenerate from scratch (e.g. after collection changes), delete SQL dump file and re-run.
+
+if [ ! -f dump.sql ]; then
 
    echo Rebuilding sample database..
 

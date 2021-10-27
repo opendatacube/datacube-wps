@@ -37,17 +37,8 @@ jobs:
 
           docker-compose up -d
 
-      - name: Setup database caching
-        uses: actions/cache@v2
-        with:
-          path: dump.sql
-          key: sample-db-${{ github.sha }}
-          restore-keys: sample-db
-
       - name: Populate sample database
-        run: |
-          touch -d $(git log -1 --pretty=%aI setup-db.sh) setup-db.sh
-          ./setup-db.sh
+        run: ./setup-db.sh
 
       - name: Run test suite
         run: |
