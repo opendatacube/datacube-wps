@@ -6,8 +6,7 @@ from datacube.utils import import_function
 from datacube.virtual import construct
 from pywps import Service
 
-from .startup_utils import (  # initialise_prometheus_register,
-    initialise_prometheus, setup_logger, setup_sentry)
+from .startup_utils import initialise_prometheus, setup_logger, setup_sentry
 
 
 def create_process(process, input, **settings):
@@ -71,11 +70,5 @@ def create_app():
     @app.route('/debug-sentry')
     def trigger_error():
         division_by_zero = 1 / 0
-
-    # Note: register your default metrics after all routes have been set up.
-    # Also note, that Gauge metrics registered as default will track the /metrics endpoint,
-    # and this can't be disabled at the moment.
-
-    #initialise_prometheus_register(metrics)
 
     return app
