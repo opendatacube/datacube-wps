@@ -19,7 +19,7 @@ def setup_logger():
 
 
 def initialise_prometheus(app, log=None):
-    if os.environ.get("prometheus_multiproc_dir", False):
+    if os.environ.get("PROMETHEUS_MULTIPROC_DIR", False):
         metrics = GunicornInternalPrometheusMetrics(app)
         if log:
             log.info("Prometheus metrics enabled")
@@ -29,7 +29,7 @@ def initialise_prometheus(app, log=None):
 
 def initialise_prometheus_register(metrics):
     # Register routes with Prometheus - call after all routes set up.
-    if os.environ.get("prometheus_multiproc_dir", False):
+    if os.environ.get("PROMETHEUS_MULTIPROC_DIR", False):
         metrics.register_default(
             metrics.summary(
                 'flask_wps_request_full_url', 'Request summary by request url',
