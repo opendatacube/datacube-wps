@@ -2,7 +2,6 @@ import logging
 import os
 
 import sentry_sdk
-from flask import request
 from prometheus_flask_exporter.multiprocess import \
     GunicornInternalPrometheusMetrics
 from sentry_sdk.integrations.flask import FlaskIntegration
@@ -25,20 +24,6 @@ def initialise_prometheus(app, log=None):
             log.info("Prometheus metrics enabled")
         return metrics
     return None
-
-
-def initialise_prometheus_register(metrics):
-    # Register routes with Prometheus - call after all routes set up.
-    if os.environ.get("PROMETHEUS_MULTIPROC_DIR", False):
-        metrics.register_default(
-            metrics.summary(
-                'flask_wps_request_full_url', 'Request summary by request url',
-                labels={
-                    'query_request': lambda: request.args.get('request'),
-                    'query_url': lambda: request.full_path
-                }
-            )
-        )
 
 
 def setup_sentry():
