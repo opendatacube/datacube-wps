@@ -14,8 +14,6 @@ jobs:
     steps:
       - name: Checkout git
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
       - name: Get unstable git tag
         run: >
