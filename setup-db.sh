@@ -43,14 +43,11 @@ if [ ! -f dump.sql ]; then
    's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2000/*.yaml'
    's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2000/*.yaml'
 EOF
-   ls # check dump.sql
    docker-compose exec -T -u postgres postgres pg_dump > dump.sql
 
 else
 
    echo Reusing cache..
-   ls
-   docker ps
    docker-compose exec -T -u postgres postgres psql < dump.sql
 
 fi

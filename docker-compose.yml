@@ -8,7 +8,12 @@ services:
       - "127.0.0.1:5431:5432"
     environment:
       POSTGRES_PASSWORD: opendatacubepassword
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
     restart: always
+
 
   # Start docker container for datacube-wps
   wps:
