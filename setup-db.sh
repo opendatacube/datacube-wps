@@ -49,7 +49,8 @@ EOF
 else
 
    echo Reusing cache..
-
+   ls
+   docker ps
    docker-compose exec -T -u postgres postgres psql < dump.sql
 
 fi
