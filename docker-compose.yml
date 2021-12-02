@@ -31,17 +31,3 @@ services:
       - "8000:8000"
     volumes:
       - ./artifacts:/mnt/artifacts
-
-  # start indexer container
-  index:
-     image: opendatacube/datacube-index:0.0.13
-     environment:
-        - DB_HOSTNAME=postgres
-        - DB_USERNAME=postgres
-        - DB_PASSWORD=opendatacubepassword
-        - DB_DATABASE=postgres
-        - DB_PORT=5432
-        - AWS_DEFAULT_REGION=ap-southeast-2
-     depends_on:
-        - postgres
-     entrypoint: bash -c 'sleep infinity'
