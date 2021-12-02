@@ -31,7 +31,9 @@ services:
       - GDAL_HTTP_MAX_RETRY=10
       - GDAL_HTTP_RETRY_DELAY=1
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+
     ports:
       - "8000:8000"
     volumes:
