@@ -26,11 +26,11 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      - name: Pre-pull layers
-        run: docker-compose pull
+      # - name: Pre-pull layers
+      #   run: docker-compose pull
 
-      - name: Build WPS image
-        run: docker-compose build
+      # - name: Build WPS image
+      #   run: docker-compose build
 
       - name: Bring up containers
         run: |
