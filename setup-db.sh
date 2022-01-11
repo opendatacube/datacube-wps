@@ -25,24 +25,9 @@ if [ ! -f dump.sql ]; then
        
        stac "ga_ls8c_ard_3,ga_ls7e_ard_3,ga_ls_fc_3,ga_ls_wo_3" 2019-03-01 2019-08-01 "146.65,-36.16,147.29,-35.66"
        
-       #stac mangrove_cover 2000-01-01 2006-01-01 "143.98,-14.69,144.27,-14.39"
+       stac mangrove_cover 2000-01-01 2006-01-01 "143.98,-14.69,144.27,-14.39"
 
    } | xargs -L1 $cmd -v dataset add --confirm-ignore-lineage
-
-   xargs -L1 -I{} docker-compose exec -T index s3-to-dc --skip-lineage --no-sign-request {} mangrove_cover << EOF
-   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2002/*.yaml'
-   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2002/*.yaml'
-   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2001/*.yaml'
-   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2001/*.yaml'
-   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2003/*.yaml'
-   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2003/*.yaml'
-   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2004/*.yaml'
-   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2004/*.yaml'
-   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2005/*.yaml'
-   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2005/*.yaml'
-   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-17/2000/*.yaml'
-   's3://dea-public-data/mangrove_cover/v2.0.2/x_13/y_-16/2000/*.yaml'
-EOF
 
    docker-compose exec -T -u postgres postgres pg_dump > dump.sql
 
