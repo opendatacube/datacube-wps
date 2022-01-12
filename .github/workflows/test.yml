@@ -13,8 +13,6 @@ on:
 env:
   ORG: opendatacube
   IMAGE: wps
-  METADATA_CATALOG: https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/master/workspaces/sandbox-metadata.yaml
-  PRODUCT_CATALOG: https://raw.githubusercontent.com/GeoscienceAustralia/dea-config/master/workspaces/sandbox-products.csv
 
 jobs:
   test:
