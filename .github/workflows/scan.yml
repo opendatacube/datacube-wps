@@ -13,30 +13,10 @@ jobs:
   cve-scanner:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout git
-        uses: actions/checkout@v2
-
-      - name: Get unstable git tag
-        run: >
-          echo "UNSTABLE_TAG=$(git describe --tags)" >> $GITHUB_ENV
-
-      - name: Log the unstable tag
-        run: echo $UNSTABLE_TAG
-
-      - name: Build unstable + latest Docker image tag
-        if: github.event_name != 'release'
-        uses: whoan/docker-build-with-cache-action@v4
-        with:
-          image_name: ${{ env.IMAGE_NAME }}
-          image_tag: ${{ env.UNSTABLE_TAG }},latest
-          build_extra_args: "--build-arg=ENVIRONMENT=deployment"
-          push_image_and_stages: false
-
       - name: Run vulnerability scanner
-        if: github.event_name != 'release'
-        uses: aquasecurity/trivy-action@0.0.6
+        uses: aquasecurity/trivy-action@0.2.1
         with:
-          image-ref: "${{ env.IMAGE_NAME }}:${{ env.UNSTABLE_TAG }}"
+          image-ref: "docker.io/opendatacube/wps:latest"
           format: "table"
           exit-code: "1"
           severity: "CRITICAL,HIGH"
