@@ -13,6 +13,9 @@ jobs:
   cve-scanner:
     runs-on: ubuntu-latest
     steps:
+      - name: Pull image
+        run: docker pull docker.io/opendatacube/wps:latest
+
       - name: Run vulnerability scanner
         uses: aquasecurity/trivy-action@0.2.1
         with:
