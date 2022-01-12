@@ -35,6 +35,9 @@ jobs:
 
           docker-compose up -d
 
+          # wait until db server is ready for connections
+          until docker-compose exec -T postgres pg_isready ; do sleep 1 ; done
+
       - name: Populate sample database
         run: ./setup-db.sh
 
