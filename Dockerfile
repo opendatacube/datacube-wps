@@ -1,6 +1,6 @@
 ARG py_env_path=/env
 
-FROM opendatacube/geobase-builder as env_builder
+FROM csiroeasi/geobase-builder:develop.latest as env_builder
 
 ARG py_env_path
 
@@ -13,7 +13,7 @@ RUN env-build-tool new /conf/requirements.txt /conf/constraints.txt ${py_env_pat
 
 ENV PATH=${py_env_path}/bin:$PATH
 
-FROM opendatacube/geobase-runner
+FROM csiroeasi/geobase-runner:develop.latest
 
 RUN mkdir -p /code/logs
 WORKDIR /code
