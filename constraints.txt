@@ -18,7 +18,7 @@ nbclassic<0.4.0 # Pinned to avoid 0.4.0 update that broke jlab
 # numexpr>=3.0.1a6
 numpy>=1.22.2,<1.23.0  # Installing 1.23 breaks some other package dependencies that are installed later. Requires some hunting or "oldest-supported-numpy" may work
 pystac-client>=0.3.5  # Required to stop odc-stac from breaking with element84 STAC API which needs an update to be compliant
-rasterio<1.3.0  # Following advice from https://github.com/opendatacube/datacube-ows/issues/851 Tested broken 1.3.0, 1.3.0post1, 1.3.1
+rasterio!=1.3.0,!=1.3.1,>=1.3.2  # Following advice from https://github.com/opendatacube/datacube-ows/issues/851 Tested broken 1.3.0, 1.3.0post1, 1.3.1
 s3fs>=2021.08.0
 scikit-learn>=1.0.0
 setuptools_scm>=6,!=7.0.0,!=7.0.1,!=7.0.2,!=7.0.3  # Avoid a bunch of version issues that are fixed in v7.0.4
