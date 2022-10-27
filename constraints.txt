@@ -2,8 +2,6 @@
 aiobotocore>=2.1.2
 boto3>=1.20.24
 botocore>=1.23.24
-Cartopy==0.20.2  # (related to setuptools_scm) v0.20.3 has the fix but not clear if its stable yet
-click~=8.0.4  # Pinned so dask/distributed cli doesn't fail. Should be fixed after dask >2022.03.0
 dask>=2022.02.0
 dask-gateway>=2022.4.0
 dask-cuda>=22.6
@@ -11,7 +9,7 @@ distributed>=2022.02.0
 hdstats>=0.1.8.post1
 # Python GDAL is included in osgeo base image and MUST be pinned to the same version or it will attempt
 # to upgrade and likely fail due to C-Library issues
-GDAL==3.4.1
+GDAL==3.5.1
 jupyterlab-widgets<3.0
 matplotlib~=3.4
 nbclassic<0.4.0 # Pinned to avoid 0.4.0 update that broke jlab
