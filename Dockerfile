@@ -8,8 +8,10 @@ RUN mkdir -p /conf
 
 COPY requirements.txt /conf
 COPY constraints.txt /conf
+RUN python3 -m venv ${py_env_path} && \
+    ${py_env_path}/bin/python -m pip  install --no-cache-dir ${PIP_EXTRA_ARGS} -U pip wheel setuptools setuptools_scm scikit-build -c /conf/constraints.txt
 
-RUN env-build-tool new /conf/requirements.txt /conf/constraints.txt ${py_env_path}
+RUN ${py_env_path}/bin/python -m pip  install --no-cache-dir -r /conf/requirements.txt -c /conf/constraints.txt
 
 ENV PATH=${py_env_path}/bin:$PATH
 
@@ -20,18 +22,35 @@ WORKDIR /code
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Use for local builds to find a local apt mirror
+# RUN apt-get update -y && apt install -y --fix-missing --no-install-recommends wget ca-certificates && \
+#   wget http://ftp.us.debian.org/debian/pool/main/n/netselect/netselect_0.3.ds1-29_amd64.deb && \
+#   dpkg -i netselect_0.3.ds1-29_amd64.deb && \
+#   export APT_MIRROR=$(netselect -s 1 -t 20 $(wget -qO - mirrors.ubuntu.com/mirrors.txt) | awk '{print $2}') && \
+#   echo $APT_MIRROR && \
+#   sed -i -r "s#http:\/\/archive.ubuntu.com\/ubuntu\/#${APT_MIRROR}#" /etc/apt/sources.list
+
 RUN apt-get update -y && apt-get install -y --fix-missing --no-install-recommends \
+    curl \
+    wget \
+    git \
+    build-essential \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
     curl \
     wget \
     git \
     && rm -rf /var/lib/apt/lists/*
 
 # install nodejs & vega-lite (for saving altair charts to svg)
-RUN curl -LsS https://raw.githubusercontent.com/tj/n/master/bin/n -o n \
-    && bash n lts \
-    && rm n \
-    && node --version
-RUN npm install --engine-strict vega-lite vega-cli canvas
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
+  nodejs
+
+RUN npm install vega-lite vega-cli canvas
 
 COPY --from=env_builder /bin/tini /bin/tini
 ARG py_env_path
