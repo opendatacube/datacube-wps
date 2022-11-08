@@ -101,7 +101,7 @@ processes:
        geometry_type: polygon
 
    input:
-       product: mangrove_cover
+       product: ga_ls_mangrove_cover_cyear_3
        measurements: [canopy_cover_class]
 
    style:
