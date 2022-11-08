@@ -3,6 +3,7 @@ import json
 import os
 from functools import wraps
 from timeit import default_timer
+from collections import Counter
 
 import altair
 import boto3
@@ -137,6 +138,19 @@ def geometry_mask(geom, geobox, all_touched=False, invert=False):
         all_touched=all_touched,
         invert=invert,
     )
+
+
+def mostcommon_crs(datasets: list):
+    """Adapted from https://github.com/GeoscienceAustralia/dea-notebooks/blob/develop/Tools/dea_tools/datahandling.py"""
+    crs_list = [str(i.crs) for i in datasets]
+    crs_mostcommon = None
+    if len(crs_list) > 0:
+        # Identify most common CRS
+        crs_counts = Counter(crs_list)
+        crs_mostcommon = crs_counts.most_common(1)[0][0]
+    else:
+        raise ProcessError('No common CRS was found for the product query')
+    return crs_mostcommon
 
 
 def wofls_fuser(dest, src):
@@ -391,10 +405,19 @@ class PixelDrill(Process):
         else:
             bag = self.input.query(dc, time=time, geopolygon=feature)
 
-        lonlat = feature.coords[0]
+        # Get output_crs/resolution/align params if product grid_spec is not defined
+        if bag.product_definitions[self.input._product].grid_spec is None:
+            output_crs = self.input.get('output_crs')
+            resolution = self.input.get('resolution')
+            align = self.input.get('align')
+            if output_crs is None:
+                output_crs = mostcommon_crs(list(bag.bag))
+            box = self.input.group(bag, output_crs=output_crs, resolution=resolution, align=align)
+        else:
+            box = self.input.group(bag)
 
+        lonlat = feature.coords[0]
         measurements = self.input.output_measurements(bag.product_definitions)
-        box = self.input.group(bag)
 
         data = self.input.fetch(box, dask_chunks={"time": 1})
         data = data.compute()
@@ -528,7 +551,16 @@ class PolygonDrill(Process):
         else:
             bag = self.input.query(dc, time=time, geopolygon=feature)
 
-        box = self.input.group(bag)
+        # Get output_crs/resolution/align params if product grid_spec is not defined
+        if bag.product_definitions[self.input._product].grid_spec is None:
+            output_crs = self.input.get('output_crs')
+            resolution = self.input.get('resolution')
+            align = self.input.get('align')
+            if output_crs is None:
+                output_crs = mostcommon_crs(list(bag.bag))
+            box = self.input.group(bag, output_crs=output_crs, resolution=resolution, align=align)
+        else:
+            box = self.input.group(bag)
 
         if self.about.get("guard_rail", True):
             _guard_rail(self.input, box)
