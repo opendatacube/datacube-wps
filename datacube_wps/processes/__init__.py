@@ -162,6 +162,7 @@ def _guard_rail(input, box):
     measurement_dicts = input.output_measurements(box.product_definitions)
 
     byte_count = 1
+
     for x in box.shape:
         byte_count *= x
     byte_count *= sum(np.dtype(m.dtype).itemsize for m in measurement_dicts.values())
@@ -527,11 +528,18 @@ class PolygonDrill(Process):
             bag = self.input.query(dc, geopolygon=feature)
         else:
             bag = self.input.query(dc, time=time, geopolygon=feature)
+        
+        print('debugging here for bag information')
+        print(bag.__dict__)
+        print('end bag information')
 
         box = self.input.group(bag)
+        print('debugging here for box information')
+        print(box.__dict__)
+        print('end box information')
 
-        if self.about.get("guard_rail", True):
-            _guard_rail(self.input, box)
+        # if self.about.get("guard_rail", True):
+        #     _guard_rail(self.input, box)
 
         # TODO customize the number of processes
         data = self.input.fetch(box, dask_chunks={"time": 1})

@@ -27,6 +27,7 @@ def test_fc():
         },
         crs=CRS("EPSG:4326"),
     )
+
     results = fc.query_handler(time=("2019-03-05", "2019-07-10"), feature=poly)
     assert "data" in results
     assert "chart" in results
@@ -78,16 +79,17 @@ def test_wit():
             "type": "Polygon",
             "coordinates": [
                 [
-                    [153.1, -27.3],
-                    [152.95, -27.4],
-                    [153.05, -27.5],
-                    [153.2, -27.45],
-                    [153.1, -27.3],
+                    [153.1, -27.4],
+                    [153.3, -27.4],
+                    [153.3, -27.2],
+                    [153.1, -27.2],
+                    [153.1, -27.4],
                 ]
             ],
         },
         crs=CRS("EPSG:4326"),
+        # crs=CRS("EPSG:3577"),
     )
-    results = wit_proc.query_handler(time=("2019-01-05", "2019-03-10"), feature=poly)
+    results = wit_proc.query_handler(time=("2019","2020"), feature=poly)
     assert "data" in results
     assert "chart" in results
