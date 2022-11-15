@@ -20,6 +20,7 @@ from botocore.client import Config
 from dask.distributed import Client
 from datacube.utils.geometry import CRS, Geometry
 from datacube.utils.rio import configure_s3_access
+from datacube.virtual.impl import Product, Juxtapose
 from dateutil.parser import parse
 from pywps import ComplexInput, ComplexOutput, Format, Process
 from pywps.app.exceptions import ProcessError
@@ -551,14 +552,17 @@ class PolygonDrill(Process):
         else:
             bag = self.input.query(dc, time=time, geopolygon=feature)
 
-        # Get output_crs/resolution/align params if product grid_spec is not defined
-        if bag.product_definitions[self.input._product].grid_spec is None:
-            output_crs = self.input.get('output_crs')
-            resolution = self.input.get('resolution')
-            align = self.input.get('align')
-            if output_crs is None:
-                output_crs = mostcommon_crs(list(bag.bag))
-            box = self.input.group(bag, output_crs=output_crs, resolution=resolution, align=align)
+        if type(self.input) in (Product,):
+            # Get output_crs/resolution/align params if product grid_spec is not defined
+            box = self.product_bag_to_box(bag)
+        elif type(self.input) in (Juxtapose,):
+            # Each self.input._children is a Product()
+            # Check each for grid_spec
+            # Separate self.input.group() for each Product
+            # - Do Juxtapose products get merged into one xarray?
+            # --- If yes, Find common crs and resolution across all products
+            # --- Else, Break up the Juxtapose for each Product and put back together???
+            box = self.input.group(bag)
         else:
             box = self.input.group(bag)
 
@@ -581,6 +585,22 @@ class PolygonDrill(Process):
                 data[band_name] = band_array.where(mask)
 
         return data
+
+    def product_bag_to_box(self, bag):
+        """Get the most common CRS if Product grid_spec is not defined"""
+        if type(self.input) not in (Product,):
+            raise ProcessError('Require a Product type to check grid_spec')
+        # Get output_crs/resolution/align params if product grid_spec is not defined
+        if bag.product_definitions[self.input._product].grid_spec is None:
+            output_crs = self.input.get('output_crs')
+            resolution = self.input.get('resolution')
+            align = self.input.get('align')
+            if output_crs is None:
+                output_crs = mostcommon_crs(list(bag.bag))
+            box = self.input.group(bag, output_crs=output_crs, resolution=resolution, align=align)
+        else:
+            box = self.input.group(bag)
+        return box
 
     def process_data(self, data: xarray.Dataset, parameters: dict) -> pandas.DataFrame:
         raise NotImplementedError
