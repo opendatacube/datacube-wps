@@ -103,6 +103,7 @@ processes:
    input:
        product: ga_ls_mangrove_cover_cyear_3
        measurements: [canopy_cover_class]
+       resolution: [30, -30]
 
    style:
        table:
