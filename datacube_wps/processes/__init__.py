@@ -20,9 +20,12 @@ from botocore.client import Config
 from dask.distributed import Client
 from datacube.utils.geometry import CRS, Geometry
 from datacube.utils.rio import configure_s3_access
+from datacube.virtual.impl import Product, Juxtapose
 from dateutil.parser import parse
 from pywps import ComplexInput, ComplexOutput, Format, Process
 from pywps.app.exceptions import ProcessError
+
+from pprint import pprint
 
 FORMATS = {
     # Defines the format for the returned object
@@ -142,6 +145,10 @@ def geometry_mask(geom, geobox, all_touched=False, invert=False):
 
 def mostcommon_crs(datasets: list):
     """Adapted from https://github.com/GeoscienceAustralia/dea-notebooks/blob/develop/Tools/dea_tools/datahandling.py"""
+    for i in datasets:
+        print("look here")
+        print(i)
+        print(str(i.crs))
     crs_list = [str(i.crs) for i in datasets]
     crs_mostcommon = None
     if len(crs_list) > 0:
@@ -176,7 +183,6 @@ def _guard_rail(input, box):
     measurement_dicts = input.output_measurements(box.product_definitions)
 
     byte_count = 1
-
     for x in box.shape:
         byte_count *= x
     byte_count *= sum(np.dtype(m.dtype).itemsize for m in measurement_dicts.values())
@@ -551,19 +557,32 @@ class PolygonDrill(Process):
             bag = self.input.query(dc, geopolygon=feature)
         else:
             bag = self.input.query(dc, time=time, geopolygon=feature)
-        # Get output_crs/resolution/align params if product grid_spec is not defined
-        if bag.product_definitions[self.input._product].grid_spec is None:
-            output_crs = self.input.get('output_crs')
-            resolution = self.input.get('resolution')
-            align = self.input.get('align')
-            if output_crs is None:
-                output_crs = mostcommon_crs(list(bag.bag))
-            box = self.input.group(bag, output_crs=output_crs, resolution=resolution, align=align)
-        else:
-            box = self.input.group(bag)
 
-        # if self.about.get("guard_rail", True):
-        #     _guard_rail(self.input, box)
+        # Hao debugging
+        pprint("self.input")
+        pprint(self.input)
+        print("\n")
+        pprint("self.input.__dict__")
+        pprint(self.input.__dict__)
+        print("\n")
+        pprint("type(self.input)")
+        pprint(type(self.input))
+        pprint("bag")
+        pprint(bag)
+        print("\n")
+        pprint("bag.__dict__")
+        pprint(bag.__dict__)
+        print("\n")
+        pprint("type(bag)")
+        pprint(type(bag))
+        print("\n")
+
+        
+        # Get output_crs/resolution/align params if product grid_spec is not defined
+        box = self.bag_to_box(bag, type(self.input))
+
+        if self.about.get("guard_rail", True):
+            _guard_rail(self.input, box)
 
         # TODO customize the number of processes
         data = self.input.fetch(box, dask_chunks={"time": 1})
@@ -581,6 +600,96 @@ class PolygonDrill(Process):
                 data[band_name] = band_array.where(mask)
 
         return data
+
+    def bag_to_box(self, bag, type):
+        """Get the most common CRS if standalone Product, or Products grid_spec in Juxtapose is not defined"""
+        if type in (Product,):
+            # Get output_crs/resolution/align params if product grid_spec is not defined
+            if bag.product_definitions[self.input._product].grid_spec is None:
+                output_crs = self.input.get('output_crs')
+                resolution = self.input.get('resolution')
+                align = self.input.get('align')
+                if output_crs is None:
+                    pprint("bag.bag")
+                    pprint(bag.bag)
+                    output_crs = mostcommon_crs(list(bag.bag))
+                pprint("resolution")
+                pprint(resolution)
+                pprint("output_crs")
+                pprint(output_crs)
+                pprint("align")
+                pprint(align)
+                box = self.input.group(bag, output_crs=output_crs, resolution=resolution, align=align)
+            else:
+                box = self.input.group(bag)
+            return box
+        
+        elif type in (Juxtapose,):
+            # Each self.input._children is a Product()
+            # Check each for grid_spec
+            # Separate self.input.group() for each Product
+            # - Do Juxtapose products get merged into one xarray?
+            # --- If yes, Find common crs and resolution across all products
+            # --- Else, Break up the Juxtapose for each Product and put back together???
+            boxes = []
+            for child_number, child in enumerate(self.input._children):
+                pprint("child")
+                pprint(child)
+                print("\n")
+                pprint("child.__dict__")
+                pprint(child.__dict__)
+                print("\n")
+
+                # Validate product
+                assert 'product' in child, f"Product not found in {child}"
+                
+                pprint("bag")
+                pprint(bag)
+                print("\n")
+                pprint("bag.__dict__")
+                pprint(bag.__dict__)
+                print("\n")
+                # do something
+                if bag.product_definitions[child._product].grid_spec is None:
+                    output_crs = child.get('output_crs')
+                    resolution = child.get('resolution')
+                    align = child.get('align')
+                    if output_crs is None:
+                        pprint("bag.bag")
+                        pprint(bag.bag)
+                        output_crs = mostcommon_crs(list(bag.bag['juxtapose'][child_number]))
+                    pprint("resolution")
+                    pprint(resolution)
+                    pprint("output_crs")
+                    pprint(output_crs)
+                    pprint("align")
+                    pprint(align)
+                    boxes.append(self.input.group(bag, output_crs=output_crs, resolution=resolution, align=align))
+                
+                else:
+                    print('grid_spec found')
+                    pprint(bag.product_definitions[child._product].grid_spec)
+                    # box = self.input.group(bag)
+
+            pprint("boxes")
+            pprint(boxes)
+
+            print('output_crses')
+            for box in boxes:
+                print(box.__dict__)
+
+            if not (all([box['output_crs'] for box in boxes]) and all([box['resolution'] for box in boxes])):
+                # placeholder
+                print("not all the same")
+                pprint(boxes)
+
+            else:
+                # placeholder 
+                print("everything is the same")
+                pprint(boxes)
+
+        else:
+            box = self.input.group(bag)
 
     def process_data(self, data: xarray.Dataset, parameters: dict) -> pandas.DataFrame:
         raise NotImplementedError

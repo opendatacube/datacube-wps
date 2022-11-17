@@ -21,7 +21,7 @@ if [ ! -f dump.sql ]; then
 	     jq '.features[].links[] | select(.rel == "odc_yaml") | .href'; }
 
    {
-       stac "ga_ls8c_ard_3,ga_ls7e_ard_3,ga_ls5t_ard_3,ga_ls_mangrove_cover_cyear_3,ga_ls_fc_3,ga_ls_wo_3" 2019-01-01 2019-04-01 "152.95,-27.5,153.55,-27"  # Brisbane
+       stac "ga_ls8c_ard_3,ga_ls7e_ard_3,ga_ls5t_ard_3,ga_ls_mangrove_cover_cyear_3,ga_ls_fc_3,ga_ls_wo_3" 2019-01-01 2020-01-01 "152.95,-27.5,153.55,-27"  # Brisbane
 
    } | xargs -L1 $cmd -v dataset add --confirm-ignore-lineage
 

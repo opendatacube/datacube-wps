@@ -7,7 +7,7 @@ from . import PolygonDrill, chart_dimensions, log_call
 # - https://cmi.ga.gov.au/data-products/dea/634/dea-mangrove-canopy-cover-landsat#processing = UTM, 30 m
 # - https://cmi.ga.gov.au/data-products/dea/191/dea-mangrove-canopy-cover-landsat-deprecated#processing = Albers, 25 m
 # Need to pass through load_hints (output_crs, resolution) to the geobox calculations
-# 1. test_api calls .__init__.PolygonDrill.query_handler()
+# 1. test_api calls datacube_wps.processes.__init__.PolygonDrill.query_handler()
 #    - query_handler accepts a "parameters" arg that could be used
 # 2. query_handler calls self.input_data()
 #    - the parameters arg is not passed in here but could be
