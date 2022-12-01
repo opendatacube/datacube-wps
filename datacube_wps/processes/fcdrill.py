@@ -26,7 +26,7 @@ class FCDrill(PolygonDrill):
     def process_data(self, data, parameters):
         wofs_mask_flags = [
             dict(dry=True),
-            dict(terrain_or_low_angle=False, high_slope=False, cloud_shadow=False, cloud=False, sea=False)
+            dict(terrain_shadow=False, high_slope=False, cloud_shadow=False, cloud=False)
         ]
 
         water = data.data_vars['water']
@@ -62,9 +62,9 @@ class FCDrill(PolygonDrill):
         BSPVNPV = BSPVNPV.where(FC_mask)
 
         FC_dominant = xarray.Dataset({
-            'BS': (BSPVNPV == 0).where(FC_mask),
-            'PV': (BSPVNPV == 1).where(FC_mask),
-            'NPV': (BSPVNPV == 2).where(FC_mask)
+            'bs': (BSPVNPV == 0).where(FC_mask),
+            'pv': (BSPVNPV == 1).where(FC_mask),
+            'npv': (BSPVNPV == 2).where(FC_mask)
         })
 
         FC_count = FC_dominant.sum(dim=['x', 'y'])
@@ -72,10 +72,10 @@ class FCDrill(PolygonDrill):
         # Fractional cover pixel count method
         # Get number of FC pixels, divide by total number of pixels per polygon
         new_ds = xarray.Dataset({
-            'BS': (FC_count.BS / total_valid)['BS'] * 100,
-            'PV': (FC_count.PV / total_valid)['PV'] * 100,
-            'NPV': (FC_count.NPV / total_valid)['NPV'] * 100,
-            'Unobservable': (not_pixels / total_valid)['BS'] * 100
+            'bs': (FC_count.bs / total_valid)['bs'] * 100,
+            'pv': (FC_count.pv / total_valid)['pv'] * 100,
+            'npv': (FC_count.npv / total_valid)['npv'] * 100,
+            'Unobservable': (not_pixels / total_valid)['bs'] * 100
         })
 
         print('dask compute')

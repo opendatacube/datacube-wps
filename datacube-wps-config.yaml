@@ -62,13 +62,11 @@ processes:
            - product: ga_ls_fc_3
              group_by: solar_day
              measurements: [bs, pv, npv]
-             resolution: [30, -30]
            - product: ga_ls_wo_3
              measurements: [water]
-             resolution: [30, -30]
              group_by: solar_day
              fuse_func: datacube_wps.processes.wofls_fuser
-
+       resolution: [30, -30]
    style:
        table:
            columns:
