@@ -86,13 +86,18 @@ This part is flow-on from Workflow testing
 
 ### DescribeProcess
 - Returns a description of a configured process in XML format (accepted input formats, data types etc.)
-- Locally accessed via http://localhost:8000/?service=WPS&version=1.0.0&request=DescribeProcess&identifier=<PROCESS NAME>
+- Locally accessed via http://localhost:8000/?service=WPS&version=1.0.0&request=DescribeProcess&identifier=&lt;PROCESS NAME&gt;
 
 ### Execute
 - Runs a specified process.
 - Inputs depend on process configuration.
 - Request can be made as either a GET URL or a POST with an XML request document.
-- POST requests are preferred for tidiness - can construct with assistance from Postman standalone app, Postman Chrome browser extension, Firefox Developer Tools or equivalent tools.
+- Sendings requests with XML request documents are preferred for tidiness.
+- POSTs can be constructed with assistance from Postman standalone app, Postman Chrome browser extension, Firefox Developer Tools or equivalent tools.
+- Example of a CURL call:
+
+curl -H "Content-Type: text/xml" -d @wpsrequest.xml -X POST localhost:8000
+
 - Example of an XML request document for a buffer process (not implemented in this repository):
 
 ```xml
