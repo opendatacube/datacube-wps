@@ -78,17 +78,17 @@ This part is flow-on from Workflow testing
 2. URL = `request URL` from Collect payload point 6
 3. Request body = `xml` from Collect payload point 6
 
-### API
-#### GetCapabilities
+## API
+### GetCapabilities
 - Returns configured operations and processes in XML format.
 - Currently, operations include **GetCapabilities**, **DescribeProcess** and **Execute**. Processes include **Fractional Cover Drill**, **Mangrove Cover Drill** and **WIT polygon drill**
 - Locally accessed via http://localhost:8000/?service=WPS&request=GetCapabilities&version=1.0.0
 
-#### DescribeProcess
+### DescribeProcess
 - Returns a description of a configured process in XML format (accepted input formats, data types etc.)
 - Locally accessed via http://localhost:8000/?service=WPS&version=1.0.0&request=DescribeProcess&identifier=<PROCESS NAME>
 
-#### Execute
+### Execute
 - Runs a specified process.
 - Inputs depend on process configuration.
 - Request can be made as either a GET URL or a POST with an XML request document.
@@ -131,4 +131,4 @@ This part is flow-on from Workflow testing
     </wps:RawDataOutput>
   </wps:ResponseForm>
 </wps:Execute>
-.```
+```
