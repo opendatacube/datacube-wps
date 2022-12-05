@@ -3,6 +3,7 @@ import boto3
 import pywps.configuration as config
 from moto import mock_s3
 from vega_datasets import data
+import pytest
 
 from datacube_wps.processes import (upload_chart_html_to_S3,
                                     upload_chart_svg_to_S3)
@@ -15,7 +16,7 @@ TEST_CHART = chart = (
 
 TEST_CFG = "pywps.cfg"
 
-
+@pytest.mark.skip(reason="Skip S3 tests for now")
 @mock_s3
 def test_s3_svg_chart_upload():
     config.load_configuration(TEST_CFG)
@@ -26,7 +27,7 @@ def test_s3_svg_chart_upload():
     client.create_bucket(Bucket=bucket, CreateBucketConfiguration=location)
     upload_chart_svg_to_S3(TEST_CHART, "abcd")
 
-
+@pytest.mark.skip(reason="Skip S3 tests for now")
 @mock_s3
 def test_s3_html_chart_upload():
     config.load_configuration(TEST_CFG)

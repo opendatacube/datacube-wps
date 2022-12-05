@@ -14,6 +14,10 @@ ls_timezone = timezone.utc
 
 def ls8_on(dataset):
     LS8_START_DATE = datetime(2013, 1, 1, tzinfo=ls_timezone)
+
+    if (dataset.center_time.tzinfo is None) or (dataset.center_time.tzinfo.utcoffset(dataset.center_time) is None):
+        dataset.center_time = dataset.center_time.replace(tzinfo=ls_timezone)
+
     return dataset.center_time >= LS8_START_DATE
 
 
@@ -21,6 +25,10 @@ def ls7_on(dataset):
     LS7_STOP_DATE = datetime(2003, 5, 31, tzinfo=ls_timezone)
     LS7_STOP_AGAIN = datetime(2013, 5, 31, tzinfo=ls_timezone)
     LS7_START_AGAIN = datetime(2010, 1, 1, tzinfo=ls_timezone)
+
+    if (dataset.center_time.tzinfo is None) or (dataset.center_time.tzinfo.utcoffset(dataset.center_time) is None):
+        dataset.center_time = dataset.center_time.replace(tzinfo=ls_timezone)
+
     return dataset.center_time <= LS7_STOP_DATE or (dataset.center_time >= LS7_START_AGAIN
                                                     and dataset.center_time <= LS7_STOP_AGAIN)
 
@@ -29,6 +37,10 @@ def ls5_on_1ym(dataset):
     LS5_START_AGAIN = datetime(2003, 1, 1, tzinfo=ls_timezone)
     LS5_STOP_DATE = datetime(1999, 12, 31, tzinfo=ls_timezone)
     LS5_STOP_AGAIN = datetime(2011, 12, 31, tzinfo=ls_timezone)
+
+    if (dataset.center_time.tzinfo is None) or (dataset.center_time.tzinfo.utcoffset(dataset.center_time) is None):
+        dataset.center_time = dataset.center_time.replace(tzinfo=ls_timezone)
+
     return dataset.center_time <= LS5_STOP_DATE or (dataset.center_time >= LS5_START_AGAIN
                                                     and dataset.center_time <= LS5_STOP_AGAIN)
 

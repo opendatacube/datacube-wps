@@ -1,6 +1,25 @@
-botocore==1.20.49
-datacube>=1.8.4.dev81+g80d466a2
-gunicorn==20.1.0
-flask==1.1.2
-Werkzeug==1.0.1
-click==7.1.2
+## Versions
+aiobotocore>=2.1.2
+boto3>=1.20.24
+botocore>=1.23.24
+dask>=2022.02.0
+dask-gateway>=2022.4.0
+dask-cuda>=22.6
+distributed>=2022.02.0
+hdstats>=0.1.8.post1
+# Python GDAL is included in osgeo base image and MUST be pinned to the same version or it will attempt
+# to upgrade and likely fail due to C-Library issues
+GDAL==3.5.1
+jupyterlab-widgets<3.0
+matplotlib~=3.4
+nbclassic<0.4.0 # Pinned to avoid 0.4.0 update that broke jlab
+# numexpr>=3.0.1a6
+numpy>=1.22.2,<1.23.0  # Installing 1.23 breaks some other package dependencies that are installed later. Requires some hunting or "oldest-supported-numpy" may work
+pystac-client>=0.3.5  # Required to stop odc-stac from breaking with element84 STAC API which needs an update to be compliant
+rasterio!=1.3.0,!=1.3.1,>=1.3.2  # Following advice from https://github.com/opendatacube/datacube-ows/issues/851 Tested broken 1.3.0, 1.3.0post1, 1.3.1
+s3fs>=2021.08.0
+scikit-learn>=1.0.0
+setuptools_scm>=6,!=7.0.0,!=7.0.1,!=7.0.2,!=7.0.3  # Avoid a bunch of version issues that are fixed in v7.0.4
+# setuptools<65.0.0 # Might be necessary if numexpr3 is re-enabled
+Shapely!=1.8.3 # Avoid errant Shapely release
+tensorflow>=2.7

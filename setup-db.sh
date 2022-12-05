@@ -7,7 +7,7 @@ if [ ! -f dump.sql ]; then
 
    echo Rebuilding sample database..
 
-   index="https://explorer-aws.dea.ga.gov.au"
+   index="https://explorer.csiro.easi-eo.solutions"
 
    cmd='docker-compose exec -T wps datacube'
 
@@ -15,17 +15,13 @@ if [ ! -f dump.sql ]; then
 
    for x in eo eo3 eo3_landsat_ard; do $cmd metadata add $index/metadata-types/$x.odc-type.yaml; done
 
-   for x in ga_ls_wo_3 ga_ls8c_ard_3 ga_ls7e_ard_3 ga_ls5t_ard_3 ga_ls_fc_3 mangrove_cover; do $cmd product add $index/products/$x.odc-product.yaml; done
+   for x in ga_ls8c_ard_3 ga_ls7e_ard_3 ga_ls5t_ard_3 ga_ls_mangrove_cover_cyear_3 ga_ls_fc_3 ga_ls_wo_3; do $cmd product add $index/products/$x.odc-product.yaml; done
 
    stac () { curl -s "$index/stac/search?collections=$1&datetime=$2T00:00:00Z/$3T00:00:00Z&bbox=$4&limit=500" |
 	     jq '.features[].links[] | select(.rel == "odc_yaml") | .href'; }
-   
+
    {
-       stac ga_ls_wo_3 2000-01-01 2001-01-01 "137.01,-28.76,137.02,-28.75" 
-       
-       stac "ga_ls8c_ard_3,ga_ls7e_ard_3,ga_ls_fc_3,ga_ls_wo_3" 2019-03-01 2019-08-01 "146.65,-36.16,147.29,-35.66"
-       
-       stac mangrove_cover 2000-01-01 2006-01-01 "143.98,-14.69,144.27,-14.39"
+       stac "ga_ls8c_ard_3,ga_ls7e_ard_3,ga_ls5t_ard_3,ga_ls_mangrove_cover_cyear_3,ga_ls_fc_3,ga_ls_wo_3" 2019-01-01 2020-01-01 "152.95,-27.5,153.55,-27"  # Brisbane
 
    } | xargs -L1 $cmd -v dataset add --confirm-ignore-lineage
 
@@ -33,7 +29,7 @@ if [ ! -f dump.sql ]; then
 
 else
 
-   echo Reusing cache..	
+   echo Reusing cache..
 
    docker-compose exec -T -u postgres postgres psql < dump.sql
 
