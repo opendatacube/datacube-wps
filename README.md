@@ -77,3 +77,57 @@ This part is flow-on from Workflow testing
 1. Go to http://www.apirequest.io/
 2. URL = `request URL` from Collect payload point 6
 3. Request body = `xml` from Collect payload point 6
+
+### API
+#### GetCapabilities
+- Returns configured operations and processes in XML format.
+- Currently, operations include **GetCapabilities**, **DescribeProcess** and **Execute**. Processes include **Fractional Cover Drill**, **Mangrove Cover Drill** and **WIT polygon drill**
+- Locally accessed via http://localhost:8000/?service=WPS&request=GetCapabilities&version=1.0.0
+
+#### DescribeProcess
+- Returns a description of a configured process in XML format (accepted input formats, data types etc.)
+- Locally accessed via http://localhost:8000/?service=WPS&version=1.0.0&request=DescribeProcess&identifier=<PROCESS NAME>
+
+#### Execute
+- Runs a specified process.
+- Inputs depend on process configuration.
+- Request can be made as either a GET URL or a POST with an XML request document.
+- POST requests are preferred for tidiness - can construct with assistance from Postman standalone app, Postman Chrome browser extension, Firefox Developer Tools or equivalent tools.
+- Example of an XML request document for a buffer process (not implemented in this repository):
+
+<?xml version="1.0" encoding="UTF-8"?>
+<wps:Execute version="1.0.0" service="WPS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.opengis.net/wps/1.0.0" xmlns:wfs="http://www.opengis.net/wfs" xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:gml="http://www.opengis.net/gml" xmlns:ogc="http://www.opengis.net/ogc" xmlns:wcs="http://www.opengis.net/wcs/1.1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsAll.xsd">
+  <ows:Identifier>JTS:buffer</ows:Identifier>
+  <wps:DataInputs>
+    <wps:Input>
+      <ows:Identifier>geom</ows:Identifier>
+      <wps:Data>
+        <wps:ComplexData mimeType="application/wkt"><![CDATA[POINT(0 0)]]></wps:ComplexData>
+      </wps:Data>
+    </wps:Input>
+    <wps:Input>
+      <ows:Identifier>distance</ows:Identifier>
+      <wps:Data>
+        <wps:LiteralData>10</wps:LiteralData>
+      </wps:Data>
+    </wps:Input>
+    <wps:Input>
+      <ows:Identifier>quadrantSegments</ows:Identifier>
+      <wps:Data>
+        <wps:LiteralData>1</wps:LiteralData>
+      </wps:Data>
+    </wps:Input>
+    <wps:Input>
+      <ows:Identifier>capStyle</ows:Identifier>
+      <wps:Data>
+        <wps:LiteralData>flat</wps:LiteralData>
+      </wps:Data>
+    </wps:Input>
+  </wps:DataInputs>
+  <wps:ResponseForm>
+    <wps:RawDataOutput mimeType="application/gml-3.1.1">
+      <ows:Identifier>result</ows:Identifier>
+    </wps:RawDataOutput>
+  </wps:ResponseForm>
+</wps:Execute>
+
