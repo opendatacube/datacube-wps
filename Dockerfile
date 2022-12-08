@@ -18,6 +18,7 @@ ENV PATH=${py_env_path}/bin:$PATH
 FROM csiroeasi/geobase-runner:develop.latest
 
 RUN mkdir -p /code/logs
+RUN mkdir -p /code/outputs
 WORKDIR /code
 
 ENV DEBIAN_FRONTEND=noninteractive

@@ -15,6 +15,24 @@ Available processes are below:
 * FCDrill
 * WOfSDrill
 
+### State of play (08/12/2022)
+- EASI WPS can currently run:
+ - Mangrove polygon drill: Calculate number of Woodland, Open Forest and Closed Forest pixels in a polygon
+ - Fractional Cover (FC) polygon drill: Calculate proportion of bare soil, photosynthetic vegetation and non-photosynthetic vegetation within a polygon.
+ - Water Observations From Space (WOFS) pixel drill: Produce water observations for a point through time as a graph.
+- Want to be able to handle Geopolygon, Geomultipolygons and shapefiles (from which we extract polygons) - can currently handle polygons.
+
+- Some considerations when working with the raster data:
+ - Statistics to be applied to the polygon (mean, std etc.)
+ - Handling of partial pixels - what happens when a polygon straddles an edge or is partially outside of one (exclude? include? more than 50%? less than 50%?)
+ - the kind of band math we can do (functions) e.g. fractional cover - bare, dry, veg; total cover, optionally combine with rainfall...
+
+- Next tasks:
+ - Deploying in EASI
+ - Connect input requests and output results to Terria
+ - Test
+
+
 ## Flask Dev Server
 
 To run the WPS on localhost modify `pywps.cfg` to point `url` and `outputurl` to `localhost`. `workdir` and `outputpath` should be left as `tmp` and `outputs` respectively for a local dev server and `base_route` should be `/` see example:
@@ -86,6 +104,7 @@ This part is flow-on from Workflow testing
 
 ### DescribeProcess
 - Returns a description of a configured process in XML format (accepted input formats, data types etc.)
+- Returned XML provides framework for input data to execute described process.
 - Locally accessed via http://localhost:8000/?service=WPS&version=1.0.0&request=DescribeProcess&identifier=&lt;PROCESS NAME&gt;
 
 ### Execute
@@ -96,7 +115,7 @@ This part is flow-on from Workflow testing
 - POSTs can be constructed with assistance from Postman standalone app, Postman Chrome browser extension, Firefox Developer Tools or equivalent tools.
 - Example of a CURL call:
 
-curl -H "Content-Type: text/xml" -d @wpsrequest.xml -X POST localhost:8000
+curl -H "Content-Type: text/xml" -d @wpsrequest.xml -X POST localhost:8000?service=WPS&request=Execute
 
 - Example of an XML request document for a buffer process (not implemented in this repository):
 
@@ -137,3 +156,5 @@ curl -H "Content-Type: text/xml" -d @wpsrequest.xml -X POST localhost:8000
   </wps:ResponseForm>
 </wps:Execute>
 ```
+
+- See `./example_mangrove_drill.xml` for an example for an implemented process
