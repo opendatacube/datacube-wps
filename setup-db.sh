@@ -9,7 +9,7 @@ if [ ! -f dump.sql ]; then
 
    index="https://explorer-aws.dea.ga.gov.au"
 
-   cmd='docker-compose exec -T wps datacube'
+   cmd='docker compose exec -T wps datacube'
 
    $cmd system init --no-default-types --no-init-users
 
@@ -29,12 +29,12 @@ if [ ! -f dump.sql ]; then
 
    } | xargs -L1 $cmd -v dataset add --confirm-ignore-lineage
 
-   docker-compose exec -T -u postgres postgres pg_dump > dump.sql
+   docker compose exec -T -u postgres postgres pg_dump > dump.sql
 
 else
 
    echo Reusing cache..	
 
-   docker-compose exec -T -u postgres postgres psql < dump.sql
+   docker compose exec -T -u postgres postgres psql < dump.sql
 
 fi

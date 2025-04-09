@@ -23,28 +23,28 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Pre-pull layers
-        run: docker-compose pull
+        run: docker compose pull
 
       - name: Build WPS image
-        run: docker-compose build
+        run: docker compose build
 
       - name: Bring up containers
         run: |
           mkdir -p ./artifacts
           chmod a+rw ./artifacts
 
-          docker-compose up -d
+          docker compose up -d
 
           # wait until db server is ready for connections
-          until docker-compose exec -T postgres pg_isready ; do sleep 1 ; done
+          until docker compose exec -T postgres pg_isready ; do sleep 1 ; done
 
       - name: Populate sample database
         run: ./setup-db.sh
 
       - name: Run test suite
         run: |
-          docker-compose exec -e WPS_BASEURL=/ -T wps pytest -v --cov=./datacube_wps --cov-report=xml tests/
-          docker-compose down
+          docker compose exec -e WPS_BASEURL=/ -T wps pytest -v --cov=./datacube_wps --cov-report=xml tests/
+          docker compose down
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v1
