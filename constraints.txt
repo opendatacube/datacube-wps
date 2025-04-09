@@ -1,6 +1,0 @@
-botocore==1.20.49
-datacube>=1.8.4.dev81+g80d466a2
-gunicorn==20.1.0
-flask==1.1.2
-Werkzeug==1.0.1
-click==7.1.2

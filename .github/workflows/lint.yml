@@ -69,6 +69,7 @@ jobs:
           fetch-depth: 0
       - name: Install airflow and run pylint
         run: |
-          pip install -r requirements.txt
-          pip install pylint
-          pylint -j 2 --reports no datacube_wps --disable=C,R,redefined-builtin,fixme,arguments-differ
+          curl -LsSf https://astral.sh/uv/0.6.6/install.sh | sh
+          uv sync
+          uv pip install -r requirements.txt
+          uv run pylint -j 2 --reports no datacube_wps --disable=C,R,redefined-builtin,fixme,arguments-differ

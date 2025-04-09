@@ -10,11 +10,12 @@ sentry_sdk[flask]
 blinker
 prometheus-flask-exporter
 pycodestyle
-# pylint
+pylint
 pytest
 pytest-cov
 pytest-flask
-moto
+moto < 5
 vega-datasets
+vl-convert-python
 twine
 pyarrow
