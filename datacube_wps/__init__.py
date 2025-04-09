@@ -28,7 +28,7 @@ if __name__ == "__main__":
         try:
             pid = os.fork()
         except OSError as e:
-            raise Exception("%s [%d]" % (e.strerror, e.errno)) from e
+            raise Exception("%s [%d]" % (e.strerror, e.errno)) from e  # pylint: disable=broad-exception-raised
 
         if pid == 0:
             os.setsid()
