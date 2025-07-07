@@ -1505,4 +1505,3 @@ ALTER TABLE ONLY agdc.dataset_type
 --
 -- PostgreSQL database dump complete
 --
-
