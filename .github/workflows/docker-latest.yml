@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Login to DockerHub
-        uses: actions/checkout@v2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
@@ -29,7 +29,7 @@ jobs:
 
       - name: Build unstable + latest Docker image tag
         if: github.event_name != 'release'
-        uses: whoan/docker-build-with-cache-action@v4
+        uses: whoan/docker-build-with-cache-action@d8d3ad518e7ac382b880720d0751815e656fe032 # v8.1.0
         with:
           image_name: ${{ env.IMAGE_NAME }}
           image_tag: ${{ env.UNSTABLE_TAG }},latest
@@ -38,7 +38,7 @@ jobs:
 
       - name: Run vulnerability scanner
         if: github.ref == 'refs/heads/master'
-        uses: aquasecurity/trivy-action@0.0.6
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         with:
           image-ref: "${{ env.IMAGE_NAME }}:${{ env.UNSTABLE_TAG }}"
           format: "table"

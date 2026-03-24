@@ -20,7 +20,7 @@ jobs:
 
   #   steps:
   #     - name: Checkout Code
-  #       uses: actions/checkout@v2
+  #       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
   #       with:
   #         fetch-depth: 0
 
@@ -35,14 +35,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: 3.9
       - run: python -m pip install isort
       - name: isort
-        uses: liskin/gh-problem-matcher-wrap@v1
+        uses: liskin/gh-problem-matcher-wrap@e7b7beaaafa52524748b31a381160759d68d61fb # v3.0.0
         with:
           linters: isort
           run: |
@@ -51,9 +51,9 @@ jobs:
   bandit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Run bandit
-        uses: tj-actions/bandit@v5
+        uses: tj-actions/bandit@0aed5b3da320e0f26781e5aecbbfc1d268ff07e2 # v5.5
         with:
           targets: |  # or a single string "."
             test_package
@@ -64,7 +64,7 @@ jobs:
     name: Pylint
     steps:
       - name: checkout git
-        uses: actions/checkout@v2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
       - name: Install airflow and run pylint
